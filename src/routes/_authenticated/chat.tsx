@@ -82,7 +82,7 @@ function ChatLayout() {
   const sidebar = (
     <>
       <div className="h-14 px-4 flex items-center justify-between gap-2 border-b border-border">
-        <Link to="/dashboard" className="flex items-center gap-2 min-w-0">
+        <Link to="/chat/dashboard" className="flex items-center gap-2 min-w-0">
           <div className="h-7 w-7 rounded-md bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0">
             <span className="text-primary-foreground font-black text-sm">V</span>
           </div>
