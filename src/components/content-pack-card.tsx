@@ -80,7 +80,7 @@ export function ContentPackCard({ data }: { data: ContentPackData }) {
       </div>
 
       {/* Voiceover */}
-      <Section icon={Mic} title="Voiceover — ElevenLabs ready">
+      <Section icon={Mic} title="Voiceover-ready dialogue">
         <div className="flex items-center justify-between mb-2">
           <div className="text-xs text-muted-foreground">
             {data.script.suggestedElevenLabsVoice?.name && (
@@ -101,7 +101,7 @@ export function ContentPackCard({ data }: { data: ContentPackData }) {
       </Section>
 
       {/* Visuals */}
-      <Section icon={ImageIcon} title="Visuals — beat by beat">
+      <Section icon={ImageIcon} title="Visual plan — scene by scene">
         <div className="space-y-3">
           {data.visuals.map((v, i) => (
             <div key={i} className="rounded-lg border border-border bg-background/50 p-3">
@@ -116,22 +116,22 @@ export function ContentPackCard({ data }: { data: ContentPackData }) {
               <Tabs defaultValue="image">
                 <TabsList className="h-7">
                   <TabsTrigger value="image" className="text-[11px] gap-1">
-                    <ImageIcon className="h-3 w-3" /> Image prompt
+                    <ImageIcon className="h-3 w-3" /> Still visual
                   </TabsTrigger>
                   <TabsTrigger value="video" className="text-[11px] gap-1">
-                    <Video className="h-3 w-3" /> Video prompt
+                    <Video className="h-3 w-3" /> Motion visual
                   </TabsTrigger>
                 </TabsList>
                 <TabsContent value="image" className="mt-2">
                   <div className="flex items-start gap-2">
                     <p className="text-xs text-muted-foreground flex-1 whitespace-pre-wrap">{v.imagePrompt}</p>
-                    <CopyBtn text={v.imagePrompt} label="Image prompt" />
+                    <CopyBtn text={v.imagePrompt} label="Still visual" />
                   </div>
                 </TabsContent>
                 <TabsContent value="video" className="mt-2">
                   <div className="flex items-start gap-2">
                     <p className="text-xs text-muted-foreground flex-1 whitespace-pre-wrap">{v.videoPrompt}</p>
-                    <CopyBtn text={v.videoPrompt} label="Video prompt" />
+                    <CopyBtn text={v.videoPrompt} label="Motion visual" />
                   </div>
                 </TabsContent>
               </Tabs>
@@ -141,7 +141,7 @@ export function ContentPackCard({ data }: { data: ContentPackData }) {
       </Section>
 
       {/* Thumbnails */}
-      <Section icon={ImageIcon} title="Thumbnail prompts (×3)">
+      <Section icon={ImageIcon} title="Thumbnail & first-frame concepts">
         <div className="space-y-2">
           {data.thumbnailPrompts.map((t, i) => (
             <div key={i} className="flex items-start gap-2 rounded-lg border border-border bg-background/50 p-3">
@@ -175,7 +175,7 @@ export function ContentPackCard({ data }: { data: ContentPackData }) {
 
       {/* Sources */}
       {data.sources && data.sources.length > 0 && (
-        <Section icon={ExternalLink} title={`Verified sources (${data.sources.length})`}>
+        <Section icon={ExternalLink} title={`Source-backed research (${data.sources.length})`}>
           <ul className="space-y-1.5">
             {data.sources.map((s, i) => (
               <li key={i} className="text-xs">
