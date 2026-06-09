@@ -57,7 +57,9 @@ const AuthenticatedChatThreadIdRoute =
     id: '/$threadId',
     path: '/$threadId',
     getParentRoute: () => AuthenticatedChatRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/chat.$threadId.lazy').then((d) => d.Route),
+  )
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -214,3 +216,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
