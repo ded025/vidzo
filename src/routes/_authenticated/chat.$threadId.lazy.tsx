@@ -66,44 +66,61 @@ function ChatWindow({
   initialMessages: UIMessage[];
 }) {
   const [input, setInput] = useState("");
-  const [bearer, setBearer] = useState<string | null>(null);
+  const bearerRef = useRef<string | null>(null);
+  const [bearerReady, setBearerReady] = useState(false);
   const sentPending = useRef(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      setBearer(data.session?.access_token ?? null);
+      bearerRef.current = data.session?.access_token ?? null;
+      setBearerReady(!!bearerRef.current);
     });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      bearerRef.current = session?.access_token ?? null;
+      setBearerReady(!!bearerRef.current);
+    });
+    return () => sub.subscription.unsubscribe();
   }, []);
 
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: "/api/chat",
-        headers: bearer ? { Authorization: `Bearer ${bearer}` } : undefined,
+        headers: () =>
+          bearerRef.current
+            ? { Authorization: `Bearer ${bearerRef.current}` }
+            : {},
         body: { threadId },
       }),
-    [bearer, threadId],
+    [threadId],
   );
 
-  const { messages, sendMessage, status } = useChat({
+  const { messages, sendMessage, status, error } = useChat({
     id: threadId,
     messages: initialMessages,
     transport,
   });
 
   useEffect(() => {
-    if (sentPending.current || !bearer) return;
+    if (error) {
+      console.error("[chat] error", error);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (sentPending.current || !bearerReady) return;
     const pending = sessionStorage.getItem(`pending:${threadId}`);
     if (pending && messages.length === 0) {
       sentPending.current = true;
       sessionStorage.removeItem(`pending:${threadId}`);
       sendMessage({ text: pending });
     }
-  }, [bearer, threadId, messages.length, sendMessage]);
+  }, [bearerReady, threadId, messages.length, sendMessage]);
 
   const handleSubmit = (message: { text?: string }) => {
     const text = (message.text ?? input).trim();
     if (!text) return;
+    if (!bearerRef.current) return;
     setInput("");
     sendMessage({ text });
   };
