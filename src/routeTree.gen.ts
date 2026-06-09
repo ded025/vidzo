@@ -57,7 +57,9 @@ const AuthenticatedChatThreadIdRoute =
     id: '/$threadId',
     path: '/$threadId',
     getParentRoute: () => AuthenticatedChatRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/chat.$threadId.lazy').then((d) => d.Route),
+  )
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
