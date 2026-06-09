@@ -49,10 +49,56 @@ export type Database = {
           },
         ]
       }
+      presets: {
+        Row: {
+          audience: string | null
+          created_at: string
+          default_voice_id: string | null
+          default_voice_name: string | null
+          id: string
+          is_active: boolean
+          language: string | null
+          name: string
+          niche: string | null
+          tone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          audience?: string | null
+          created_at?: string
+          default_voice_id?: string | null
+          default_voice_name?: string | null
+          id?: string
+          is_active?: boolean
+          language?: string | null
+          name: string
+          niche?: string | null
+          tone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          audience?: string | null
+          created_at?: string
+          default_voice_id?: string | null
+          default_voice_name?: string | null
+          id?: string
+          is_active?: boolean
+          language?: string | null
+          name?: string
+          niche?: string | null
+          tone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       scripts: {
         Row: {
           created_at: string
           data: Json
+          folder: string | null
           id: string
           thread_id: string | null
           topic: string
@@ -61,6 +107,7 @@ export type Database = {
         Insert: {
           created_at?: string
           data: Json
+          folder?: string | null
           id?: string
           thread_id?: string | null
           topic: string
@@ -69,6 +116,7 @@ export type Database = {
         Update: {
           created_at?: string
           data?: Json
+          folder?: string | null
           id?: string
           thread_id?: string | null
           topic?: string
@@ -86,6 +134,7 @@ export type Database = {
       }
       threads: {
         Row: {
+          context_brief: string | null
           created_at: string
           id: string
           title: string
@@ -93,6 +142,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          context_brief?: string | null
           created_at?: string
           id?: string
           title?: string
@@ -100,6 +150,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          context_brief?: string | null
           created_at?: string
           id?: string
           title?: string
