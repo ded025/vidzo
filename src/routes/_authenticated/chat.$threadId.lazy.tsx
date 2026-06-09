@@ -23,8 +23,8 @@ import {
   PromptInputFooter,
 } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
-import { ScriptCard } from "@/components/script-card";
-import { Search, Loader2 } from "lucide-react";
+import { ContentPackCard, type ContentPackData } from "@/components/content-pack-card";
+import { Search, Loader2, ShieldCheck } from "lucide-react";
 
 const routeApi = getRouteApi("/_authenticated/chat/$threadId");
 
@@ -87,9 +87,7 @@ function ChatWindow({
       new DefaultChatTransport({
         api: "/api/chat",
         headers: (): Record<string, string> =>
-          bearerRef.current
-            ? { Authorization: `Bearer ${bearerRef.current}` }
-            : {},
+          bearerRef.current ? { Authorization: `Bearer ${bearerRef.current}` } : {},
         body: { threadId },
       }),
     [threadId],
@@ -102,9 +100,7 @@ function ChatWindow({
   });
 
   useEffect(() => {
-    if (error) {
-      console.error("[chat] error", error);
-    }
+    if (error) console.error("[chat] error", error);
   }, [error]);
 
   useEffect(() => {
@@ -133,7 +129,7 @@ function ChatWindow({
         <ConversationContent className="max-w-3xl mx-auto w-full px-4 py-6">
           {messages.length === 0 && (
             <div className="text-center text-sm text-muted-foreground py-16">
-              Start typing — search trending topics or paste your own idea.
+              Type your brief. The whole chat will lock onto it.
             </div>
           )}
           {messages.map((m) => (
@@ -154,11 +150,7 @@ function ChatWindow({
                       state: string;
                       input?: { query?: string };
                       output?: {
-                        results?: Array<{
-                          title: string;
-                          url: string;
-                          snippet: string;
-                        }>;
+                        results?: Array<{ title: string; url: string; snippet: string }>;
                         error?: string;
                       };
                     };
@@ -170,9 +162,7 @@ function ChatWindow({
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <Search className="h-3.5 w-3.5" />
                           Searching:{" "}
-                          <span className="text-foreground">
-                            {p.input?.query ?? "…"}
-                          </span>
+                          <span className="text-foreground">{p.input?.query ?? "…"}</span>
                           {p.state !== "output-available" && (
                             <Loader2 className="h-3 w-3 animate-spin" />
                           )}
@@ -189,22 +179,18 @@ function ChatWindow({
                                 >
                                   {r.title}
                                 </a>
-                                <div className="text-muted-foreground line-clamp-2">
-                                  {r.snippet}
-                                </div>
+                                <div className="text-muted-foreground line-clamp-2">{r.snippet}</div>
                               </li>
                             ))}
                           </ul>
                         )}
                         {p.output?.error && (
-                          <div className="mt-2 text-destructive">
-                            {p.output.error}
-                          </div>
+                          <div className="mt-2 text-destructive">{p.output.error}</div>
                         )}
                       </div>
                     );
                   }
-                  if (part.type === "tool-generate_script") {
+                  if (part.type === "tool-generate_content_pack") {
                     const p = part as unknown as {
                       state: string;
                       output?: Record<string, unknown>;
@@ -215,12 +201,13 @@ function ChatWindow({
                           key={i}
                           className="rounded-lg border border-border bg-secondary/40 p-3 text-xs text-muted-foreground flex items-center gap-2"
                         >
+                          <ShieldCheck className="h-3 w-3" />
                           <Loader2 className="h-3 w-3 animate-spin" />
-                          Generating script…
+                          Drafting + validating against sources…
                         </div>
                       );
                     }
-                    return <ScriptCard key={i} data={p.output as never} />;
+                    return <ContentPackCard key={i} data={p.output as unknown as ContentPackData} />;
                   }
                   return null;
                 })}
@@ -242,7 +229,7 @@ function ChatWindow({
             <PromptInputTextarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Trending topic dhundo, ya script tweak karo…"
+              placeholder="Tweak your brief, ask for trends, or request a new pack…"
               autoFocus
             />
             <PromptInputFooter className="justify-end">

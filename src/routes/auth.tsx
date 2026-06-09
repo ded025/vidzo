@@ -6,13 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in · Reel Engine" },
-      { name: "description", content: "Sign in to your Hinglish Shorts script engine." },
+      { title: "Sign in · Vidzo" },
+      { name: "description", content: "Sign in to Vidzo — your end-to-end content engine." },
     ],
   }),
   component: AuthPage,
@@ -27,7 +26,7 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) navigate({ to: "/chat" });
+      if (data.user) navigate({ to: "/chat/dashboard" });
     });
   }, [navigate]);
 
@@ -44,7 +43,7 @@ function AuthPage() {
         if (error) throw error;
         if (data.session) {
           toast.success("Account created");
-          navigate({ to: "/chat" });
+          navigate({ to: "/chat/dashboard" });
         } else {
           toast.success("Check your email to confirm, then sign in.");
           setMode("signin");
@@ -62,7 +61,7 @@ function AuthPage() {
           }
           return;
         }
-        navigate({ to: "/chat" });
+        navigate({ to: "/chat/dashboard" });
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Auth failed");
@@ -82,24 +81,26 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/chat" });
+    navigate({ to: "/chat/dashboard" });
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 relative overflow-hidden">
+      <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
+      <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-accent/20 blur-3xl" />
+      <div className="w-full max-w-md relative">
         <Link to="/" className="flex items-center gap-2 justify-center mb-8 text-foreground">
-          <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
-            <Sparkles className="h-5 w-5 text-primary-foreground" />
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+            <span className="text-primary-foreground font-black text-lg">V</span>
           </div>
-          <span className="text-xl font-semibold tracking-tight">Reel Engine</span>
+          <span className="text-2xl font-bold tracking-tight">Vidzo</span>
         </Link>
-        <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
-          <h1 className="text-2xl font-semibold text-card-foreground">
+        <div className="rounded-2xl border border-border bg-card p-8 shadow-xl">
+          <h1 className="text-2xl font-bold text-card-foreground">
             {mode === "signin" ? "Welcome back" : "Create your account"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Your Hinglish Shorts script engine.
+            Your end-to-end content engine.
           </p>
 
           <Button
@@ -113,34 +114,19 @@ function AuthPage() {
           </Button>
 
           <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
-            <div className="h-px flex-1 bg-border" />
-            or
-            <div className="h-px flex-1 bg-border" />
+            <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
           </div>
 
           <form onSubmit={handleEmail} className="space-y-3">
             <div>
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1"
-              />
+              <Input id="email" type="email" required value={email}
+                onChange={(e) => setEmail(e.target.value)} className="mt-1" />
             </div>
             <div>
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1"
-              />
+              <Input id="password" type="password" required minLength={6} value={password}
+                onChange={(e) => setPassword(e.target.value)} className="mt-1" />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {mode === "signin" ? "Sign in" : "Create account"}
