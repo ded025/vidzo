@@ -127,7 +127,7 @@ function Landing() {
             className="h-[420px] w-[420px] sm:h-[640px] sm:w-[640px] rounded-full opacity-40 blur-3xl"
             style={{
               background:
-                "radial-gradient(circle at 50% 50%, hsl(var(--primary) / 0.45), transparent 60%)",
+                "radial-gradient(circle at 50% 50%, color-mix(in oklab, var(--primary) 45%, transparent), transparent 60%)",
             }}
           />
         </div>
