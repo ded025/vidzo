@@ -86,7 +86,7 @@ function ChatWindow({
     () =>
       new DefaultChatTransport({
         api: "/api/chat",
-        headers: () =>
+        headers: (): Record<string, string> =>
           bearerRef.current
             ? { Authorization: `Bearer ${bearerRef.current}` }
             : {},
