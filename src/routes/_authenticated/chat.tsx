@@ -98,10 +98,10 @@ function ChatLayout() {
         </button>
       </div>
       <div className="p-3 space-y-1">
-        <NavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
-        <NavItem to="/trends" icon={TrendingUp} label="Trends" />
-        <NavItem to="/scripts" icon={FileText} label="Library" />
-        <NavItem to="/presets" icon={Sliders} label="Presets" />
+        <NavItem to="/chat/dashboard" icon={LayoutDashboard} label="Dashboard" />
+        <NavItem to="/chat/trends" icon={TrendingUp} label="Trends" />
+        <NavItem to="/chat/library" icon={FileText} label="Library" />
+        <NavItem to="/chat/presets" icon={Sliders} label="Presets" />
       </div>
       <div className="px-3 pt-2 pb-1">
         <Button
