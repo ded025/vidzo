@@ -36,17 +36,32 @@ function AuthPage() {
     setLoading(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
-        toast.success("Check your email to confirm, then sign in.");
-        setMode("signin");
+        if (data.session) {
+          toast.success("Account created");
+          navigate({ to: "/chat" });
+        } else {
+          toast.success("Check your email to confirm, then sign in.");
+          setMode("signin");
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        if (error) {
+          const msg = error.message.toLowerCase();
+          if (msg.includes("not confirmed") || msg.includes("email_not_confirmed")) {
+            toast.error("Please confirm your email first, then sign in.");
+          } else if (msg.includes("invalid")) {
+            toast.error("Invalid email or password. New here? Create an account.");
+          } else {
+            toast.error(error.message);
+          }
+          return;
+        }
         navigate({ to: "/chat" });
       }
     } catch (err) {
