@@ -99,9 +99,8 @@ function ChatWindow({
     }
   }, [bearer, threadId, messages.length, sendMessage]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const text = input.trim();
+  const handleSubmit = (message: { text?: string }) => {
+    const text = (message.text ?? input).trim();
     if (!text) return;
     setInput("");
     sendMessage({ text });
