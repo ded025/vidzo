@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, useNavigate, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useNavigate, useParams, useRouterState } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
@@ -9,7 +9,10 @@ import {
 } from "@/lib/threads.functions";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Trash2, MessageSquare, FileText, LogOut, Sparkles, Menu, X } from "lucide-react";
+import {
+  Plus, Trash2, MessageSquare, FileText, LogOut, Menu, X,
+  LayoutDashboard, Sliders, TrendingUp,
+} from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/chat")({
@@ -20,15 +23,15 @@ function ChatLayout() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const params = useParams({ strict: false }) as { threadId?: string };
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const list = useServerFn(listThreads);
   const create = useServerFn(createThread);
   const del = useServerFn(deleteThread);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Close drawer when the route (thread) changes on mobile
   useEffect(() => {
     setSidebarOpen(false);
-  }, [params.threadId]);
+  }, [pathname]);
 
   const threadsQ = useQuery({
     queryKey: ["threads"],
@@ -59,14 +62,31 @@ function ChatLayout() {
     navigate({ to: "/auth", replace: true });
   };
 
+  const NavItem = ({
+    to, icon: Icon, label,
+  }: { to: string; icon: React.ComponentType<{className?: string}>; label: string }) => {
+    const active = pathname === to || (to !== "/chat" && pathname.startsWith(to));
+    return (
+      <Link
+        to={to}
+        className={`flex items-center gap-2 px-2.5 py-1.5 rounded-md text-sm transition-colors ${
+          active ? "bg-primary text-primary-foreground" : "hover:bg-secondary text-foreground"
+        }`}
+      >
+        <Icon className="h-4 w-4" />
+        {label}
+      </Link>
+    );
+  };
+
   const sidebar = (
     <>
       <div className="h-14 px-4 flex items-center justify-between gap-2 border-b border-border">
-        <Link to="/chat" className="flex items-center gap-2 min-w-0">
-          <div className="h-7 w-7 rounded-md bg-primary flex items-center justify-center shrink-0">
-            <Sparkles className="h-4 w-4 text-primary-foreground" />
+        <Link to="/dashboard" className="flex items-center gap-2 min-w-0">
+          <div className="h-7 w-7 rounded-md bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0">
+            <span className="text-primary-foreground font-black text-sm">V</span>
           </div>
-          <span className="font-semibold tracking-tight text-sm truncate">Reel Engine</span>
+          <span className="font-bold tracking-tight text-base truncate">Vidzo</span>
         </Link>
         <button
           type="button"
@@ -77,7 +97,13 @@ function ChatLayout() {
           <X className="h-4 w-4" />
         </button>
       </div>
-      <div className="p-3">
+      <div className="p-3 space-y-1">
+        <NavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
+        <NavItem to="/trends" icon={TrendingUp} label="Trends" />
+        <NavItem to="/scripts" icon={FileText} label="Library" />
+        <NavItem to="/presets" icon={Sliders} label="Presets" />
+      </div>
+      <div className="px-3 pt-2 pb-1">
         <Button
           className="w-full justify-start gap-2"
           size="sm"
@@ -126,14 +152,7 @@ function ChatLayout() {
           </div>
         )}
       </nav>
-      <div className="border-t border-border p-2 space-y-0.5">
-        <Link
-          to="/scripts"
-          className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-secondary"
-        >
-          <FileText className="h-4 w-4 text-muted-foreground" />
-          Script library
-        </Link>
+      <div className="border-t border-border p-2">
         <button
           onClick={signOut}
           className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-secondary text-left"
@@ -147,18 +166,13 @@ function ChatLayout() {
 
   return (
     <div className="h-[100dvh] flex bg-background text-foreground">
-      {/* Desktop sidebar */}
       <aside className="hidden md:flex w-64 border-r border-border flex-col shrink-0">
         {sidebar}
       </aside>
 
-      {/* Mobile drawer */}
       {sidebarOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in"
-            onClick={() => setSidebarOpen(false)}
-          />
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
           <aside className="relative w-72 max-w-[85vw] bg-background border-r border-border flex flex-col animate-in slide-in-from-left duration-200">
             {sidebar}
           </aside>
@@ -166,7 +180,6 @@ function ChatLayout() {
       )}
 
       <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
-        {/* Mobile top bar */}
         <div className="md:hidden h-12 shrink-0 border-b border-border flex items-center px-2 gap-2">
           <button
             type="button"
@@ -177,10 +190,10 @@ function ChatLayout() {
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-2 min-w-0">
-            <div className="h-6 w-6 rounded-md bg-primary flex items-center justify-center shrink-0">
-              <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
+            <div className="h-6 w-6 rounded-md bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0">
+              <span className="text-primary-foreground font-black text-xs">V</span>
             </div>
-            <span className="font-semibold tracking-tight text-sm truncate">Reel Engine</span>
+            <span className="font-bold tracking-tight text-sm truncate">Vidzo</span>
           </div>
           <Button
             size="sm"
