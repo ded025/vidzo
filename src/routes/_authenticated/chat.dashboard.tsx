@@ -4,9 +4,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { getDashboardStats, listScripts, listThreads, createThread } from "@/lib/threads.functions";
 import { Sparkles, TrendingUp, Package, Wand2, BookOpen, FileText, ArrowRight, Rocket, Trophy, ShoppingBag, Dumbbell, Film, Coins, Laptop, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
 
 export const Route = createFileRoute("/_authenticated/chat/dashboard")({
   component: Dashboard,
