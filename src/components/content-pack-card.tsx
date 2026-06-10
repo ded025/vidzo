@@ -142,12 +142,14 @@ export function ContentPackCard({ data }: { data: ContentPackData }) {
 
       {/* Thumbnails */}
       <Section icon={ImageIcon} title="Thumbnail & first-frame concepts">
-        <div className="space-y-2">
+        <div className="grid sm:grid-cols-3 gap-2">
           {data.thumbnailPrompts.map((t, i) => (
-            <div key={i} className="flex items-start gap-2 rounded-lg border border-border bg-background/50 p-3">
-              <div className="text-xs font-bold text-primary shrink-0">{i + 1}.</div>
-              <p className="text-xs text-muted-foreground flex-1 whitespace-pre-wrap">{t}</p>
-              <CopyBtn text={t} label={`Thumbnail ${i + 1}`} />
+            <div key={i} className="rounded-lg border border-border bg-background/50 p-3 flex flex-col h-full">
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="text-xs font-bold text-primary">Concept {i + 1}</div>
+                <CopyBtn text={t} label={`Thumbnail ${i + 1}`} />
+              </div>
+              <p className="text-xs text-muted-foreground whitespace-pre-wrap flex-1">{t}</p>
             </div>
           ))}
         </div>
