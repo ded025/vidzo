@@ -134,3 +134,20 @@
     color: var(--color-foreground);
   }
 }
+
+@keyframes vidzo-marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.vidzo-marquee-track {
+  animation: vidzo-marquee 30s linear infinite;
+  will-change: transform;
+}
+
+.glass-header {
+  background: color-mix(in oklab, var(--background) 55%, transparent);
+  backdrop-filter: saturate(180%) blur(22px);
+  -webkit-backdrop-filter: saturate(180%) blur(22px);
+  border: 1px solid color-mix(in oklab, var(--foreground) 10%, transparent);
+  box-shadow: 0 10px 30px -14px color-mix(in oklab, var(--foreground) 22%, transparent);
+}
