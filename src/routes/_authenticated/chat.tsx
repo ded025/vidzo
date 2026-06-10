@@ -14,6 +14,7 @@ import {
   LayoutDashboard, Sliders, TrendingUp,
 } from "lucide-react";
 import { toast } from "sonner";
+import { VidzoLogo } from "@/components/vidzo-logo";
 
 export const Route = createFileRoute("/_authenticated/chat")({
   component: ChatLayout,
@@ -59,7 +60,7 @@ function ChatLayout() {
     qc.clear();
     await supabase.auth.signOut();
     toast.success("Signed out");
-    navigate({ to: "/auth", replace: true });
+    navigate({ to: "/", replace: true });
   };
 
   const NavItem = ({
@@ -82,11 +83,8 @@ function ChatLayout() {
   const sidebar = (
     <>
       <div className="h-14 px-4 flex items-center justify-between gap-2 border-b border-border">
-        <Link to="/chat/dashboard" className="flex items-center gap-2 min-w-0">
-          <div className="h-7 w-7 rounded-md bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0">
-            <span className="text-primary-foreground font-black text-sm">V</span>
-          </div>
-          <span className="font-bold tracking-tight text-base truncate">Vidzo</span>
+        <Link to="/chat/dashboard" className="flex items-center min-w-0">
+          <VidzoLogo className="h-7 w-auto" />
         </Link>
         <button
           type="button"
@@ -189,12 +187,9 @@ function ChatLayout() {
           >
             <Menu className="h-5 w-5" />
           </button>
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="h-6 w-6 rounded-md bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0">
-              <span className="text-primary-foreground font-black text-xs">V</span>
-            </div>
-            <span className="font-bold tracking-tight text-sm truncate">Vidzo</span>
-          </div>
+          <Link to="/chat/dashboard" className="flex items-center min-w-0">
+            <VidzoLogo className="h-6 w-auto" />
+          </Link>
           <Button
             size="sm"
             variant="ghost"
