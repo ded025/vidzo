@@ -82,18 +82,20 @@ function Dashboard() {
     startMut.mutate(fullPrompt);
   };
 
-  // Compute quality stub — illustrative only when there are no scripts yet
-  const hasScripts = (scripts.data?.length ?? 0) > 0;
-  const qualityScores = [
-    { l: "Hook Strength", v: hasScripts ? 92 : 0 },
-    { l: "Clarity", v: hasScripts ? 88 : 0 },
-    { l: "Pacing", v: hasScripts ? 85 : 0 },
-    { l: "Source Coverage", v: hasScripts ? 81 : 0 },
-    { l: "Platform Fit", v: hasScripts ? 90 : 0 },
-  ];
-  const overall = Math.round(qualityScores.reduce((a, b) => a + b.v, 0) / qualityScores.length);
-  const status = overall >= 85 ? "Looks Good" : overall >= 70 ? "Can Improve" : hasScripts ? "Needs Work" : "No data yet";
-  const statusColor = overall >= 85 ? "text-emerald-600" : overall >= 70 ? "text-amber-600" : "text-muted-foreground";
+  // Compute REAL average quality from the user's actual generated packs.
+  const scriptItems = (scripts.data ?? []) as Array<{ id: string; topic: string; data: unknown }>;
+  const qualityReports = scriptItems
+    .map((s) => {
+      const d = s.data as Parameters<typeof computeQuality>[0] | null;
+      if (!d || !d.script || !d.visuals) return null;
+      try {
+        return { id: s.id, topic: s.topic, report: computeQuality(d) };
+      } catch {
+        return null;
+      }
+    })
+    .filter((x): x is { id: string; topic: string; report: ReturnType<typeof computeQuality> } => !!x);
+  const hasScripts = qualityReports.length > 0;
 
   return (
     <div className="h-full overflow-y-auto bg-[#fafaf7]">
