@@ -17,14 +17,14 @@ const LENGTHS = ["30 sec", "40 sec", "60 sec", "90 sec"] as const;
 const LANGUAGES = ["Hinglish", "English", "Hindi"] as const;
 
 const TREND_CARDS = [
-  { t: "Indian startup funding this week", c: "Business / Startup", v: 84, icon: Rocket, grad: "from-pink-500 to-rose-500" },
-  { t: "Shark Tank India latest viral pitch", c: "Entertainment", v: 82, icon: Trophy, grad: "from-amber-400 to-orange-500" },
-  { t: "D2C brand going viral 2026", c: "Business / Marketing", v: 79, icon: ShoppingBag, grad: "from-fuchsia-500 to-purple-500" },
-  { t: "Indian gym & fitness controversies", c: "Fitness", v: 76, icon: Dumbbell, grad: "from-emerald-500 to-teal-500" },
-  { t: "Recent Bollywood box office surprises", c: "Entertainment", v: 74, icon: Film, grad: "from-rose-500 to-pink-500" },
-  { t: "Crypto / fintech India this month", c: "Finance / Crypto", v: 73, icon: Coins, grad: "from-amber-400 to-yellow-500" },
-  { t: "Tech layoffs India recent", c: "Tech / Business", v: 71, icon: Laptop, grad: "from-blue-500 to-cyan-500" },
-  { t: "21-year-old founders India recent funding", c: "Startup / Business", v: 70, icon: User, grad: "from-violet-500 to-indigo-500" },
+  { t: "Indian startup funding this week", c: "Business / Startup", icon: Rocket, grad: "from-pink-500 to-rose-500" },
+  { t: "Shark Tank India latest viral pitch", c: "Entertainment", icon: Trophy, grad: "from-amber-400 to-orange-500" },
+  { t: "D2C brand going viral 2026", c: "Business / Marketing", icon: ShoppingBag, grad: "from-fuchsia-500 to-purple-500" },
+  { t: "Indian gym & fitness controversies", c: "Fitness", icon: Dumbbell, grad: "from-emerald-500 to-teal-500" },
+  { t: "Recent Bollywood box office surprises", c: "Entertainment", icon: Film, grad: "from-rose-500 to-pink-500" },
+  { t: "Crypto / fintech India this month", c: "Finance / Crypto", icon: Coins, grad: "from-amber-400 to-yellow-500" },
+  { t: "Tech layoffs India recent", c: "Tech / Business", icon: Laptop, grad: "from-blue-500 to-cyan-500" },
+  { t: "21-year-old founders India recent funding", c: "Startup / Business", icon: User, grad: "from-violet-500 to-indigo-500" },
 ];
 
 function Dashboard() {
