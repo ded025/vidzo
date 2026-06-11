@@ -24,7 +24,7 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { ContentPackCard, type ContentPackData } from "@/components/content-pack-card";
-import { Search, Loader2, ShieldCheck } from "lucide-react";
+import { Loader2, ShieldCheck } from "lucide-react";
 
 const routeApi = getRouteApi("/_authenticated/chat/$threadId");
 
