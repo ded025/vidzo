@@ -6,6 +6,7 @@ import { Sparkles, TrendingUp, Package, Wand2, BookOpen, FileText, ArrowRight, R
 import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { computeQuality } from "@/lib/quality";
 
 export const Route = createFileRoute("/_authenticated/chat/dashboard")({
   component: Dashboard,
@@ -17,14 +18,14 @@ const LENGTHS = ["30 sec", "40 sec", "60 sec", "90 sec"] as const;
 const LANGUAGES = ["Hinglish", "English", "Hindi"] as const;
 
 const TREND_CARDS = [
-  { t: "Indian startup funding this week", c: "Business / Startup", v: 84, icon: Rocket, grad: "from-pink-500 to-rose-500" },
-  { t: "Shark Tank India latest viral pitch", c: "Entertainment", v: 82, icon: Trophy, grad: "from-amber-400 to-orange-500" },
-  { t: "D2C brand going viral 2026", c: "Business / Marketing", v: 79, icon: ShoppingBag, grad: "from-fuchsia-500 to-purple-500" },
-  { t: "Indian gym & fitness controversies", c: "Fitness", v: 76, icon: Dumbbell, grad: "from-emerald-500 to-teal-500" },
-  { t: "Recent Bollywood box office surprises", c: "Entertainment", v: 74, icon: Film, grad: "from-rose-500 to-pink-500" },
-  { t: "Crypto / fintech India this month", c: "Finance / Crypto", v: 73, icon: Coins, grad: "from-amber-400 to-yellow-500" },
-  { t: "Tech layoffs India recent", c: "Tech / Business", v: 71, icon: Laptop, grad: "from-blue-500 to-cyan-500" },
-  { t: "21-year-old founders India recent funding", c: "Startup / Business", v: 70, icon: User, grad: "from-violet-500 to-indigo-500" },
+  { t: "Indian startup funding this week", c: "Business / Startup", icon: Rocket, grad: "from-pink-500 to-rose-500" },
+  { t: "Shark Tank India latest viral pitch", c: "Entertainment", icon: Trophy, grad: "from-amber-400 to-orange-500" },
+  { t: "D2C brand going viral 2026", c: "Business / Marketing", icon: ShoppingBag, grad: "from-fuchsia-500 to-purple-500" },
+  { t: "Indian gym & fitness controversies", c: "Fitness", icon: Dumbbell, grad: "from-emerald-500 to-teal-500" },
+  { t: "Recent Bollywood box office surprises", c: "Entertainment", icon: Film, grad: "from-rose-500 to-pink-500" },
+  { t: "Crypto / fintech India this month", c: "Finance / Crypto", icon: Coins, grad: "from-amber-400 to-yellow-500" },
+  { t: "Tech layoffs India recent", c: "Tech / Business", icon: Laptop, grad: "from-blue-500 to-cyan-500" },
+  { t: "21-year-old founders India recent funding", c: "Startup / Business", icon: User, grad: "from-violet-500 to-indigo-500" },
 ];
 
 function Dashboard() {
@@ -82,18 +83,20 @@ function Dashboard() {
     startMut.mutate(fullPrompt);
   };
 
-  // Compute quality stub — illustrative only when there are no scripts yet
-  const hasScripts = (scripts.data?.length ?? 0) > 0;
-  const qualityScores = [
-    { l: "Hook Strength", v: hasScripts ? 92 : 0 },
-    { l: "Clarity", v: hasScripts ? 88 : 0 },
-    { l: "Pacing", v: hasScripts ? 85 : 0 },
-    { l: "Source Coverage", v: hasScripts ? 81 : 0 },
-    { l: "Platform Fit", v: hasScripts ? 90 : 0 },
-  ];
-  const overall = Math.round(qualityScores.reduce((a, b) => a + b.v, 0) / qualityScores.length);
-  const status = overall >= 85 ? "Looks Good" : overall >= 70 ? "Can Improve" : hasScripts ? "Needs Work" : "No data yet";
-  const statusColor = overall >= 85 ? "text-emerald-600" : overall >= 70 ? "text-amber-600" : "text-muted-foreground";
+  // Compute REAL average quality from the user's actual generated packs.
+  const scriptItems = (scripts.data ?? []) as Array<{ id: string; topic: string; data: unknown }>;
+  const qualityReports = scriptItems
+    .map((s) => {
+      const d = s.data as Parameters<typeof computeQuality>[0] | null;
+      if (!d || !d.script || !d.visuals) return null;
+      try {
+        return { id: s.id, topic: s.topic, report: computeQuality(d) };
+      } catch {
+        return null;
+      }
+    })
+    .filter((x): x is { id: string; topic: string; report: ReturnType<typeof computeQuality> } => !!x);
+  const hasScripts = qualityReports.length > 0;
 
   return (
     <div className="h-full overflow-y-auto bg-[#fafaf7]">
@@ -110,7 +113,7 @@ function Dashboard() {
             {[
               { n: stats.data?.scriptsTotal ?? 0, l: "Packs Created", icon: Package, c: "text-pink-500" },
               { n: stats.data?.scriptsWeek ?? 0, l: "Ready to Ship", icon: Rocket, c: "text-emerald-500" },
-              { n: 0, l: "Sources Used", icon: BookOpen, c: "text-blue-500" },
+              { n: (stats.data as { sourcesUsed?: number } | undefined)?.sourcesUsed ?? 0, l: "Sources Used", icon: BookOpen, c: "text-blue-500" },
               { n: Math.max(0, (stats.data?.threadsTotal ?? 0) - (stats.data?.scriptsTotal ?? 0)), l: "Drafts Cooking", icon: FileText, c: "text-amber-500" },
             ].map((s) => (
               <div key={s.l} className="flex items-center gap-2 rounded-xl bg-white border border-border px-3 py-2 min-w-[120px]">
@@ -186,8 +189,7 @@ function Dashboard() {
                     </div>
                     <div className="mt-2 font-semibold text-sm leading-tight line-clamp-2">{tr.t}</div>
                     <div className="text-[11px] text-muted-foreground mt-0.5">{tr.c}</div>
-                    <div className="text-[11px] text-orange-500 mt-1 font-semibold">🔥 {tr.v}% Virality</div>
-                    <div className="mt-2 text-[11px] text-primary">Tap to search + generate</div>
+                    <div className="mt-2 text-[11px] text-primary">Tap to research + generate</div>
                   </button>
                 ))}
               </div>
@@ -208,46 +210,53 @@ function Dashboard() {
             </button>
           </div>
 
-          {/* Right column: Content Quality + recent */}
+          {/* Right column: recent packs with their own (real) quality */}
           <div className="space-y-5">
             <div className="rounded-3xl border border-border bg-white p-5">
-              <div className="flex items-center justify-between">
-                <div className="font-bold flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-primary" /> Content Quality
-                </div>
-                <span className={`text-[11px] font-bold uppercase tracking-wider ${statusColor}`}>{status}</span>
+              <div className="font-bold flex items-center gap-2 text-sm mb-3">
+                <Package className="h-4 w-4 text-primary" /> Your recent packs
               </div>
-              <div className="mt-4 flex flex-col items-center">
-                <div className="relative h-32 w-32 rounded-full flex items-center justify-center"
-                  style={{ background: `conic-gradient(${overall >= 85 ? "#10b981" : overall >= 70 ? "#f59e0b" : "#e5e7eb"} ${overall}%, #e5e7eb 0)` }}>
-                  <div className="h-[78%] w-[78%] rounded-full bg-white flex flex-col items-center justify-center">
-                    <div className="text-3xl font-black">{hasScripts ? overall : "—"}</div>
-                    <div className="text-[10px] text-muted-foreground">/100</div>
-                  </div>
+              {hasScripts ? (
+                <div className="space-y-3">
+                  {qualityReports.slice(0, 4).map((q) => {
+                    const c =
+                      q.report.overall >= 85
+                        ? "text-emerald-600"
+                        : q.report.overall >= 70
+                          ? "text-amber-600"
+                          : "text-rose-600";
+                    return (
+                      <Link
+                        key={q.id}
+                        to="/chat/library"
+                        className="block rounded-xl border border-border p-3 hover:border-foreground/30 transition-colors"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div
+                            className="relative h-10 w-10 rounded-full flex items-center justify-center shrink-0"
+                            style={{
+                              background: `conic-gradient(${q.report.overall >= 85 ? "#10b981" : q.report.overall >= 70 ? "#f59e0b" : "#ef4444"} ${q.report.overall}%, hsl(var(--secondary)) 0)`,
+                            }}
+                          >
+                            <div className="h-[78%] w-[78%] rounded-full bg-white flex items-center justify-center">
+                              <span className={`text-[11px] font-bold ${c}`}>{q.report.overall}</span>
+                            </div>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium line-clamp-1">{q.topic}</div>
+                            <div className="text-[11px] text-muted-foreground">
+                              Reach potential {q.report.reach}/100
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
                 </div>
-              </div>
-              <div className="mt-4 space-y-2.5">
-                {qualityScores.map((q) => (
-                  <div key={q.l}>
-                    <div className="flex justify-between text-xs"><span className="text-muted-foreground">{q.l}</span><span className="font-bold">{q.v}</span></div>
-                    <div className="h-1.5 rounded-full bg-secondary overflow-hidden mt-1">
-                      <div className="h-full bg-gradient-to-r from-[var(--vidzo-magenta)] via-[var(--vidzo-blue)] to-[var(--vidzo-yellow)]" style={{ width: `${q.v}%` }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {hasScripts && (
-                <div className="mt-4 rounded-xl bg-emerald-50 border border-emerald-100 p-3">
-                  <div className="text-[11px] font-semibold text-emerald-700 mb-1.5">What to improve</div>
-                  {["Add 1 stronger source", "Improve first 3 seconds hook", "Add more visual direction"].map((s) => (
-                    <div key={s} className="flex items-center justify-between text-xs py-0.5">
-                      <span>✓ {s}</span>
-                    </div>
-                  ))}
+              ) : (
+                <div className="text-xs text-muted-foreground text-center py-6">
+                  Your content quality and reach scores appear here once you generate a pack.
                 </div>
-              )}
-              {!hasScripts && (
-                <div className="mt-4 text-xs text-muted-foreground text-center">Generate a pack to see your quality scores.</div>
               )}
             </div>
 

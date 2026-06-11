@@ -24,7 +24,7 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { ContentPackCard, type ContentPackData } from "@/components/content-pack-card";
-import { Search, Loader2, ShieldCheck } from "lucide-react";
+import { Loader2, ShieldCheck } from "lucide-react";
 
 const routeApi = getRouteApi("/_authenticated/chat/$threadId");
 
@@ -148,44 +148,31 @@ function ChatWindow({
                   if (part.type === "tool-search_trending_topics") {
                     const p = part as unknown as {
                       state: string;
-                      input?: { query?: string };
                       output?: {
                         results?: Array<{ title: string; url: string; snippet: string }>;
                         error?: string;
                       };
                     };
+                    const done = p.state === "output-available";
+                    const count = p.output?.results?.length ?? 0;
                     return (
                       <div
                         key={i}
-                        className="rounded-lg border border-border bg-secondary/40 p-3 text-xs"
+                        className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/40 px-3 py-1.5 text-xs text-muted-foreground"
                       >
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Search className="h-3.5 w-3.5" />
-                          Searching:{" "}
-                          <span className="text-foreground">{p.input?.query ?? "…"}</span>
-                          {p.state !== "output-available" && (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          )}
-                        </div>
-                        {p.output?.results && (
-                          <ul className="mt-2 space-y-1.5">
-                            {p.output.results.slice(0, 6).map((r) => (
-                              <li key={r.url}>
-                                <a
-                                  href={r.url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="text-primary hover:underline"
-                                >
-                                  {r.title}
-                                </a>
-                                <div className="text-muted-foreground line-clamp-2">{r.snippet}</div>
-                              </li>
-                            ))}
-                          </ul>
+                        {done ? (
+                          <>
+                            <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                            Researched {count} {count === 1 ? "source" : "sources"}
+                          </>
+                        ) : (
+                          <>
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            Researching sources…
+                          </>
                         )}
                         {p.output?.error && (
-                          <div className="mt-2 text-destructive">{p.output.error}</div>
+                          <span className="text-destructive ml-2">Research unavailable</span>
                         )}
                       </div>
                     );

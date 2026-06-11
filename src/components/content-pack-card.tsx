@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { Copy, Check, ExternalLink, Mic, Image as ImageIcon, Video, Hash, FileText } from "lucide-react";
-import { useState } from "react";
+import { Copy, Check, ExternalLink, Mic, Image as ImageIcon, Video, Hash, FileText, Gauge } from "lucide-react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { computeQuality } from "@/lib/quality";
 
 export type ContentPackData = {
   topic: string;
@@ -67,6 +68,12 @@ function Section({
 }
 
 export function ContentPackCard({ data }: { data: ContentPackData }) {
+  const quality = useMemo(() => computeQuality(data), [data]);
+  const overallColor =
+    quality.overall >= 85 ? "text-emerald-600" : quality.overall >= 70 ? "text-amber-600" : "text-rose-600";
+  const overallLabel =
+    quality.overall >= 85 ? "Ready to publish" : quality.overall >= 70 ? "Solid — can polish" : "Needs work";
+
   return (
     <div className="rounded-2xl border border-border bg-card text-card-foreground overflow-hidden shadow-sm">
       <div className="bg-gradient-to-br from-primary/10 via-accent/10 to-transparent px-4 py-3 border-b border-border">
@@ -78,6 +85,45 @@ export function ContentPackCard({ data }: { data: ContentPackData }) {
         <h3 className="font-semibold mt-1 text-base">{data.topic}</h3>
         <p className="text-xs text-muted-foreground mt-1">{data.whyViral}</p>
       </div>
+
+      {/* Per-pack quality readout — deterministic, computed from this pack's content */}
+      <Section icon={Gauge} title="Content quality">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div
+              className="relative h-14 w-14 rounded-full flex items-center justify-center"
+              style={{
+                background: `conic-gradient(${quality.overall >= 85 ? "#10b981" : quality.overall >= 70 ? "#f59e0b" : "#ef4444"} ${quality.overall}%, hsl(var(--secondary)) 0)`,
+              }}
+            >
+              <div className="h-[78%] w-[78%] rounded-full bg-card flex items-center justify-center">
+                <div className={`text-base font-black ${overallColor}`}>{quality.overall}</div>
+              </div>
+            </div>
+            <div>
+              <div className={`text-xs font-bold ${overallColor}`}>{overallLabel}</div>
+              <div className="text-[11px] text-muted-foreground">Reach potential: {quality.reach}/100</div>
+            </div>
+          </div>
+          <div className="flex-1 min-w-[220px] grid grid-cols-2 sm:grid-cols-5 gap-2">
+            {quality.metrics.map((m) => (
+              <div key={m.key}>
+                <div className="flex justify-between text-[10px]">
+                  <span className="text-muted-foreground truncate">{m.label}</span>
+                  <span className="font-semibold">{m.value}</span>
+                </div>
+                <div className="h-1 rounded-full bg-secondary overflow-hidden mt-1">
+                  <div
+                    className="h-full bg-gradient-to-r from-primary to-accent"
+                    style={{ width: `${m.value}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Section>
+
 
       {/* Voiceover */}
       <Section icon={Mic} title="Voiceover-ready dialogue">

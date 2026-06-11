@@ -106,7 +106,7 @@ export const getDashboardStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    const [{ count: scriptsTotal }, { count: scriptsWeek }, { count: threadsTotal }, { count: messagesTotal }] =
+    const [{ count: scriptsTotal }, { count: scriptsWeek }, { count: threadsTotal }, { count: messagesTotal }, scriptsRows] =
       await Promise.all([
         context.supabase.from("scripts").select("id", { count: "exact", head: true }),
         context.supabase
@@ -115,12 +115,20 @@ export const getDashboardStats = createServerFn({ method: "GET" })
           .gte("created_at", sevenDaysAgo),
         context.supabase.from("threads").select("id", { count: "exact", head: true }),
         context.supabase.from("messages").select("id", { count: "exact", head: true }),
+        context.supabase.from("scripts").select("data").limit(500),
       ]);
+    let sourcesUsed = 0;
+    const rows = (scriptsRows.data ?? []) as Array<{ data: unknown }>;
+    for (const r of rows) {
+      const d = r.data as { sources?: unknown[] } | null;
+      if (d && Array.isArray(d.sources)) sourcesUsed += d.sources.length;
+    }
     return {
       scriptsTotal: scriptsTotal ?? 0,
       scriptsWeek: scriptsWeek ?? 0,
       threadsTotal: threadsTotal ?? 0,
       messagesTotal: messagesTotal ?? 0,
+      sourcesUsed,
     };
   });
 
