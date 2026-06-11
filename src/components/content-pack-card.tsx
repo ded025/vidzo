@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { Copy, Check, ExternalLink, Mic, Image as ImageIcon, Video, Hash, FileText } from "lucide-react";
-import { useState } from "react";
+import { Copy, Check, ExternalLink, Mic, Image as ImageIcon, Video, Hash, FileText, Gauge } from "lucide-react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { computeQuality } from "@/lib/quality";
 
 export type ContentPackData = {
   topic: string;
