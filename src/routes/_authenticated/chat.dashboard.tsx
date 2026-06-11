@@ -189,8 +189,7 @@ function Dashboard() {
                     </div>
                     <div className="mt-2 font-semibold text-sm leading-tight line-clamp-2">{tr.t}</div>
                     <div className="text-[11px] text-muted-foreground mt-0.5">{tr.c}</div>
-                    <div className="text-[11px] text-orange-500 mt-1 font-semibold">🔥 {tr.v}% Virality</div>
-                    <div className="mt-2 text-[11px] text-primary">Tap to search + generate</div>
+                    <div className="mt-2 text-[11px] text-primary">Tap to research + generate</div>
                   </button>
                 ))}
               </div>
