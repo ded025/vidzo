@@ -113,7 +113,7 @@ function Dashboard() {
             {[
               { n: stats.data?.scriptsTotal ?? 0, l: "Packs Created", icon: Package, c: "text-pink-500" },
               { n: stats.data?.scriptsWeek ?? 0, l: "Ready to Ship", icon: Rocket, c: "text-emerald-500" },
-              { n: 0, l: "Sources Used", icon: BookOpen, c: "text-blue-500" },
+              { n: (stats.data as { sourcesUsed?: number } | undefined)?.sourcesUsed ?? 0, l: "Sources Used", icon: BookOpen, c: "text-blue-500" },
               { n: Math.max(0, (stats.data?.threadsTotal ?? 0) - (stats.data?.scriptsTotal ?? 0)), l: "Drafts Cooking", icon: FileText, c: "text-amber-500" },
             ].map((s) => (
               <div key={s.l} className="flex items-center gap-2 rounded-xl bg-white border border-border px-3 py-2 min-w-[120px]">
