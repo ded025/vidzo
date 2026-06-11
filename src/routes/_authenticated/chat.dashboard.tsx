@@ -6,6 +6,7 @@ import { Sparkles, TrendingUp, Package, Wand2, BookOpen, FileText, ArrowRight, R
 import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { computeQuality } from "@/lib/quality";
 
 export const Route = createFileRoute("/_authenticated/chat/dashboard")({
   component: Dashboard,
