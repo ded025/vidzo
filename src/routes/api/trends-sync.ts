@@ -4,22 +4,41 @@ import { CATEGORY_QUERIES, type TrendCategory } from "@/lib/trends.functions";
 
 // ─────────────────────────────────────────────────────────────────────
 // POST /api/trends-sync
+// Firecrawl v2 /search — correct field mapping per OpenAPI spec:
+//   web results:  { title, url, description, publishedDate? }
+//   news results: { title, url, snippet, date }
+//   tbs goes inside the web source object, NOT at top level when using sources[]
 // ─────────────────────────────────────────────────────────────────────
 
-type FirecrawlResult = {
+type FirecrawlWebResult = {
   title: string;
   url: string;
   description?: string;
   publishedDate?: string;
 };
 
+type FirecrawlNewsResult = {
+  title: string;
+  url: string;
+  snippet?: string;   // news uses snippet, not description
+  date?: string;      // news uses date, not publishedDate
+};
+
 type FirecrawlResponse = {
   success?: boolean;
   data?: {
-    web?: FirecrawlResult[];
-    news?: FirecrawlResult[];
+    web?: FirecrawlWebResult[];
+    news?: FirecrawlNewsResult[];
   };
   error?: string;
+};
+
+// Normalised shape we work with internally
+type NormalisedResult = {
+  title: string;
+  url: string;
+  summary: string;
+  publishedDate?: string;
 };
 
 function dedupeKey(title: string, category: string): string {
@@ -31,40 +50,59 @@ function scoreFreshness(publishedDate: string | undefined): number {
   const ageMs = Date.now() - new Date(publishedDate).getTime();
   const ageDays = ageMs / (1000 * 60 * 60 * 24);
   if (ageDays < 0.25) return 100;
-  if (ageDays < 1) return 90;
-  if (ageDays < 2) return 78;
-  if (ageDays < 4) return 65;
-  if (ageDays < 7) return 52;
+  if (ageDays < 1)    return 90;
+  if (ageDays < 2)    return 78;
+  if (ageDays < 4)    return 65;
+  if (ageDays < 7)    return 52;
   return 35;
 }
 
 async function firecrawlSearch(
   query: string,
   apiKey: string,
-): Promise<FirecrawlResult[]> {
+): Promise<NormalisedResult[]> {
   const res = await fetch("https://api.firecrawl.dev/v2/search", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
+    // tbs goes INSIDE the web source object per Firecrawl v2 OpenAPI spec
     body: JSON.stringify({
       query,
-      limit: 8,
-      tbs: "qdr:d",
-      sources: [{ type: "web" }, { type: "news" }],
+      limit: 6,
+      timeout: 25000,
+      sources: [
+        { type: "web", tbs: "qdr:w" },  // past week for web
+        { type: "news" },                // news (already recent by default)
+      ],
     }),
   });
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(`Firecrawl HTTP ${res.status}: ${text.slice(0, 200)}`);
+    throw new Error(`Firecrawl HTTP ${res.status}: ${text.slice(0, 300)}`);
   }
 
   const fc = (await res.json()) as FirecrawlResponse;
-  const webItems: FirecrawlResult[] = fc?.data?.web ?? [];
-  const newsItems: FirecrawlResult[] = fc?.data?.news ?? [];
-  return [...webItems, ...newsItems];
+
+  // Map web results
+  const webNorm: NormalisedResult[] = (fc?.data?.web ?? []).map((it) => ({
+    title: it.title,
+    url: it.url,
+    summary: (it.description ?? "").slice(0, 600),
+    publishedDate: it.publishedDate,
+  }));
+
+  // Map news results — different field names: snippet + date
+  const newsNorm: NormalisedResult[] = (fc?.data?.news ?? []).map((it) => ({
+    title: it.title,
+    url: it.url,
+    summary: (it.snippet ?? "").slice(0, 600),
+    publishedDate: it.date,
+  }));
+
+  return [...webNorm, ...newsNorm];
 }
 
 export const Route = createFileRoute("/api/trends-sync")(
@@ -84,16 +122,11 @@ export const Route = createFileRoute("/api/trends-sync")(
 
           if (!firecrawlKey) {
             return new Response(
-              JSON.stringify({
-                error: "FIRECRAWL_API_KEY not set. Connect Firecrawl to use live sync.",
-              }),
+              JSON.stringify({ error: "FIRECRAWL_API_KEY not set." }),
               { status: 503, headers: { "Content-Type": "application/json" } },
             );
           }
 
-          // Service-role client — used for all DB writes AND JWT verification.
-          // supabase.auth.getUser(token) with the service-role key is the correct
-          // server-side way to verify a user JWT; the anon-key approach was wrong.
           const supabase = createClient(supaUrl, supaServiceKey, {
             auth: { persistSession: false, autoRefreshToken: false },
           });
@@ -101,20 +134,18 @@ export const Route = createFileRoute("/api/trends-sync")(
           if (!isCron) {
             if (!token) {
               return new Response(JSON.stringify({ error: "Unauthorized" }), {
-                status: 401,
-                headers: { "Content-Type": "application/json" },
+                status: 401, headers: { "Content-Type": "application/json" },
               });
             }
             const { data: userRes, error: userErr } = await supabase.auth.getUser(token);
             if (userErr || !userRes?.user?.id) {
               return new Response(JSON.stringify({ error: "Unauthorized" }), {
-                status: 401,
-                headers: { "Content-Type": "application/json" },
+                status: 401, headers: { "Content-Type": "application/json" },
               });
             }
           }
 
-          // Read body ONCE before any other async calls
+          // Read body ONCE
           const body = (await request.json().catch(() => ({}))) as {
             categories?: string[];
             keywords?: string[];
@@ -134,10 +165,12 @@ export const Route = createFileRoute("/api/trends-sync")(
           type SyncTask = { category: TrendCategory | "Custom"; query: string };
           const tasks: SyncTask[] = [];
 
+          // Custom keyword tasks
           for (const kw of customKeywords) {
             tasks.push({ category: "Custom" as TrendCategory, query: kw });
           }
 
+          // Category tasks — limit to 1 query per category to avoid timeouts
           const categoriesToSync: TrendCategory[] =
             requestedCats.length > 0
               ? requestedCats
@@ -145,7 +178,9 @@ export const Route = createFileRoute("/api/trends-sync")(
 
           for (const category of categoriesToSync) {
             const queries = CATEGORY_QUERIES[category] ?? [];
-            for (const q of queries.slice(0, 2)) {
+            // 1 query per category for full sync, 2 for single-category sync
+            const limit = requestedCats.length > 0 ? 2 : 1;
+            for (const q of queries.slice(0, limit)) {
               tasks.push({ category, query: q });
             }
           }
@@ -161,17 +196,14 @@ export const Route = createFileRoute("/api/trends-sync")(
                 .filter((it) => it.title && it.url)
                 .map((it) => ({
                   title: it.title.slice(0, 200),
-                  summary: (it.description ?? "").slice(0, 600),
+                  summary: it.summary,
                   category,
                   sub_tags: [] as string[],
                   platform_signals: ["web", "news"] as string[],
                   source_url: it.url,
                   source_name: (() => {
-                    try {
-                      return new URL(it.url).hostname.replace(/^www\./, "");
-                    } catch {
-                      return null;
-                    }
+                    try { return new URL(it.url).hostname.replace(/^www\./, ""); }
+                    catch { return null; }
                   })(),
                   published_at: it.publishedDate ?? null,
                   synced_at: new Date().toISOString(),
@@ -193,7 +225,7 @@ export const Route = createFileRoute("/api/trends-sync")(
               }
             } catch (e) {
               errors.push(
-                `${category} ["${query}"]: ${e instanceof Error ? e.message : String(e)}`,
+                `${category} ["${query.slice(0, 40)}"]: ${e instanceof Error ? e.message : String(e)}`,
               );
             }
           }
@@ -207,9 +239,9 @@ export const Route = createFileRoute("/api/trends-sync")(
               .from("trend_sync_runs")
               .update({
                 finished_at: new Date().toISOString(),
-                status: errors.length === 0 ? "success" : "error",
+                status: errors.length === 0 ? "success" : totalAdded > 0 ? "success" : "error",
                 trends_added: totalAdded,
-                error_msg: errors.length > 0 ? errors.join(" | ") : null,
+                error_msg: errors.length > 0 ? errors.slice(0, 5).join(" | ") : null,
               })
               .eq("id", runId);
           }
