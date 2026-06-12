@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { VidzoLogo } from "@/components/vidzo-logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export const Route = createFileRoute("/_authenticated/chat")({
   component: ChatLayout,
@@ -150,14 +151,15 @@ function ChatLayout() {
           </div>
         )}
       </nav>
-      <div className="border-t border-border p-2">
+      <div className="border-t border-border p-2 flex items-center gap-2">
         <button
           onClick={signOut}
-          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-secondary text-left"
+          className="flex-1 flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-secondary text-left"
         >
           <LogOut className="h-4 w-4 text-muted-foreground" />
           Sign out
         </button>
+        <ThemeToggle />
       </div>
     </>
   );
