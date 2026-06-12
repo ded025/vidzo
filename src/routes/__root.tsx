@@ -100,8 +100,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     scripts: [
       {
+        // Dark mode is default. Only override if user has explicitly set light.
         children:
-          "(function(){try{var k='vidzo-theme';var v=localStorage.getItem(k);if(!v){v=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}var r=document.documentElement;if(v==='dark')r.classList.add('dark');r.style.colorScheme=v;}catch(e){}})();",
+          "(function(){try{var k='vidzo-theme';var v=localStorage.getItem(k);var r=document.documentElement;if(v==='light'){r.style.colorScheme='light';}else{r.classList.add('dark');r.style.colorScheme='dark';if(!v)localStorage.setItem(k,'dark');}}catch(e){}})();",
       },
     ],
   }),
