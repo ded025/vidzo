@@ -97,6 +97,7 @@ function Landing() {
               <Link to="/about" className="hover:text-primary transition-colors">About</Link>
             </nav>
             <div className="flex items-center gap-2">
+              <ThemeToggle className="hidden sm:inline-flex" />
               <Button variant="ghost" size="sm" onClick={() => openAuth("signin")}>Sign in</Button>
               <Button size="sm" className="bg-foreground text-background hover:bg-foreground/90" onClick={() => openAuth("signup")}>Get Vidzo</Button>
             </div>
@@ -112,10 +113,10 @@ function Landing() {
               <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
               AI production room for creators
             </div>
-            <h1 className="text-[42px] leading-[0.95] sm:text-7xl lg:text-[88px] font-black tracking-[-0.04em]">
+            <h1 className="font-display text-[44px] leading-[1.02] sm:text-7xl lg:text-[88px] font-black tracking-[-0.03em]">
               <span className="hero-word inline-block">One idea in.</span>{" "}
               <span className="hero-word inline-block">Full video</span>{" "}
-              <span className="hero-word inline-block bg-gradient-to-r from-[var(--vidzo-magenta)] via-[var(--vidzo-blue)] to-[var(--vidzo-yellow)] bg-clip-text text-transparent">pack out.</span>
+              <span className="hero-word inline-block italic bg-gradient-to-r from-[var(--vidzo-magenta)] via-[var(--vidzo-blue)] to-[var(--vidzo-yellow)] bg-clip-text text-transparent">pack out.</span>
             </h1>
             <p className="hero-sub mt-6 text-lg sm:text-xl text-muted-foreground max-w-xl">
               Vidzo turns your rough content idea into a ready-to-record script, voiceover dialogue, scene-by-scene visuals, thumbnail direction, captions, hashtags, and source-backed research — all in one flow.
@@ -131,33 +132,44 @@ function Landing() {
             </div>
           </div>
 
-          {/* Hero: stacked product cards — NO shadows, with sample content */}
-          <div className="relative h-[520px] sm:h-[580px]">
-            <div className="absolute inset-0 bg-gradient-to-br from-[var(--vidzo-magenta)]/15 via-[var(--vidzo-blue)]/15 to-[var(--vidzo-yellow)]/15 rounded-3xl blur-3xl" />
-            {[
-              { icon: FileText, label: "Script", grad: "from-pink-500 to-rose-500", pos: "top-0 left-0 sm:left-4 rotate-[-6deg]", w: "w-[64%]",
-                body: '"Bhai ye chhoti si D2C brand ne 90 din mein 4 crore kaise kamaye? Sun…"' },
-              { icon: Mic, label: "Voiceover dialogue", grad: "from-violet-500 to-indigo-600", pos: "top-20 right-0 rotate-[5deg]", w: "w-[60%]",
-                body: 'Tone: warm founder energy. Pace: medium. Pause after hook for 0.4s.' },
-              { icon: ImageIcon, label: "Visual plan", grad: "from-blue-500 to-cyan-500", pos: "top-52 left-2 rotate-[2deg]", w: "w-[62%]",
-                body: 'Beat 1: founder POV, warm office, golden hour, handheld 24mm.' },
-              { icon: Sparkles, label: "Thumbnail", grad: "from-amber-400 to-orange-500", pos: "top-72 right-4 rotate-[-4deg]", w: "w-[56%]",
-                body: 'Big bold text: "₹4 CR IN 90 DAYS" + shocked founder face left.' },
-              { icon: Hash, label: "Caption + hashtags", grad: "from-emerald-400 to-teal-500", pos: "bottom-16 left-0 rotate-[-2deg]", w: "w-[58%]",
-                body: 'Yeh brand chhoti thi, soch badi thi. #d2cindia #founderstory #reelitfeelit' },
-              { icon: BookOpen, label: "Sources", grad: "from-fuchsia-500 to-purple-600", pos: "bottom-0 right-2 rotate-[6deg]", w: "w-[52%]",
-                body: '5 cited links: YourStory · Inc42 · Moneycontrol · The Ken · ET' },
-            ].map((c) => (
-              <div key={c.label} className={`hero-card absolute ${c.pos} ${c.w} rounded-2xl bg-gradient-to-br ${c.grad} text-white p-4 backdrop-blur-sm`}>
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-lg bg-white/25 flex items-center justify-center">
-                    <c.icon className="h-4 w-4" />
-                  </div>
-                  <span className="font-bold text-sm tracking-tight">{c.label}</span>
+          {/* Hero: stacked product cards — clean grid on mobile, scattered on desktop */}
+          <div className="relative">
+            <div className="absolute inset-0 hero-glow rounded-3xl" />
+            {(() => {
+              const cards = [
+                { icon: FileText, label: "Script", grad: "from-pink-500 to-rose-500", pos: "lg:top-0 lg:left-0 lg:rotate-[-6deg] lg:w-[64%]",
+                  body: '"Bhai ye chhoti si D2C brand ne 90 din mein 4 crore kaise kamaye? Sun…"' },
+                { icon: Mic, label: "Voiceover dialogue", grad: "from-violet-500 to-indigo-600", pos: "lg:top-20 lg:right-0 lg:rotate-[5deg] lg:w-[60%]",
+                  body: 'Tone: warm founder energy. Pace: medium. Pause after hook for 0.4s.' },
+                { icon: ImageIcon, label: "Visual plan", grad: "from-blue-500 to-cyan-500", pos: "lg:top-52 lg:left-2 lg:rotate-[2deg] lg:w-[62%]",
+                  body: 'Beat 1: founder POV, warm office, golden hour, handheld 24mm.' },
+                { icon: Sparkles, label: "Thumbnail", grad: "from-amber-400 to-orange-500", pos: "lg:top-72 lg:right-4 lg:rotate-[-4deg] lg:w-[56%]",
+                  body: 'Big bold text: "₹4 CR IN 90 DAYS" + shocked founder face left.' },
+                { icon: Hash, label: "Caption + hashtags", grad: "from-emerald-400 to-teal-500", pos: "lg:bottom-16 lg:left-0 lg:rotate-[-2deg] lg:w-[58%]",
+                  body: 'Yeh brand chhoti thi, soch badi thi. #d2cindia #founderstory #reelitfeelit' },
+                { icon: BookOpen, label: "Sources", grad: "from-fuchsia-500 to-purple-600", pos: "lg:bottom-0 lg:right-2 lg:rotate-[6deg] lg:w-[52%]",
+                  body: '5 cited links: YourStory · Inc42 · Moneycontrol · The Ken · ET' },
+              ];
+              return (
+                <div className="relative grid grid-cols-2 auto-rows-fr gap-3 lg:block lg:h-[580px]">
+                  {cards.map((c) => (
+                    <div
+                      key={c.label}
+                      className={`hero-card lg:absolute rounded-2xl bg-gradient-to-br ${c.grad} text-white p-4 min-h-[120px] ${c.pos}`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-lg bg-white/25 flex items-center justify-center shrink-0">
+                          <c.icon className="h-4 w-4" />
+                        </div>
+                        <span className="font-bold text-sm tracking-tight truncate">{c.label}</span>
+                      </div>
+                      <p className="mt-2.5 text-[12px] leading-snug text-white/95 line-clamp-4">{c.body}</p>
+                    </div>
+                  ))}
                 </div>
-                <p className="mt-2.5 text-[12px] leading-snug text-white/95">{c.body}</p>
-              </div>
-            ))}
+              );
+            })()}
+          </div>
           </div>
         </div>
       </section>
