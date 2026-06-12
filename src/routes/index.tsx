@@ -18,7 +18,6 @@ export const Route = createFileRoute("/")({
       const { data } = await supabase.auth.getUser();
       if (data.user) throw redirect({ to: "/chat/dashboard" });
     } catch (e: unknown) {
-      // Re-throw redirect; swallow other errors so landing still renders.
       if (e && typeof e === "object" && "isRedirect" in e) throw e;
     }
   },
@@ -39,8 +38,6 @@ function Landing() {
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const rootRef = useRef<HTMLDivElement>(null);
-
-
 
   useEffect(() => {
     let mounted = true;
@@ -75,7 +72,6 @@ function Landing() {
     return () => { mounted = false; };
   }, []);
 
-
   const openAuth = (mode: "signin" | "signup") => {
     setAuthMode(mode);
     setAuthOpen(true);
@@ -83,6 +79,7 @@ function Landing() {
 
   return (
     <div ref={rootRef} className="min-h-screen bg-background text-foreground overflow-x-hidden" style={{ fontFamily: '"Roboto Flex", sans-serif' }}>
+
       {/* FLOATING GLASS NAV */}
       <header className="fixed top-3 inset-x-3 sm:inset-x-6 z-50">
         <div className="max-w-6xl mx-auto glass-header rounded-2xl">
@@ -105,74 +102,113 @@ function Landing() {
         </div>
       </header>
 
-      {/* HERO */}
-      <section className="relative max-w-7xl mx-auto px-4 sm:px-8 pt-28 sm:pt-36 pb-16 sm:pb-24">
-        <div className="grid lg:grid-cols-[1.15fr,1fr] gap-10 items-center">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold mb-6">
-              <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
-              AI production room for creators
-            </div>
-            <h1 className="font-display text-[44px] leading-[1.02] sm:text-7xl lg:text-[88px] font-black tracking-[-0.03em]">
-              <span className="hero-word inline-block">One idea in.</span>{" "}
-              <span className="hero-word inline-block">Full video</span>{" "}
-              <span className="hero-word inline-block italic bg-gradient-to-r from-[var(--vidzo-magenta)] via-[var(--vidzo-blue)] to-[var(--vidzo-yellow)] bg-clip-text text-transparent">pack out.</span>
-            </h1>
-            <p className="hero-sub mt-6 text-lg sm:text-xl text-muted-foreground max-w-xl">
-              Vidzo turns your rough content idea into a ready-to-record script, voiceover dialogue, scene-by-scene visuals, thumbnail direction, captions, hashtags, and source-backed research — all in one flow.
-            </p>
-            <div className="hero-cta mt-8 flex flex-wrap gap-3">
-              <Button size="lg" className="text-base h-12 px-6 group bg-foreground text-background hover:bg-foreground/90" onClick={() => openAuth("signup")}>
-                Start creating free
-                <ArrowRight className="ml-1 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-              <a href="#how">
-                <Button size="lg" variant="outline" className="text-base h-12 px-6">See how it works</Button>
-              </a>
-            </div>
+      {/* HERO — fully centred, two-line headline, mobile-first */}
+      <section className="relative px-4 sm:px-8 pt-28 sm:pt-36 pb-16 sm:pb-24">
+        {/* Ambient background glow */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(700px,90vw)] h-[min(700px,90vw)] rounded-full"
+            style={{
+              background: "radial-gradient(circle, color-mix(in oklab, var(--vidzo-magenta) 18%, transparent) 0%, color-mix(in oklab, var(--vidzo-blue) 12%, transparent) 50%, transparent 75%)",
+              filter: "blur(60px)",
+            }}
+          />
+        </div>
+
+        <div className="relative max-w-4xl mx-auto text-center">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold mb-6">
+            <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+            AI production room for creators
           </div>
 
-          {/* Hero: stacked product cards — clean grid on mobile, scattered on desktop */}
-          <div className="relative">
-            <div className="absolute inset-0 hero-glow rounded-3xl" />
-            {(() => {
-              const cards = [
-                { icon: FileText, label: "Script", grad: "from-pink-500 to-rose-500", pos: "lg:top-0 lg:left-0 lg:rotate-[-6deg] lg:w-[64%]",
-                  body: '"Bhai ye chhoti si D2C brand ne 90 din mein 4 crore kaise kamaye? Sun…"' },
-                { icon: Mic, label: "Voiceover dialogue", grad: "from-violet-500 to-indigo-600", pos: "lg:top-20 lg:right-0 lg:rotate-[5deg] lg:w-[60%]",
-                  body: 'Tone: warm founder energy. Pace: medium. Pause after hook for 0.4s.' },
-                { icon: ImageIcon, label: "Visual plan", grad: "from-blue-500 to-cyan-500", pos: "lg:top-52 lg:left-2 lg:rotate-[2deg] lg:w-[62%]",
-                  body: 'Beat 1: founder POV, warm office, golden hour, handheld 24mm.' },
-                { icon: Sparkles, label: "Thumbnail", grad: "from-amber-400 to-orange-500", pos: "lg:top-72 lg:right-4 lg:rotate-[-4deg] lg:w-[56%]",
-                  body: 'Big bold text: "₹4 CR IN 90 DAYS" + shocked founder face left.' },
-                { icon: Hash, label: "Caption + hashtags", grad: "from-emerald-400 to-teal-500", pos: "lg:bottom-16 lg:left-0 lg:rotate-[-2deg] lg:w-[58%]",
-                  body: 'Yeh brand chhoti thi, soch badi thi. #d2cindia #founderstory #reelitfeelit' },
-                { icon: BookOpen, label: "Sources", grad: "from-fuchsia-500 to-purple-600", pos: "lg:bottom-0 lg:right-2 lg:rotate-[6deg] lg:w-[52%]",
-                  body: '5 cited links: YourStory · Inc42 · Moneycontrol · The Ken · ET' },
-              ];
-              return (
-                <div className="relative grid grid-cols-2 auto-rows-fr gap-3 lg:block lg:h-[580px]">
-                  {cards.map((c) => (
-                    <div
-                      key={c.label}
-                      className={`hero-card lg:absolute rounded-2xl bg-gradient-to-br ${c.grad} text-white p-4 min-h-[120px] ${c.pos}`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-lg bg-white/25 flex items-center justify-center shrink-0">
-                          <c.icon className="h-4 w-4" />
-                        </div>
-                        <span className="font-bold text-sm tracking-tight truncate">{c.label}</span>
-                      </div>
-                      <p className="mt-2.5 text-[12px] leading-snug text-white/95 line-clamp-4">{c.body}</p>
-                    </div>
-                  ))}
-                </div>
-              );
-            })()}
+          {/* Two-line headline — stays on one line each at all breakpoints */}
+          <h1 className="font-display font-black tracking-[-0.03em] leading-[1.05]">
+            {/* Line 1 */}
+            <span
+              className="hero-word block bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent"
+              style={{ fontSize: "clamp(2.6rem, 7vw, 5.5rem)" }}
+            >
+              One idea in.
+            </span>
+            {/* Line 2 */}
+            <span
+              className="hero-word block bg-gradient-to-r from-[var(--vidzo-magenta)] via-[var(--vidzo-blue)] to-[var(--vidzo-yellow)] bg-clip-text text-transparent"
+              style={{ fontSize: "clamp(2.6rem, 7vw, 5.5rem)" }}
+            >
+              Full video pack out.
+            </span>
+          </h1>
+
+          {/* Subtitle */}
+          <p className="hero-sub mt-5 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-2">
+            Vidzo turns your rough content idea into a ready-to-record script, voiceover dialogue,
+            scene-by-scene visuals, thumbnail direction, captions, hashtags, and source-backed research
+            — all in one flow.
+          </p>
+
+          {/* CTAs — centred, no overflow on small screens */}
+          <div className="hero-cta mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Button
+              size="lg"
+              className="w-full sm:w-auto text-base h-12 px-7 group bg-foreground text-background hover:bg-foreground/90"
+              onClick={() => openAuth("signup")}
+            >
+              Start creating free
+              <ArrowRight className="ml-1 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            </Button>
+            <a href="#how" className="w-full sm:w-auto">
+              <Button size="lg" variant="outline" className="w-full text-base h-12 px-7">
+                See how it works
+              </Button>
+            </a>
           </div>
+
+          {/* AI production room label */}
+          <p className="mt-5 text-xs text-muted-foreground flex items-center justify-center gap-1.5">
+            <CheckCircle2 className="h-3.5 w-3.5 text-accent" />
+            No credit card required &middot; Free to start
+          </p>
+        </div>
+
+        {/* Hero product cards — below headline on all screens */}
+        <div className="relative mt-12 max-w-5xl mx-auto">
+          <div className="absolute inset-0 hero-glow rounded-3xl" />
+          {(() => {
+            const cards = [
+              { icon: FileText, label: "Script", grad: "from-pink-500 to-rose-500",
+                body: '"Bhai ye chhoti si D2C brand ne 90 din mein 4 crore kaise kamaye? Sun…"' },
+              { icon: Mic, label: "Voiceover dialogue", grad: "from-violet-500 to-indigo-600",
+                body: "Tone: warm founder energy. Pace: medium. Pause after hook for 0.4s." },
+              { icon: ImageIcon, label: "Visual plan", grad: "from-blue-500 to-cyan-500",
+                body: "Beat 1: founder POV, warm office, golden hour, handheld 24mm." },
+              { icon: Sparkles, label: "Thumbnail", grad: "from-amber-400 to-orange-500",
+                body: 'Big bold text: "₹4 CR IN 90 DAYS" + shocked founder face left.' },
+              { icon: Hash, label: "Caption + hashtags", grad: "from-emerald-400 to-teal-500",
+                body: "Yeh brand chhoti thi, soch badi thi. #d2cindia #founderstory #reelitfeelit" },
+              { icon: BookOpen, label: "Sources", grad: "from-fuchsia-500 to-purple-600",
+                body: "5 cited links: YourStory · Inc42 · Moneycontrol · The Ken · ET" },
+            ];
+            return (
+              <div className="relative grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {cards.map((c) => (
+                  <div
+                    key={c.label}
+                    className={`hero-card rounded-2xl bg-gradient-to-br ${c.grad} text-white p-4 min-h-[110px]`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 w-8 rounded-lg bg-white/25 flex items-center justify-center shrink-0">
+                        <c.icon className="h-4 w-4" />
+                      </div>
+                      <span className="font-bold text-sm tracking-tight truncate">{c.label}</span>
+                    </div>
+                    <p className="mt-2.5 text-[12px] leading-snug text-white/95 line-clamp-3">{c.body}</p>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
         </div>
       </section>
-
 
       {/* INFINITE MARQUEE */}
       <section className="border-y border-border bg-foreground text-background overflow-hidden py-4">
@@ -191,7 +227,7 @@ function Landing() {
         </div>
       </section>
 
-      {/* SECTION 2: Features (6 cards, uniform) */}
+      {/* SECTION 2: Features */}
       <section id="what" className="max-w-7xl mx-auto px-4 sm:px-8 py-20 sm:py-28">
         <div className="max-w-3xl">
           <div className="text-xs uppercase tracking-[0.2em] font-bold text-[var(--vidzo-magenta)]">The content pack</div>
@@ -250,7 +286,7 @@ function Landing() {
         </div>
       </section>
 
-      {/* SECTION 4: Use cases — uniform grid (no pill-wrap unevenness) */}
+      {/* SECTION 4: Use cases */}
       <section className="max-w-7xl mx-auto px-4 sm:px-8 py-20 sm:py-28">
         <div className="max-w-3xl">
           <div className="text-xs uppercase tracking-[0.2em] font-bold text-[var(--vidzo-yellow)]">Use cases</div>
@@ -281,7 +317,7 @@ function Landing() {
         </div>
       </section>
 
-      {/* SECTION 5: Dashboard preview — matches the real new dashboard */}
+      {/* SECTION 5: Dashboard preview */}
       <section id="product" className="bg-foreground text-background py-20 sm:py-28 relative overflow-hidden">
         <div className="absolute inset-0 opacity-30">
           <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-[var(--vidzo-magenta)] blur-[120px]" />
@@ -300,7 +336,6 @@ function Landing() {
 
           <div className="dashboard-preview mt-12 rounded-3xl bg-background text-foreground border border-border overflow-hidden">
             <div className="grid lg:grid-cols-[220px,1fr] min-h-[560px]">
-              {/* Sidebar */}
               <aside className="bg-[#0b0d14] text-white p-4 hidden lg:flex flex-col gap-2">
                 <div className="px-1 pb-3"><VidzoLogo className="h-7 w-auto" /></div>
                 {[
@@ -320,76 +355,74 @@ function Landing() {
                 ))}
               </aside>
 
-              {/* Main */}
               <div className="p-5 sm:p-7 space-y-5 bg-[#fafaf7]">
                 <div className="flex flex-wrap justify-between gap-3 items-start">
                   <div>
-                    <div className="font-bold text-xl">Welcome back, Aman 👋</div>
-                    <div className="text-xs text-muted-foreground">Turn a trend or idea into a ready-to-produce content pack.</div>
+                    <div className="font-bold text-xl text-gray-900">Welcome back, Aman 👋</div>
+                    <div className="text-xs text-gray-500">Turn a trend or idea into a ready-to-produce content pack.</div>
                   </div>
                   <div className="flex gap-2 text-[11px]">
                     {[{n:12,l:"Packs"},{n:4,l:"Ready"},{n:8,l:"Sources"},{n:2,l:"Drafts"}].map((s)=>(
-                      <div key={s.l} className="rounded-lg bg-white border border-border px-3 py-2 min-w-[64px] text-center">
-                        <div className="font-bold text-sm">{s.n}</div>
-                        <div className="text-muted-foreground">{s.l}</div>
+                      <div key={s.l} className="rounded-lg bg-white border border-gray-200 px-3 py-2 min-w-[64px] text-center">
+                        <div className="font-bold text-sm text-gray-900">{s.n}</div>
+                        <div className="text-gray-500">{s.l}</div>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 <div className="grid lg:grid-cols-[1fr,260px] gap-4">
-                  <div className="rounded-2xl border border-border p-5 bg-gradient-to-br from-pink-100 via-violet-100 to-blue-100">
-                    <div className="font-bold flex items-center gap-2">🎁 Create a New Content Pack</div>
-                    <div className="mt-3 rounded-xl bg-white border border-border p-3 text-sm text-muted-foreground">
+                  <div className="rounded-2xl border border-gray-200 p-5 bg-gradient-to-br from-pink-100 via-violet-100 to-blue-100">
+                    <div className="font-bold flex items-center gap-2 text-gray-900">🎁 Create a New Content Pack</div>
+                    <div className="mt-3 rounded-xl bg-white border border-gray-200 p-3 text-sm text-gray-400">
                       Create a 40-second reel on how a small D2C brand went viral.
                     </div>
                     <div className="mt-3 grid grid-cols-[64px,1fr] gap-y-2 items-center text-[11px]">
-                      <span className="text-muted-foreground">Format</span>
+                      <span className="text-gray-400">Format</span>
                       <div className="flex flex-wrap gap-1.5">
                         {["Reel","YT Short","LinkedIn","Ad","Explainer"].map((x,i)=>(
-                          <span key={x} className={`px-2 py-1 rounded-md border ${i===0 ? "border-[var(--vidzo-magenta)] text-[var(--vidzo-magenta)]" : "border-border text-foreground"}`}>{x}</span>
+                          <span key={x} className={`px-2 py-1 rounded-md border text-gray-700 ${i===0 ? "border-pink-500 text-pink-600" : "border-gray-200"}`}>{x}</span>
                         ))}
                       </div>
-                      <span className="text-muted-foreground">Tone</span>
+                      <span className="text-gray-400">Tone</span>
                       <div className="flex flex-wrap gap-1.5">
                         {["Founder","Dramatic","Educational","Funny","Premium"].map((x,i)=>(
-                          <span key={x} className={`px-2 py-1 rounded-md border ${i===0 ? "border-[var(--vidzo-magenta)] text-[var(--vidzo-magenta)]" : "border-border text-foreground"}`}>{x}</span>
+                          <span key={x} className={`px-2 py-1 rounded-md border text-gray-700 ${i===0 ? "border-pink-500 text-pink-600" : "border-gray-200"}`}>{x}</span>
                         ))}
                       </div>
-                      <span className="text-muted-foreground">Length</span>
+                      <span className="text-gray-400">Length</span>
                       <div className="flex flex-wrap gap-1.5">
                         {["30s","40s","60s","90s"].map((x,i)=>(
-                          <span key={x} className={`px-2 py-1 rounded-md border ${i===1 ? "border-[var(--vidzo-magenta)] text-[var(--vidzo-magenta)]" : "border-border text-foreground"}`}>{x}</span>
+                          <span key={x} className={`px-2 py-1 rounded-md border text-gray-700 ${i===1 ? "border-pink-500 text-pink-600" : "border-gray-200"}`}>{x}</span>
                         ))}
                       </div>
                     </div>
                     <div className="mt-4 flex gap-2">
                       <div className="rounded-md px-3 py-1.5 text-xs font-semibold text-white bg-gradient-to-r from-violet-500 to-fuchsia-500">✨ Generate</div>
-                      <div className="rounded-md px-3 py-1.5 text-xs font-semibold border border-border bg-white">↗ Use a trend</div>
+                      <div className="rounded-md px-3 py-1.5 text-xs font-semibold border border-gray-200 bg-white text-gray-700">↗ Use a trend</div>
                     </div>
                   </div>
 
-                  {/* Content Quality */}
-                  <div className="rounded-2xl border border-border bg-white p-4">
+                  <div className="rounded-2xl border border-gray-200 bg-white p-4">
                     <div className="flex items-center justify-between">
-                      <div className="font-bold text-sm">📈 Content Quality</div>
+                      <div className="font-bold text-sm text-gray-900">📈 Content Quality</div>
                       <span className="text-[10px] font-bold text-emerald-600">Looks Good</span>
                     </div>
                     <div className="mt-3 flex flex-col items-center">
                       <div className="relative h-24 w-24 rounded-full flex items-center justify-center"
                         style={{ background: "conic-gradient(#10b981 91%, #e5e7eb 0)" }}>
                         <div className="h-[78%] w-[78%] rounded-full bg-white flex flex-col items-center justify-center">
-                          <div className="text-2xl font-black">91</div>
-                          <div className="text-[9px] text-muted-foreground">/100</div>
+                          <div className="text-2xl font-black text-gray-900">91</div>
+                          <div className="text-[9px] text-gray-400">/100</div>
                         </div>
                       </div>
                     </div>
                     <div className="mt-3 space-y-1.5 text-[11px]">
                       {[{l:"Hook",v:92},{l:"Clarity",v:88},{l:"Pacing",v:85},{l:"Sources",v:81},{l:"Platform fit",v:90}].map((q)=>(
                         <div key={q.l}>
-                          <div className="flex justify-between"><span className="text-muted-foreground">{q.l}</span><span className="font-bold">{q.v}</span></div>
-                          <div className="h-1 rounded-full bg-secondary overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-[var(--vidzo-magenta)] via-[var(--vidzo-blue)] to-[var(--vidzo-yellow)]" style={{ width: `${q.v}%` }} />
+                          <div className="flex justify-between"><span className="text-gray-400">{q.l}</span><span className="font-bold text-gray-800">{q.v}</span></div>
+                          <div className="h-1 rounded-full bg-gray-100 overflow-hidden">
+                            <div className="h-full bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500" style={{ width: `${q.v}%` }} />
                           </div>
                         </div>
                       ))}
@@ -397,11 +430,10 @@ function Landing() {
                   </div>
                 </div>
 
-                {/* Trends */}
-                <div className="rounded-2xl border border-border bg-white p-4">
+                <div className="rounded-2xl border border-gray-200 bg-white p-4">
                   <div className="flex justify-between items-center mb-3">
-                    <div className="font-bold text-sm">📈 Trends</div>
-                    <div className="text-[10px] text-muted-foreground">Pick a category — Vidzo searches live sources.</div>
+                    <div className="font-bold text-sm text-gray-900">📈 Trends</div>
+                    <div className="text-[10px] text-gray-400">Pick a category — Vidzo searches live sources.</div>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {[
@@ -410,21 +442,21 @@ function Landing() {
                       {t:"D2C going viral",c:"Marketing",v:79,e:"🛍️"},
                       {t:"Gym controversies",c:"Fitness",v:76,e:"💪"},
                     ].map((tr)=>(
-                      <div key={tr.t} className="rounded-lg border border-border p-2.5 text-[11px]">
-                        <div className="flex items-center gap-1.5 font-bold"><span>{tr.e}</span>{tr.t}</div>
-                        <div className="text-muted-foreground mt-0.5">{tr.c}</div>
+                      <div key={tr.t} className="rounded-lg border border-gray-200 p-2.5 text-[11px]">
+                        <div className="flex items-center gap-1.5 font-bold text-gray-800"><span>{tr.e}</span>{tr.t}</div>
+                        <div className="text-gray-400 mt-0.5">{tr.c}</div>
                         <div className="text-orange-500 mt-1 font-semibold">🔥 {tr.v}% virality</div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="rounded-2xl bg-gradient-to-r from-[var(--vidzo-magenta)] via-pink-400 to-violet-500 text-white p-5 flex flex-wrap items-center justify-between gap-3">
+                <div className="rounded-2xl bg-gradient-to-r from-pink-500 via-pink-400 to-violet-500 text-white p-5 flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <div className="font-bold">✨ Start from your own idea</div>
                     <div className="text-[12px] text-white/90">Type your own topic and Vidzo will build a content pack.</div>
                   </div>
-                  <div className="rounded-md bg-white text-foreground px-3 py-1.5 text-xs font-semibold">Create custom pack →</div>
+                  <div className="rounded-md bg-white text-gray-900 px-3 py-1.5 text-xs font-semibold">Create custom pack →</div>
                 </div>
               </div>
             </div>
