@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getDashboardStats, listScripts, listThreads, createThread } from "@/lib/threads.functions";
+import { getDashboardStats, listScripts, listThreads } from "@/lib/threads.functions";
 import { Sparkles, TrendingUp, Package, Wand2, BookOpen, FileText, ArrowRight, Rocket, Trophy, ShoppingBag, Dumbbell, Film, Coins, Laptop, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
@@ -30,12 +30,11 @@ const TREND_CARDS = [
 
 function Dashboard() {
   const navigate = useNavigate();
-  const qc = useQueryClient();
   const statsFn = useServerFn(getDashboardStats);
   const scriptsFn = useServerFn(listScripts);
   const threadsFn = useServerFn(listThreads);
-  const create = useServerFn(createThread);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
 
   const [userName, setUserName] = useState<string | null>(null);
   const [brief, setBrief] = useState("");
