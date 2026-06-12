@@ -32,23 +32,34 @@ export function AuthDialog({
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin },
+          options: {
+            // Redirect back to the app after email confirmation
+            emailRedirectTo: `${window.location.origin}/chat/dashboard`,
+          },
         });
         if (error) throw error;
         if (data.session) {
-          toast.success("Welcome to Vidzo");
-          navigate({ to: "/chat/dashboard" });
+          // Immediate session (email confirmation disabled in Supabase)
+          toast.success("Welcome to Vidzo!");
+          onOpenChange(false);
+          await navigate({ to: "/chat/dashboard" });
         } else {
-          toast.success("Check your email to confirm, then sign in.");
+          toast.success("Check your email to confirm your account, then sign in.");
           setMode("signin");
         }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
           toast.error(error.message);
           return;
         }
-        navigate({ to: "/chat/dashboard" });
+        if (data.session) {
+          toast.success("Welcome back!");
+          // Close dialog BEFORE navigating so the landing-page beforeLoad
+          // no longer intercepts the route change.
+          onOpenChange(false);
+          await navigate({ to: "/chat/dashboard" });
+        }
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Auth failed");
@@ -59,16 +70,21 @@ export function AuthDialog({
 
   const handleGoogle = async () => {
     setLoading(true);
+    // Use /chat/dashboard as the redirect so OAuth callback lands on the app,
+    // not the landing page (which would re-run beforeLoad and redirect to /chat/dashboard
+    // anyway, but this avoids one extra redirect hop and the loop risk).
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/`,
+      redirect_uri: `${window.location.origin}/chat/dashboard`,
     });
     if (result.error) {
       toast.error(result.error.message ?? "Google sign-in failed");
       setLoading(false);
       return;
     }
+    // OAuth flow will redirect the browser; no further action needed here.
     if (result.redirected) return;
-    navigate({ to: "/chat/dashboard" });
+    onOpenChange(false);
+    await navigate({ to: "/chat/dashboard" });
   };
 
   return (
@@ -113,7 +129,7 @@ export function AuthDialog({
                 onChange={(e) => setPassword(e.target.value)} className="mt-1" />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {mode === "signin" ? "Sign in" : "Create account"}
+              {loading ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
             </Button>
           </form>
 
