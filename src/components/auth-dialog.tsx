@@ -24,6 +24,15 @@ export function AuthDialog({
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Navigate to dashboard — close dialog first to prevent landing-page
+  // beforeLoad from racing with the navigation.
+  const goToDashboard = async () => {
+    onOpenChange(false);
+    // Small tick so React can flush the dialog close state before navigate
+    await new Promise((r) => setTimeout(r, 30));
+    await navigate({ to: "/chat/dashboard" });
+  };
+
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -33,16 +42,13 @@ export function AuthDialog({
           email,
           password,
           options: {
-            // Redirect back to the app after email confirmation
             emailRedirectTo: `${window.location.origin}/chat/dashboard`,
           },
         });
         if (error) throw error;
         if (data.session) {
-          // Immediate session (email confirmation disabled in Supabase)
           toast.success("Welcome to Vidzo!");
-          onOpenChange(false);
-          await navigate({ to: "/chat/dashboard" });
+          await goToDashboard();
         } else {
           toast.success("Check your email to confirm your account, then sign in.");
           setMode("signin");
@@ -55,10 +61,7 @@ export function AuthDialog({
         }
         if (data.session) {
           toast.success("Welcome back!");
-          // Close dialog BEFORE navigating so the landing-page beforeLoad
-          // no longer intercepts the route change.
-          onOpenChange(false);
-          await navigate({ to: "/chat/dashboard" });
+          await goToDashboard();
         }
       }
     } catch (err) {
@@ -70,21 +73,39 @@ export function AuthDialog({
 
   const handleGoogle = async () => {
     setLoading(true);
-    // Use /chat/dashboard as the redirect so OAuth callback lands on the app,
-    // not the landing page (which would re-run beforeLoad and redirect to /chat/dashboard
-    // anyway, but this avoids one extra redirect hop and the loop risk).
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/chat/dashboard`,
-    });
-    if (result.error) {
-      toast.error(result.error.message ?? "Google sign-in failed");
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        // redirect_uri is for redirect-based flows; Lovable uses a popup
+        // so this may be ignored, but set it as a hint anyway.
+        redirect_uri: `${window.location.origin}/chat/dashboard`,
+      });
+
+      if (result.error) {
+        toast.error(
+          (result.error as Error)?.message ?? "Google sign-in failed"
+        );
+        return;
+      }
+
+      // If the flow was popup-based, lovable sets the Supabase session.
+      // Verify the session is now live before navigating.
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData?.session) {
+        toast.success("Welcome to Vidzo!");
+        await goToDashboard();
+        return;
+      }
+
+      // Redirect-based fallback: browser is being redirected, nothing to do.
+      if (result.redirected) return;
+
+      // Unexpected: session not found after OAuth
+      toast.error("Sign-in completed but session not found. Please try again.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Google sign-in failed");
+    } finally {
       setLoading(false);
-      return;
     }
-    // OAuth flow will redirect the browser; no further action needed here.
-    if (result.redirected) return;
-    onOpenChange(false);
-    await navigate({ to: "/chat/dashboard" });
   };
 
   return (
@@ -106,10 +127,16 @@ export function AuthDialog({
           <Button
             type="button"
             variant="outline"
-            className="w-full mt-6"
+            className="w-full mt-6 gap-2"
             onClick={handleGoogle}
             disabled={loading}
           >
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
             Continue with Google
           </Button>
 

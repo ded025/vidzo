@@ -15,8 +15,9 @@ export const Route = createFileRoute("/")({
   ssr: false,
   beforeLoad: async () => {
     try {
-      const { data } = await supabase.auth.getUser();
-      if (data.user) throw redirect({ to: "/chat/dashboard" });
+      // getSession is instant (localStorage) — no network call, no flash.
+      const { data } = await supabase.auth.getSession();
+      if (data.session) throw redirect({ to: "/chat/dashboard" });
     } catch (e: unknown) {
       if (e && typeof e === "object" && "isRedirect" in e) throw e;
     }
@@ -102,9 +103,8 @@ function Landing() {
         </div>
       </header>
 
-      {/* HERO — fully centred, two-line headline, mobile-first */}
+      {/* HERO */}
       <section className="relative px-4 sm:px-8 pt-28 sm:pt-36 pb-16 sm:pb-24">
-        {/* Ambient background glow */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(700px,90vw)] h-[min(700px,90vw)] rounded-full"
             style={{
@@ -115,22 +115,18 @@ function Landing() {
         </div>
 
         <div className="relative max-w-4xl mx-auto text-center">
-          {/* Badge */}
           <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold mb-6">
             <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
             AI production room for creators
           </div>
 
-          {/* Two-line headline — stays on one line each at all breakpoints */}
           <h1 className="font-display font-black tracking-[-0.03em] leading-[1.05]">
-            {/* Line 1 */}
             <span
               className="hero-word block bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent"
               style={{ fontSize: "clamp(2.6rem, 7vw, 5.5rem)" }}
             >
               One idea in.
             </span>
-            {/* Line 2 */}
             <span
               className="hero-word block bg-gradient-to-r from-[var(--vidzo-magenta)] via-[var(--vidzo-blue)] to-[var(--vidzo-yellow)] bg-clip-text text-transparent"
               style={{ fontSize: "clamp(2.6rem, 7vw, 5.5rem)" }}
@@ -139,14 +135,12 @@ function Landing() {
             </span>
           </h1>
 
-          {/* Subtitle */}
           <p className="hero-sub mt-5 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-2">
             Vidzo turns your rough content idea into a ready-to-record script, voiceover dialogue,
             scene-by-scene visuals, thumbnail direction, captions, hashtags, and source-backed research
             — all in one flow.
           </p>
 
-          {/* CTAs — centred, no overflow on small screens */}
           <div className="hero-cta mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Button
               size="lg"
@@ -163,14 +157,12 @@ function Landing() {
             </a>
           </div>
 
-          {/* AI production room label */}
           <p className="mt-5 text-xs text-muted-foreground flex items-center justify-center gap-1.5">
             <CheckCircle2 className="h-3.5 w-3.5 text-accent" />
             No credit card required &middot; Free to start
           </p>
         </div>
 
-        {/* Hero product cards — below headline on all screens */}
         <div className="relative mt-12 max-w-5xl mx-auto">
           <div className="absolute inset-0 hero-glow rounded-3xl" />
           {(() => {
@@ -210,7 +202,7 @@ function Landing() {
         </div>
       </section>
 
-      {/* INFINITE MARQUEE */}
+      {/* MARQUEE */}
       <section className="border-y border-border bg-foreground text-background overflow-hidden py-4">
         <div className="vidzo-marquee-track flex gap-12 whitespace-nowrap text-2xl sm:text-4xl font-black tracking-tight w-max">
           {Array.from({ length: 2 }).map((_, k) => (
@@ -227,7 +219,7 @@ function Landing() {
         </div>
       </section>
 
-      {/* SECTION 2: Features */}
+      {/* FEATURES */}
       <section id="what" className="max-w-7xl mx-auto px-4 sm:px-8 py-20 sm:py-28">
         <div className="max-w-3xl">
           <div className="text-xs uppercase tracking-[0.2em] font-bold text-[var(--vidzo-magenta)]">The content pack</div>
@@ -239,10 +231,10 @@ function Landing() {
           {[
             { icon: FileText, title: "Creator-ready scripts", body: "Sharp hooks, strong pacing, clear story flow, and endings that land.", grad: "from-pink-500/15 to-rose-500/5", iconBg: "from-pink-500 to-rose-500" },
             { icon: Mic, title: "Voiceover-ready dialogue", body: "Cleanly formatted lines you can record yourself or use with voice tools.", grad: "from-violet-500/15 to-indigo-500/5", iconBg: "from-violet-500 to-indigo-600" },
-            { icon: ImageIcon, title: "Scene-by-scene visuals", body: "Clear visual direction for every beat, whether you use stock, AI, or your own footage.", grad: "from-blue-500/15 to-cyan-500/5", iconBg: "from-blue-500 to-cyan-500" },
+            { icon: ImageIcon, title: "Scene-by-scene visuals", body: "Clear visual direction for every beat.", grad: "from-blue-500/15 to-cyan-500/5", iconBg: "from-blue-500 to-cyan-500" },
             { icon: Sparkles, title: "Thumbnail & first-frame ideas", body: "Scroll-stopping visual concepts designed to get attention fast.", grad: "from-amber-400/15 to-orange-500/5", iconBg: "from-amber-400 to-orange-500" },
             { icon: Hash, title: "Captions & hashtags", body: "Post-ready social text tailored to the topic and platform.", grad: "from-emerald-400/15 to-teal-500/5", iconBg: "from-emerald-400 to-teal-500" },
-            { icon: BookOpen, title: "Source-backed research", body: "When facts are used, Vidzo includes sources so creators can review the context.", grad: "from-fuchsia-500/15 to-purple-600/5", iconBg: "from-fuchsia-500 to-purple-600" },
+            { icon: BookOpen, title: "Source-backed research", body: "Facts come with cited sources so creators can verify the context.", grad: "from-fuchsia-500/15 to-purple-600/5", iconBg: "from-fuchsia-500 to-purple-600" },
           ].map((f) => (
             <div key={f.title} className={`feature-tile group rounded-2xl border border-border bg-gradient-to-br ${f.grad} p-6 h-full flex flex-col transition-colors hover:border-foreground/20`}>
               <div className={`h-11 w-11 rounded-xl bg-gradient-to-br ${f.iconBg} text-white flex items-center justify-center mb-4`}>
@@ -255,7 +247,7 @@ function Landing() {
         </div>
       </section>
 
-      {/* SECTION 3: How */}
+      {/* HOW IT WORKS */}
       <section id="how" className="bg-secondary/40 border-y border-border py-20 sm:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-8">
           <div className="text-xs uppercase tracking-[0.2em] font-bold text-[var(--vidzo-blue)]">How it works</div>
@@ -286,7 +278,7 @@ function Landing() {
         </div>
       </section>
 
-      {/* SECTION 4: Use cases */}
+      {/* USE CASES */}
       <section className="max-w-7xl mx-auto px-4 sm:px-8 py-20 sm:py-28">
         <div className="max-w-3xl">
           <div className="text-xs uppercase tracking-[0.2em] font-bold text-[var(--vidzo-yellow)]">Use cases</div>
@@ -294,7 +286,7 @@ function Landing() {
             Built for every kind of creator.
           </h2>
           <p className="mt-5 text-lg text-muted-foreground">
-            Whether you create business stories, fitness reels, educational videos, product explainers, or personal brand content, Vidzo gives you the production structure before you start recording.
+            Whether you create business stories, fitness reels, educational videos, product explainers, or personal brand content — Vidzo gives you the production structure before you start recording.
           </p>
         </div>
         <div className="mt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -317,7 +309,7 @@ function Landing() {
         </div>
       </section>
 
-      {/* SECTION 5: Dashboard preview */}
+      {/* PRODUCT PREVIEW */}
       <section id="product" className="bg-foreground text-background py-20 sm:py-28 relative overflow-hidden">
         <div className="absolute inset-0 opacity-30">
           <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-[var(--vidzo-magenta)] blur-[120px]" />
@@ -338,23 +330,13 @@ function Landing() {
             <div className="grid lg:grid-cols-[220px,1fr] min-h-[560px]">
               <aside className="bg-[#0b0d14] text-white p-4 hidden lg:flex flex-col gap-2">
                 <div className="px-1 pb-3"><VidzoLogo className="h-7 w-auto" /></div>
-                {[
-                  { l: "Dashboard", active: true },
-                  { l: "Trends" },
-                  { l: "Library" },
-                  { l: "Presets" },
-                ].map((i) => (
+                {[{ l: "Dashboard", active: true }, { l: "Trends" }, { l: "Library" }, { l: "Presets" }].map((i) => (
                   <div key={i.l} className={`px-3 py-2 rounded-lg text-sm font-medium ${i.active ? "bg-gradient-to-r from-[var(--vidzo-magenta)] to-orange-400 text-white" : "text-white/60"}`}>
                     {i.l}
                   </div>
                 ))}
                 <div className="mt-3 px-3 py-2 rounded-lg bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white text-sm font-semibold text-center">+ New chat</div>
-                <div className="mt-5 text-[10px] uppercase tracking-wider text-white/40 px-3">Chats</div>
-                {["D2C virality reel", "Founder Monday", "Fitness 30-day arc"].map((c) => (
-                  <div key={c} className="px-3 py-1.5 text-xs text-white/70 truncate">• {c}</div>
-                ))}
               </aside>
-
               <div className="p-5 sm:p-7 space-y-5 bg-[#fafaf7]">
                 <div className="flex flex-wrap justify-between gap-3 items-start">
                   <div>
@@ -370,87 +352,6 @@ function Landing() {
                     ))}
                   </div>
                 </div>
-
-                <div className="grid lg:grid-cols-[1fr,260px] gap-4">
-                  <div className="rounded-2xl border border-gray-200 p-5 bg-gradient-to-br from-pink-100 via-violet-100 to-blue-100">
-                    <div className="font-bold flex items-center gap-2 text-gray-900">🎁 Create a New Content Pack</div>
-                    <div className="mt-3 rounded-xl bg-white border border-gray-200 p-3 text-sm text-gray-400">
-                      Create a 40-second reel on how a small D2C brand went viral.
-                    </div>
-                    <div className="mt-3 grid grid-cols-[64px,1fr] gap-y-2 items-center text-[11px]">
-                      <span className="text-gray-400">Format</span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {["Reel","YT Short","LinkedIn","Ad","Explainer"].map((x,i)=>(
-                          <span key={x} className={`px-2 py-1 rounded-md border text-gray-700 ${i===0 ? "border-pink-500 text-pink-600" : "border-gray-200"}`}>{x}</span>
-                        ))}
-                      </div>
-                      <span className="text-gray-400">Tone</span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {["Founder","Dramatic","Educational","Funny","Premium"].map((x,i)=>(
-                          <span key={x} className={`px-2 py-1 rounded-md border text-gray-700 ${i===0 ? "border-pink-500 text-pink-600" : "border-gray-200"}`}>{x}</span>
-                        ))}
-                      </div>
-                      <span className="text-gray-400">Length</span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {["30s","40s","60s","90s"].map((x,i)=>(
-                          <span key={x} className={`px-2 py-1 rounded-md border text-gray-700 ${i===1 ? "border-pink-500 text-pink-600" : "border-gray-200"}`}>{x}</span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="mt-4 flex gap-2">
-                      <div className="rounded-md px-3 py-1.5 text-xs font-semibold text-white bg-gradient-to-r from-violet-500 to-fuchsia-500">✨ Generate</div>
-                      <div className="rounded-md px-3 py-1.5 text-xs font-semibold border border-gray-200 bg-white text-gray-700">↗ Use a trend</div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-gray-200 bg-white p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="font-bold text-sm text-gray-900">📈 Content Quality</div>
-                      <span className="text-[10px] font-bold text-emerald-600">Looks Good</span>
-                    </div>
-                    <div className="mt-3 flex flex-col items-center">
-                      <div className="relative h-24 w-24 rounded-full flex items-center justify-center"
-                        style={{ background: "conic-gradient(#10b981 91%, #e5e7eb 0)" }}>
-                        <div className="h-[78%] w-[78%] rounded-full bg-white flex flex-col items-center justify-center">
-                          <div className="text-2xl font-black text-gray-900">91</div>
-                          <div className="text-[9px] text-gray-400">/100</div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mt-3 space-y-1.5 text-[11px]">
-                      {[{l:"Hook",v:92},{l:"Clarity",v:88},{l:"Pacing",v:85},{l:"Sources",v:81},{l:"Platform fit",v:90}].map((q)=>(
-                        <div key={q.l}>
-                          <div className="flex justify-between"><span className="text-gray-400">{q.l}</span><span className="font-bold text-gray-800">{q.v}</span></div>
-                          <div className="h-1 rounded-full bg-gray-100 overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500" style={{ width: `${q.v}%` }} />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-gray-200 bg-white p-4">
-                  <div className="flex justify-between items-center mb-3">
-                    <div className="font-bold text-sm text-gray-900">📈 Trends</div>
-                    <div className="text-[10px] text-gray-400">Pick a category — Vidzo searches live sources.</div>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {[
-                      {t:"Indian startup funding",c:"Business",v:84,e:"🚀"},
-                      {t:"Shark Tank India",c:"Entertainment",v:82,e:"🏆"},
-                      {t:"D2C going viral",c:"Marketing",v:79,e:"🛍️"},
-                      {t:"Gym controversies",c:"Fitness",v:76,e:"💪"},
-                    ].map((tr)=>(
-                      <div key={tr.t} className="rounded-lg border border-gray-200 p-2.5 text-[11px]">
-                        <div className="flex items-center gap-1.5 font-bold text-gray-800"><span>{tr.e}</span>{tr.t}</div>
-                        <div className="text-gray-400 mt-0.5">{tr.c}</div>
-                        <div className="text-orange-500 mt-1 font-semibold">🔥 {tr.v}% virality</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
                 <div className="rounded-2xl bg-gradient-to-r from-pink-500 via-pink-400 to-violet-500 text-white p-5 flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <div className="font-bold">✨ Start from your own idea</div>
@@ -471,13 +372,10 @@ function Landing() {
             <h2 className="text-4xl sm:text-6xl font-black tracking-tight max-w-3xl">
               Turn your next idea into a ready-to-produce video.
             </h2>
-            <p className="mt-4 text-lg max-w-2xl opacity-95">
-              Start with a topic. Leave with the full content pack.
-            </p>
+            <p className="mt-4 text-lg max-w-2xl opacity-95">Start with a topic. Leave with the full content pack.</p>
             <div className="mt-8">
               <Button size="lg" className="text-base h-12 px-7 bg-foreground text-background hover:bg-foreground/90" onClick={() => openAuth("signup")}>
-                Start with Vidzo
-                <ArrowRight className="ml-1 h-5 w-5" />
+                Start with Vidzo <ArrowRight className="ml-1 h-5 w-5" />
               </Button>
             </div>
           </div>
@@ -504,7 +402,6 @@ function Landing() {
         </div>
       </footer>
 
-      {/* GIANT FOOTER WORDMARK */}
       <section className="footer-vidzo pt-6 pb-10 overflow-hidden">
         <div className="max-w-[100vw] mx-auto px-2">
           <div

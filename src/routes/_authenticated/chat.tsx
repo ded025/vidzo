@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Plus, Trash2, MessageSquare, FileText, LogOut, Menu, X,
-  LayoutDashboard, Sliders, TrendingUp,
+  LayoutDashboard, Sliders, TrendingUp, Library, Settings, Home,
 } from "lucide-react";
 import { toast } from "sonner";
 import { VidzoLogo } from "@/components/vidzo-logo";
@@ -164,48 +164,109 @@ function ChatLayout() {
     </>
   );
 
+  // Bottom nav items for mobile
+  const bottomNav = [
+    { to: "/chat/dashboard", icon: Home, label: "Home" },
+    { to: "/chat/trends", icon: TrendingUp, label: "Trends" },
+    { to: "/chat/library", icon: Library, label: "Library" },
+    { to: "/chat/new", icon: Plus, label: "Create", isCreate: true },
+    { to: "/chat/presets", icon: Settings, label: "Settings" },
+  ];
+
   return (
-    <div className="h-[100dvh] flex bg-background text-foreground">
-      <aside className="hidden md:flex w-64 border-r border-border flex-col shrink-0">
-        {sidebar}
-      </aside>
+    <div className="h-[100dvh] flex flex-col bg-background text-foreground">
+      <div className="flex flex-1 min-h-0">
+        {/* Desktop sidebar */}
+        <aside className="hidden md:flex w-64 border-r border-border flex-col shrink-0">
+          {sidebar}
+        </aside>
 
-      {sidebarOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
-          <aside className="relative w-72 max-w-[85vw] bg-background border-r border-border flex flex-col animate-in slide-in-from-left duration-200">
-            {sidebar}
-          </aside>
-        </div>
-      )}
+        {/* Mobile overlay sidebar */}
+        {sidebarOpen && (
+          <div className="md:hidden fixed inset-0 z-50 flex">
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
+            <aside className="relative w-72 max-w-[85vw] bg-background border-r border-border flex flex-col animate-in slide-in-from-left duration-200">
+              {sidebar}
+            </aside>
+          </div>
+        )}
 
-      <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
-        <div className="md:hidden h-12 shrink-0 border-b border-border flex items-center px-2 gap-2">
-          <button
-            type="button"
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-md hover:bg-secondary"
-            aria-label="Open menu"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-          <Link to="/chat/dashboard" className="flex items-center min-w-0">
-            <VidzoLogo className="h-6 w-auto" />
-          </Link>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="ml-auto"
-            onClick={() => createMut.mutate()}
-            disabled={createMut.isPending}
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
-        <div className="flex-1 min-h-0 overflow-hidden">
-          <Outlet />
-        </div>
-      </main>
+        <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
+          {/* Mobile top bar */}
+          <div className="md:hidden h-12 shrink-0 border-b border-border flex items-center px-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 rounded-md hover:bg-secondary"
+              aria-label="Open menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <Link to="/chat/dashboard" className="flex items-center min-w-0">
+              <VidzoLogo className="h-6 w-auto" />
+            </Link>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="ml-auto"
+              onClick={() => createMut.mutate()}
+              disabled={createMut.isPending}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+          {/* Main content — add bottom padding on mobile so content isn't hidden behind bottom nav */}
+          <div className="flex-1 min-h-0 overflow-hidden md:pb-0 pb-[calc(64px+env(safe-area-inset-bottom,0px))]">
+            <Outlet />
+          </div>
+        </main>
+      </div>
+
+      {/* MOBILE BOTTOM NAV */}
+      <nav
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 flex items-stretch"
+        style={{
+          height: "calc(64px + env(safe-area-inset-bottom, 0px))",
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+          background: "rgba(var(--background-rgb, 15 15 15) / 0.85)",
+          backdropFilter: "blur(24px) saturate(180%)",
+          WebkitBackdropFilter: "blur(24px) saturate(180%)",
+          borderTop: "1px solid hsl(var(--border))",
+        }}
+      >
+        {bottomNav.map(({ to, icon: Icon, label, isCreate }) => {
+          const active = pathname === to || (to !== "/chat" && to !== "/chat/new" && pathname.startsWith(to));
+          if (isCreate) {
+            return (
+              <button
+                key={label}
+                type="button"
+                onClick={() => createMut.mutate()}
+                disabled={createMut.isPending}
+                className="flex-1 flex flex-col items-center justify-center gap-0.5 active:opacity-60 transition-opacity"
+                aria-label={label}
+              >
+                <div className="h-10 w-10 rounded-full flex items-center justify-center bg-gradient-to-br from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)]">
+                  <Icon className="h-5 w-5 text-white" />
+                </div>
+                <span className="text-[10px] text-muted-foreground">{label}</span>
+              </button>
+            );
+          }
+          return (
+            <Link
+              key={label}
+              to={to}
+              className={`flex-1 flex flex-col items-center justify-center gap-0.5 active:opacity-60 transition-opacity ${
+                active ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              <Icon className={`h-5 w-5 transition-transform ${active ? "scale-110" : ""}`} />
+              <span className="text-[10px]">{label}</span>
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }
