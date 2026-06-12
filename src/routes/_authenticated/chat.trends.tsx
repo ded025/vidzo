@@ -1,37 +1,195 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createThread } from "@/lib/threads.functions";
+import { listGlobalTrends, getLastSyncRun, TREND_CATEGORIES, type TrendCategory, type GlobalTrend } from "@/lib/trends.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { TrendingUp, Sparkles } from "lucide-react";
+import {
+  TrendingUp, Sparkles, RefreshCw, Zap, Clock, Globe2, ChevronRight,
+  Bot, DollarSign, Rocket, Megaphone, Users, ShoppingCart,
+  Dumbbell, Film, Bitcoin, Laptop, BriefcaseBusiness, CircleDollarSign,
+} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/chat/trends")({
   component: TrendsPage,
 });
 
-const STARTERS = [
-  "Indian startup funding this week",
-  "Shark Tank India latest viral pitch",
-  "D2C brand going viral 2026",
-  "Indian gym & fitness controversies",
-  "Recent Bollywood box office surprises",
-  "Crypto / fintech India this month",
-  "Tech layoffs India recent",
-  "21-year-old founders India recent funding",
-];
+const CATEGORY_META: Record<
+  TrendCategory | "All",
+  { icon: React.ElementType; grad: string; emoji: string }
+> = {
+  All: { icon: Globe2, grad: "from-slate-500 to-slate-700", emoji: "🌍" },
+  AI: { icon: Bot, grad: "from-violet-500 to-purple-700", emoji: "🤖" },
+  Finance: { icon: CircleDollarSign, grad: "from-emerald-500 to-teal-600", emoji: "💰" },
+  Startups: { icon: Rocket, grad: "from-pink-500 to-rose-600", emoji: "🚀" },
+  Funding: { icon: DollarSign, grad: "from-amber-400 to-orange-500", emoji: "💸" },
+  Marketing: { icon: Megaphone, grad: "from-fuchsia-500 to-pink-600", emoji: "📣" },
+  "Creator Economy": { icon: Users, grad: "from-sky-500 to-blue-600", emoji: "🎥" },
+  Tech: { icon: Laptop, grad: "from-blue-500 to-cyan-600", emoji: "💻" },
+  Business: { icon: BriefcaseBusiness, grad: "from-indigo-500 to-violet-600", emoji: "📊" },
+  Ecommerce: { icon: ShoppingCart, grad: "from-lime-500 to-green-600", emoji: "🛒" },
+  Fitness: { icon: Dumbbell, grad: "from-orange-400 to-red-500", emoji: "💪" },
+  Entertainment: { icon: Film, grad: "from-rose-500 to-pink-600", emoji: "🎬" },
+  Crypto: { icon: Bitcoin, grad: "from-yellow-400 to-amber-500", emoji: "₿" },
+};
 
-function TrendsPage() {
+const SORT_OPTIONS = [
+  { value: "newest", label: "Newest" },
+  { value: "hottest", label: "🔥 Hottest" },
+  { value: "freshest", label: "⚡ Freshest" },
+] as const;
+
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return `${d}d ago`;
+}
+
+function FreshnessChip({ score }: { score: number }) {
+  if (score >= 85) return <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 rounded-full px-2 py-0.5">⚡ Live</span>;
+  if (score >= 65) return <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">🔥 Hot</span>;
+  return <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold bg-slate-100 text-slate-500 rounded-full px-2 py-0.5">📅 Recent</span>;
+}
+
+function ScoreBar({ value, color }: { value: number; color: string }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <div className="flex-1 h-1 rounded-full bg-border overflow-hidden">
+        <div className={`h-full rounded-full ${color}`} style={{ width: `${value}%` }} />
+      </div>
+      <span className="text-[10px] text-muted-foreground w-6 text-right">{value}</span>
+    </div>
+  );
+}
+
+function TrendCard({ trend, onUse }: { trend: GlobalTrend; onUse: (t: GlobalTrend) => void }) {
+  const meta = CATEGORY_META[trend.category as TrendCategory] ?? CATEGORY_META["All"];
+  const Icon = meta.icon;
+  return (
+    <div className="group flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 hover:border-primary/40 hover:shadow-md transition-all duration-200">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className={`h-8 w-8 rounded-lg bg-gradient-to-br ${meta.grad} text-white flex items-center justify-center shrink-0`}>
+            <Icon className="h-4 w-4" />
+          </span>
+          <div>
+            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">{trend.category}</span>
+            <FreshnessChip score={trend.freshness} />
+          </div>
+        </div>
+        <span className="text-[10px] text-muted-foreground whitespace-nowrap">{timeAgo(trend.synced_at)}</span>
+      </div>
+
+      {/* Title */}
+      <p className="font-semibold text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+        {trend.title}
+      </p>
+
+      {/* Summary */}
+      {trend.summary && (
+        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">{trend.summary}</p>
+      )}
+
+      {/* Scores */}
+      <div className="space-y-1">
+        <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+          <span>Popularity</span><span>Freshness</span>
+        </div>
+        <div className="flex gap-3">
+          <div className="flex-1"><ScoreBar value={trend.popularity} color="bg-primary" /></div>
+          <div className="flex-1"><ScoreBar value={trend.freshness} color="bg-amber-400" /></div>
+        </div>
+      </div>
+
+      {/* Source */}
+      {trend.source_name && (
+        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+          <Globe2 className="h-3 w-3" />
+          <span className="truncate">{trend.source_name}</span>
+          {trend.source_url && (
+            <a href={trend.source_url} target="_blank" rel="noopener noreferrer" className="ml-auto text-primary hover:underline shrink-0">↗</a>
+          )}
+        </div>
+      )}
+
+      {/* CTA */}
+      <Button
+        size="sm"
+        className="w-full gap-1.5 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:opacity-90 text-white mt-auto"
+        onClick={() => onUse(trend)}
+      >
+        <Sparkles className="h-3.5 w-3.5" />
+        Generate content
+        <ChevronRight className="h-3.5 w-3.5 ml-auto" />
+      </Button>
+    </div>
+  );
+}
+
+function EmptyState({ onSync, syncing }: { onSync: () => void; syncing: boolean }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-center">
+      <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-white mb-4">
+        <Globe2 className="h-8 w-8" />
+      </div>
+      <h3 className="font-bold text-lg mb-1">No trends synced yet</h3>
+      <p className="text-sm text-muted-foreground max-w-xs mb-6">
+        Hit <strong>Sync Trends</strong> to pull the latest global stories from across the web — AI, Finance, Startups, Funding and more.
+      </p>
+      <Button onClick={onSync} disabled={syncing} className="gap-2 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white">
+        {syncing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+        {syncing ? "Syncing…" : "Sync Trends Now"}
+      </Button>
+    </div>
+  );
+}
+
+export function TrendsPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const create = useServerFn(createThread);
-  const [custom, setCustom] = useState("");
+  const createThreadFn = useServerFn(createThread);
+  const listTrendsFn = useServerFn(listGlobalTrends);
+  const lastRunFn = useServerFn(getLastSyncRun);
 
-  const start = useMutation({
+  const [activeCategory, setActiveCategory] = useState<TrendCategory | "All">("All");
+  const [sort, setSort] = useState<"newest" | "hottest" | "freshest">("newest");
+  const [custom, setCustom] = useState("");
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+
+  // Get auth token once
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setToken(data.session?.access_token ?? null);
+    });
+  }, []);
+
+  const trendsQuery = useQuery({
+    queryKey: ["global_trends", activeCategory, sort],
+    queryFn: () => listTrendsFn({ data: { category: activeCategory === "All" ? undefined : activeCategory, sort, limit: 60 } }),
+    staleTime: 2 * 60 * 1000, // 2 min cache
+  });
+
+  const lastRunQuery = useQuery({
+    queryKey: ["last_sync_run"],
+    queryFn: () => lastRunFn(),
+    refetchInterval: syncing ? 3000 : false,
+  });
+
+  const startContent = useMutation({
     mutationFn: async (query: string) => {
-      const brief = `Search trending topics for: "${query}". Score top 3 and generate a full content pack for the most viral.`;
-      const t = await create({ data: { title: query.slice(0, 60), contextBrief: brief } });
+      const brief = `Search live sources for: "${query}". Find the most viral angle, verify with sources, and generate a full detailed content pack.`;
+      const t = await createThreadFn({ data: { title: query.slice(0, 60), contextBrief: brief } });
       return { t, brief };
     },
     onSuccess: ({ t, brief }) => {
@@ -41,52 +199,209 @@ function TrendsPage() {
     },
   });
 
+  const handleSync = async () => {
+    if (!token) { setSyncMsg("Not authenticated."); return; }
+    setSyncing(true);
+    setSyncMsg(null);
+    try {
+      const res = await fetch("/api/trends-sync", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const json = await res.json() as { ok?: boolean; added?: number; error?: string };
+      if (json.ok) {
+        setSyncMsg(`✅ Synced! ${json.added ?? 0} new trends added.`);
+        await qc.invalidateQueries({ queryKey: ["global_trends"] });
+        await qc.invalidateQueries({ queryKey: ["last_sync_run"] });
+      } else {
+        setSyncMsg(`⚠️ ${json.error ?? "Sync failed"}`);
+      }
+    } catch (e) {
+      setSyncMsg(`❌ ${e instanceof Error ? e.message : "Network error"}`);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleSyncCategory = async (cat: TrendCategory) => {
+    if (!token) return;
+    setSyncing(true);
+    setSyncMsg(null);
+    try {
+      const res = await fetch("/api/trends-sync", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ categories: [cat] }),
+      });
+      const json = await res.json() as { ok?: boolean; added?: number; error?: string };
+      if (json.ok) {
+        setSyncMsg(`✅ ${cat} synced — ${json.added ?? 0} new trends.`);
+        await qc.invalidateQueries({ queryKey: ["global_trends"] });
+        await qc.invalidateQueries({ queryKey: ["last_sync_run"] });
+      } else {
+        setSyncMsg(`⚠️ ${json.error ?? "Sync failed"}`);
+      }
+    } catch (e) {
+      setSyncMsg(`❌ ${e instanceof Error ? e.message : "Network error"}`);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const lastRun = lastRunQuery.data;
+  const trends = (trendsQuery.data ?? []) as GlobalTrend[];
+  const allCategories: (TrendCategory | "All")[] = ["All", ...TREND_CATEGORIES];
+
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
-            <TrendingUp className="h-5 w-5" />
+    <div className="h-full overflow-y-auto bg-[#fafaf7]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-5">
+
+        {/* ── Header ── */}
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-white">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">Global Trends</h1>
+              <p className="text-sm text-muted-foreground">
+                Real-time intelligence from across the web — AI, Finance, Startups, Funding & more.
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Trends</h1>
-            <p className="text-muted-foreground text-sm">
-              Pick a category — Vidzo searches live sources and builds a verified pack.
-            </p>
+
+          {/* Sync controls */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {lastRun && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-card border border-border rounded-lg px-3 py-1.5">
+                <Clock className="h-3.5 w-3.5" />
+                <span>Last synced {timeAgo(lastRun.finished_at ?? lastRun.started_at)}</span>
+                <span className={`ml-1 h-2 w-2 rounded-full ${lastRun.status === "success" ? "bg-emerald-500" : lastRun.status === "error" ? "bg-red-500" : "bg-amber-400 animate-pulse"}`} />
+              </div>
+            )}
+            <Button
+              onClick={handleSync}
+              disabled={syncing}
+              className="gap-2 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:opacity-90 text-white"
+            >
+              {syncing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+              {syncing ? "Syncing…" : "Sync Trends"}
+            </Button>
           </div>
         </div>
 
+        {/* Sync message */}
+        {syncMsg && (
+          <div className="rounded-xl border border-border bg-card px-4 py-2.5 text-sm">{syncMsg}</div>
+        )}
+
+        {/* ── Custom search bar ── */}
         <form
-          className="flex gap-2 mb-6"
+          className="flex gap-2"
           onSubmit={(e) => {
             e.preventDefault();
-            if (custom.trim()) start.mutate(custom.trim());
+            if (custom.trim()) startContent.mutate(custom.trim());
           }}
         >
           <Input
-            placeholder="Or type your own trend search…"
+            placeholder="Search any topic — Vidzo finds live sources and builds a content pack…"
             value={custom}
             onChange={(e) => setCustom(e.target.value)}
+            className="bg-white"
           />
-          <Button type="submit" disabled={!custom.trim() || start.isPending}>
-            <Sparkles className="h-4 w-4 mr-1" /> Find & generate
+          <Button type="submit" disabled={!custom.trim() || startContent.isPending} className="shrink-0">
+            <Sparkles className="h-4 w-4 mr-1.5" /> Generate
           </Button>
         </form>
 
-        <div className="grid sm:grid-cols-2 gap-3">
-          {STARTERS.map((s) => (
+        {/* ── Category pills ── */}
+        <div className="flex gap-2 flex-wrap">
+          {allCategories.map((cat) => {
+            const meta = CATEGORY_META[cat];
+            const Icon = meta.icon;
+            const active = activeCategory === cat;
+            return (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-150 ${
+                  active
+                    ? `bg-gradient-to-r ${meta.grad} text-white border-transparent shadow-sm`
+                    : "bg-white border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {cat}
+              </button>
+            );
+          })}
+
+          {/* Per-category sync */}
+          {activeCategory !== "All" && (
             <button
-              key={s}
-              onClick={() => start.mutate(s)}
-              disabled={start.isPending}
-              className="text-left p-5 rounded-xl border border-border bg-card hover:border-primary hover:shadow-md transition-all group"
+              onClick={() => handleSyncCategory(activeCategory as TrendCategory)}
+              disabled={syncing}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-dashed border-primary text-primary bg-white hover:bg-primary/5 transition-all"
             >
-              <TrendingUp className="h-4 w-4 text-primary mb-2 group-hover:scale-110 transition-transform" />
-              <div className="font-medium">{s}</div>
-              <div className="mt-1 text-xs text-muted-foreground">Tap to search + generate →</div>
+              {syncing ? <RefreshCw className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+              Sync {activeCategory}
             </button>
-          ))}
+          )}
         </div>
+
+        {/* ── Sort + stats bar ── */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-1">
+            {SORT_OPTIONS.map((o) => (
+              <button
+                key={o.value}
+                onClick={() => setSort(o.value)}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                  sort === o.value
+                    ? "bg-foreground text-background"
+                    : "bg-card border border-border text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+          <span className="text-xs text-muted-foreground">
+            {trendsQuery.isLoading ? "Loading…" : `${trends.length} trends`}
+          </span>
+        </div>
+
+        {/* ── Trend grid ── */}
+        {trendsQuery.isLoading ? (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="rounded-2xl border border-border bg-card p-4 animate-pulse space-y-3">
+                <div className="h-8 w-8 rounded-lg bg-border" />
+                <div className="h-4 w-3/4 bg-border rounded" />
+                <div className="h-3 w-full bg-border rounded" />
+                <div className="h-3 w-5/6 bg-border rounded" />
+                <div className="h-8 w-full bg-border rounded-lg mt-2" />
+              </div>
+            ))}
+          </div>
+        ) : trends.length === 0 ? (
+          <EmptyState onSync={handleSync} syncing={syncing} />
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {trends.map((tr) => (
+              <TrendCard
+                key={tr.id}
+                trend={tr}
+                onUse={(t) =>
+                  startContent.mutate(
+                    `${t.category} trend: "${t.title}". ${t.summary ? `Context: ${t.summary}` : ""} Search live sources and generate a full detailed content pack.`,
+                  )
+                }
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
