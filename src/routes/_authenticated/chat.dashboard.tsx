@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getDashboardStats, listScripts, listThreads, createThread } from "@/lib/threads.functions";
+import { getDashboardStats, listScripts, listThreads } from "@/lib/threads.functions";
 import { Sparkles, TrendingUp, Package, Wand2, BookOpen, FileText, ArrowRight, Rocket, Trophy, ShoppingBag, Dumbbell, Film, Coins, Laptop, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
@@ -30,12 +30,11 @@ const TREND_CARDS = [
 
 function Dashboard() {
   const navigate = useNavigate();
-  const qc = useQueryClient();
   const statsFn = useServerFn(getDashboardStats);
   const scriptsFn = useServerFn(listScripts);
   const threadsFn = useServerFn(listThreads);
-  const create = useServerFn(createThread);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
 
   const [userName, setUserName] = useState<string | null>(null);
   const [brief, setBrief] = useState("");
@@ -56,17 +55,12 @@ function Dashboard() {
   const scripts = useQuery({ queryKey: ["scripts"], queryFn: () => scriptsFn() });
   const threads = useQuery({ queryKey: ["threads"], queryFn: () => threadsFn() });
 
-  const startMut = useMutation({
-    mutationFn: async (firstMessage: string) => {
-      const t = await create({ data: { title: firstMessage.slice(0, 60), contextBrief: firstMessage } });
-      return { thread: t, firstMessage };
-    },
-    onSuccess: ({ thread, firstMessage }) => {
-      qc.invalidateQueries({ queryKey: ["threads"] });
-      sessionStorage.setItem(`pending:${thread!.id}`, firstMessage);
-      navigate({ to: "/chat/$threadId", params: { threadId: thread!.id } });
-    },
-  });
+  const goToNewThread = (prompt: string) => {
+    navigate({
+      to: "/chat/new",
+      search: { prompt, title: prompt.slice(0, 60) },
+    });
+  };
 
   const handleGenerate = () => {
     const idea = brief.trim();
@@ -75,13 +69,14 @@ function Dashboard() {
       return;
     }
     const fullPrompt = `Create a ${length} ${format} in ${language} with a ${tone} tone based on this idea: ${idea}.`;
-    startMut.mutate(fullPrompt);
+    goToNewThread(fullPrompt);
   };
 
   const handleTrend = (title: string) => {
     const fullPrompt = `Trend topic: "${title}". Search live sources and build a ${length} ${format} in ${language} with a ${tone} tone for this topic.`;
-    startMut.mutate(fullPrompt);
+    goToNewThread(fullPrompt);
   };
+
 
   // Compute REAL average quality from the user's actual generated packs.
   const scriptItems = (scripts.data ?? []) as Array<{ id: string; topic: string; data: unknown }>;
@@ -155,9 +150,9 @@ function Dashboard() {
                   <ChipRow label="Language" options={LANGUAGES} value={language} onChange={(v) => setLanguage(v as typeof language)} />
                 </div>
                 <div className="mt-5 flex flex-wrap gap-2">
-                  <Button onClick={handleGenerate} disabled={startMut.isPending} className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:opacity-90 text-white gap-2">
+                  <Button onClick={handleGenerate} className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:opacity-90 text-white gap-2">
                     <Wand2 className="h-4 w-4" />
-                    {startMut.isPending ? "Starting…" : "Generate"}
+                    Generate
                   </Button>
                   <Button variant="outline" onClick={() => document.getElementById("dash-trends")?.scrollIntoView({ behavior: "smooth" })} className="bg-white gap-2">
                     <TrendingUp className="h-4 w-4" /> Use a trend
@@ -180,7 +175,7 @@ function Dashboard() {
               </div>
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {TREND_CARDS.map((tr) => (
-                  <button key={tr.t} onClick={() => handleTrend(tr.t)} disabled={startMut.isPending} className="text-left rounded-xl border border-border bg-white p-3 hover:border-foreground/30 transition-colors">
+                  <button key={tr.t} onClick={() => handleTrend(tr.t)} className="text-left rounded-xl border border-border bg-white p-3 hover:border-foreground/30 hover:shadow-sm active:scale-[0.98] transition-all">
                     <div className="flex items-start justify-between">
                       <div className={`h-9 w-9 rounded-lg bg-gradient-to-br ${tr.grad} text-white flex items-center justify-center`}>
                         <tr.icon className="h-4 w-4" />
