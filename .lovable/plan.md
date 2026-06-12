@@ -1,78 +1,53 @@
-# Vidzo — Full Upgrade Plan
 
-## 1. Brand: Reel Engine → Vidzo
-- Rename across `src/routes/index.tsx`, `auth.tsx`, `__root.tsx` (`<head>` title/meta), `chat.tsx` sidebar header, `package.json`, `public/llms.txt`.
-- Add **Roboto Flex** via Google Fonts in `src/routes/__root.tsx` `<head>`; set as default in `src/styles.css` (`--font-sans`, `body { font-family }`). Replace any other font families.
+# Vidzo V2 — Phased Overhaul Plan
 
-## 2. New AI-Ready Content Pack (replaces current "script-only" output)
-Replace `ScriptSchema` in `src/routes/api/chat.ts` + `ScriptCard` with a richer schema. Each generation = a complete "production brick set":
+This is a very large scope. To ship it safely without breaking the working chat/AI pipeline, I'll split it into **5 phases**. Each phase is shippable on its own — you can review after each before I move to the next.
 
-**Schema fields:**
-- `topic`, `niche`, `format` (reel/short/long/etc — inferred from chat context), `whyViral`
-- `script.dialogue` — clean copy-pasteable voiceover text (no stage directions inline), ElevenLabs-ready
-- `script.voiceDirection` — separate field: tone, pace, emotion, pauses (so dialogue stays clean)
-- `script.suggestedElevenLabsVoice` — voice name + voice_id from the known catalog
-- `visuals[]` — per beat, each with:
-  - `beat` (e.g. "0–3s hook")
-  - `imagePrompt` — detailed prompt ready for Midjourney/DALL·E/Gemini/etc
-  - `videoPrompt` — detailed prompt ready for Sora/Runway/Veo/Kling
-  - `onScreenText`
-- `thumbnailPrompts[]` — 3 full image-gen prompts (not one-liners), each with composition, lighting, text overlay
-- `caption`, `hashtags[]`
-- `sources[]` — array of `{claim, url, publisher}`. **Required for every factual claim.**
+Tell me which phases to run, in what order, or "do all in order".
 
-## 3. Validation Layer (silently drops unverified)
-New server step before `generate_script` returns:
-1. Model drafts content.
-2. **Validator pass** (second `generateText` call, low temp) receives draft + the firecrawl search results from earlier in the conversation. It returns the same object with any claim lacking a matching source rewritten to a safe, source-backed version, or removed.
-3. If after validation a claim has no source, it is removed and the surrounding sentence is rewritten. `sources[]` only contains verified entries.
-4. If the whole topic has zero verifiable sources, tool returns `{ insufficientSources: true }` and the assistant tells the user to pick another angle — never fabricates.
+---
 
-System prompt updated: "Every numeric claim, name, funding figure, date must come from a tool-returned source. If not in sources, do not include it."
+## Phase 1 — Critical fixes + Landing/Dashboard polish (fast, no schema)
+1. **Auth flash fix**: hydrate Supabase session in the router root before first paint; if authenticated, `/` redirects straight to `/chat/dashboard` (no landing flash).
+2. **Dashboard click delay**: trend/format cards navigate immediately to a new thread route with an optimistic skeleton; thread creation happens in the background, message dispatched once ready. Sub-100ms perceived response.
+3. **Landing hero cards**: enforce equal dimensions / spacing with CSS grid auto-rows, keep the scattered offsets via `translate` only. Fix mobile clipping.
+4. **Light/Dark theme switcher**: token-based, persisted in `localStorage`, applied via `data-theme` on `<html>`. Switcher in header + dashboard.
+5. **Typography**: Playfair Display for hero/section headlines, Inter for body. Wired via `src/styles.css`.
 
-## 4. Chat Context Locking
-- On thread create, capture the first user message as `thread.context_brief` (new column).
-- System prompt is dynamically built: `MASTER_PROMPT + "\n\nLocked brief for this chat: <context_brief>. All subsequent generations must serve this brief."`
-- Migration: add `context_brief text` to `threads`.
+## Phase 2 — Mobile-first + Library rebuild
+1. **Bottom nav** (mobile only): Home / Trends / Library / Create / Settings. Sidebar stays on desktop.
+2. **Responsive audit pass** on dashboard, chat, library, trends, presets.
+3. **Library rebuild**: searchable + filterable card grid (thumbnail, title, date, format, platform, quality score). Actions: Open, Duplicate, Delete, Favorite, Export (JSON), Share (copy link). Favorites stored on `scripts.data.favorite`.
 
-## 5. Output UI (`ScriptCard` → `ContentPackCard`)
-Sectioned card with copy-to-clipboard on every block:
-- **Voiceover (ElevenLabs ready)** — dialogue + "Copy for ElevenLabs" button + voice suggestion chip
-- **Visuals** — per beat, tabs `[Image prompt | Video prompt]`, each with copy
-- **Thumbnails** — 3 prompt cards with copy
-- **Caption + hashtags**
-- **Sources** — collapsible list of `{publisher → url}` links
-Remove the "Verify before posting" section entirely (replaced by sources).
+## Phase 3 — Auth expansion + Session memory
+1. **Email auth**: sign up, sign in, forgot password, reset password page (`/reset-password`), remember-me/session persistence. Google stays via the Lovable broker.
+2. **Session memory table** (`user_settings`): theme, language, default tone/length/format, last-used trend, AI provider preference.
 
-## 6. Industry-Grade Dashboard
-New route `src/routes/_authenticated/dashboard.tsx` becomes the default landing after login (redirect `/chat` → `/dashboard` for the index; chats remain accessible). Layout: sidebar (Dashboard / Chats / Library / Trends / Presets / Settings) + main grid.
+## Phase 4 — Trend engine + Remix
+1. **Global hourly trend cache** (`trend_snapshots` table): scheduled `pg_cron` job hits a public `/api/public/refresh-trends` route that uses Firecrawl + a small curated source list (YouTube/Reddit/X/HN/etc.) and stores normalized cards (title, summary, category, velocity, source, confidence, emoji, color). All users read the same global feed.
+2. **Rich trend cards** with color/emoji/category/velocity/confidence chips.
+3. **Trend detail page** `/chat/trends/$id`: summary, why-trending, sources, audience, growth, risk, suggested formats.
+4. **Remix button**: opens a new thread with a hidden remix-prompt that forbids reusing the original angle and forces a fresh hook/positioning.
 
-Sections:
-- **Stats row** — total scripts, scripts this week, credits used (from `ai_usage` count), avg sources/script
-- **Library** — grid of saved scripts from `scripts` table, search, filter by niche, folder tags. Add `folder text` column to `scripts` via migration.
-- **Trends feed** — auto-runs `search_trending_topics` for the user's saved niches every visit (cached 1h in localStorage), one-click "Generate pack" → creates a thread with that topic.
-- **Brand/voice presets** — new table `presets (id, user_id, name, niche, audience, tone, language, default_voice_id)`. CRUD UI. Active preset gets injected into the system prompt for every new chat.
+## Phase 5 — Marketing mode + Prompt Engine 2.0 + Provider layer
+1. **Marketing Pack mode** alongside Content Pack: dedicated form (product, features, audience, competitors, offer, CTA, URL) → new server tool `generate_marketing_pack` returning positioning, hooks, UGC/founder/problem-solution/demo scripts, thumbnails, captions, hashtags.
+2. **Prompt Engine 2.0**: server-side orchestrator that composes user prompt + format/tone/length/language + trend + session memory + history; runs a hidden validation pass (hook, script, voice, thumbnails, image/video prompts, captions, hashtags, sources, facts) and auto-regenerates missing fields. Nothing internal exposed in UI.
+3. **Crawled-URL hiding** in chat (already partly done — extend to all tool parts; only show "Researched N sources" + final source list inside the pack).
+4. **AI provider abstraction**: `src/lib/ai-providers.server.ts` selects between Lovable AI (default), OpenAI, Anthropic, Gemini, OpenRouter based on `user_settings.ai_provider` + optional user-supplied keys (stored via secrets). Settings UI to choose provider + model.
 
-Migrations needed:
-- `threads.context_brief text`
-- `scripts.folder text`
-- `presets` table (full CRUD with RLS + GRANTs)
-- `ai_usage` table optional — or derive from `messages` count
+---
 
-## 7. Landing Page Redesign (Schbang-style, colorful)
-Rewrite `src/routes/index.tsx`:
-- Generate 3 hero images (premium model): bold media-company aesthetic, color-blocked abstract collages with Vidzo brand colors (electric blue, hot magenta, acid yellow, off-white).
-- Sections: oversized animated headline → "what Vidzo does" 3-column → live ticker of generated reel topics → case-study cards (use generated images) → testimonials placeholder → giant **VIDZO** wordmark at the bottom (full-bleed, Roboto Flex variable weight animated on scroll via GSAP).
-- GSAP: ScrollTrigger pinned sections, character-by-character headline reveal, parallax color blocks, marquee.
-- Keep Roboto Flex everywhere; use variable axis (`wght`, `wdth`) for the giant footer wordmark.
+## Technical notes (for the technical reviewer)
+- New tables: `user_settings(user_id pk, theme, language, default_format, default_tone, default_length, ai_provider, ai_model, updated_at)`, `trend_snapshots(id, category, title, summary, source_url, source_name, velocity, confidence, emoji, color, payload jsonb, fetched_at, expires_at)`. Both with GRANTs + RLS (`user_settings` user-scoped, `trend_snapshots` readable by `authenticated`, writable by `service_role`).
+- New server fns: `getUserSettings`, `updateUserSettings`, `listTrendSnapshots`, `getTrendSnapshot`, `generateMarketingPack` (tool).
+- New public route: `/api/public/refresh-trends` (HMAC via anon key per scheduled jobs pattern).
+- New routes: `/chat/marketing`, `/chat/trends/$id`, `/chat/settings`, `/reset-password`.
+- Dashboard click latency fix: pre-create thread on hover/idle, or navigate first to `/chat/new?prompt=...` which mounts skeleton + creates thread in parallel.
 
-## Technical Notes
-- All AI calls stay in `src/routes/api/chat.ts` using existing Lovable AI Gateway provider.
-- Validation pass uses same `google/gemini-3-flash-preview` model with `generateText` (non-streaming) inside the `generate_script` tool's `execute`.
-- Hero images saved to `src/assets/landing-*.jpg`.
-- No new dependencies needed beyond what's installed (`gsap` already added).
+---
 
-## Out of Scope (ask later if wanted)
-- Direct ElevenLabs API call from the app (currently we output copy-pasteable text only).
-- Direct video/image generation inside Vidzo (we output prompts only, per your spec).
-- Stripe/credits billing UI beyond the usage counter.
+## What I need from you
+1. **Approve phases** — all 5, or pick a subset to start.
+2. **AI providers**: confirm we add OpenAI/Anthropic/Gemini/OpenRouter as bring-your-own-key (stored as secrets). OK?
+3. **Trend sources**: Firecrawl is already connected. OK to start with a curated list (YouTube trending, Reddit r/popular + niche subs, HackerNews, Product Hunt, X via nitter mirrors) and expand later?
+4. **Theme default**: light or dark?
