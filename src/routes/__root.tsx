@@ -95,7 +95,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wdth,wght@8..144,25..151,100..1000&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wdth,wght@8..144,25..151,100..1000&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Inter:wght@300..800&display=swap",
+      },
+    ],
+    scripts: [
+      {
+        children:
+          "(function(){try{var k='vidzo-theme';var v=localStorage.getItem(k);if(!v){v=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}var r=document.documentElement;if(v==='dark')r.classList.add('dark');r.style.colorScheme=v;}catch(e){}})();",
       },
     ],
   }),
