@@ -34,10 +34,12 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
+  void _navigate;
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const rootRef = useRef<HTMLDivElement>(null);
+
 
 
   useEffect(() => {
