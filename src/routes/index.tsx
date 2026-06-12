@@ -170,9 +170,9 @@ function Landing() {
               );
             })()}
           </div>
-          </div>
         </div>
       </section>
+
 
       {/* INFINITE MARQUEE */}
       <section className="border-y border-border bg-foreground text-background overflow-hidden py-4">
