@@ -151,9 +151,9 @@ function Dashboard() {
                   <ChipRow label="Language" options={LANGUAGES} value={language} onChange={(v) => setLanguage(v as typeof language)} />
                 </div>
                 <div className="mt-5 flex flex-wrap gap-2">
-                  <Button onClick={handleGenerate} disabled={startMut.isPending} className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:opacity-90 text-white gap-2">
+                  <Button onClick={handleGenerate} className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:opacity-90 text-white gap-2">
                     <Wand2 className="h-4 w-4" />
-                    {startMut.isPending ? "Starting…" : "Generate"}
+                    Generate
                   </Button>
                   <Button variant="outline" onClick={() => document.getElementById("dash-trends")?.scrollIntoView({ behavior: "smooth" })} className="bg-white gap-2">
                     <TrendingUp className="h-4 w-4" /> Use a trend
@@ -176,7 +176,7 @@ function Dashboard() {
               </div>
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {TREND_CARDS.map((tr) => (
-                  <button key={tr.t} onClick={() => handleTrend(tr.t)} disabled={startMut.isPending} className="text-left rounded-xl border border-border bg-white p-3 hover:border-foreground/30 transition-colors">
+                  <button key={tr.t} onClick={() => handleTrend(tr.t)} className="text-left rounded-xl border border-border bg-white p-3 hover:border-foreground/30 hover:shadow-sm active:scale-[0.98] transition-all">
                     <div className="flex items-start justify-between">
                       <div className={`h-9 w-9 rounded-lg bg-gradient-to-br ${tr.grad} text-white flex items-center justify-center`}>
                         <tr.icon className="h-4 w-4" />
