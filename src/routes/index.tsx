@@ -41,7 +41,6 @@ function Landing() {
 
 
   useEffect(() => {
-    if (signedIn) return;
     let mounted = true;
     import("gsap/ScrollTrigger").then(({ ScrollTrigger }) => {
       if (!mounted) return;
@@ -72,7 +71,8 @@ function Landing() {
       return () => ctx.revert();
     });
     return () => { mounted = false; };
-  }, [signedIn]);
+  }, []);
+
 
   const openAuth = (mode: "signin" | "signup") => {
     setAuthMode(mode);
