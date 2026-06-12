@@ -1,15 +1,22 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createThread } from "@/lib/threads.functions";
-import { listGlobalTrends, getLastSyncRun, TREND_CATEGORIES, type TrendCategory, type GlobalTrend } from "@/lib/trends.functions";
+import {
+  listGlobalTrends,
+  getLastSyncRun,
+  TREND_CATEGORIES,
+  type TrendCategory,
+  type GlobalTrend,
+} from "@/lib/trends.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   TrendingUp, Sparkles, RefreshCw, Zap, Clock, Globe2, ChevronRight,
   Bot, DollarSign, Rocket, Megaphone, Users, ShoppingCart,
   Dumbbell, Film, Bitcoin, Laptop, BriefcaseBusiness, CircleDollarSign,
+  Search, Tag, X, Plus,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -54,9 +61,23 @@ function timeAgo(iso: string): string {
 }
 
 function FreshnessChip({ score }: { score: number }) {
-  if (score >= 85) return <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 rounded-full px-2 py-0.5">⚡ Live</span>;
-  if (score >= 65) return <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">🔥 Hot</span>;
-  return <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold bg-slate-100 text-slate-500 rounded-full px-2 py-0.5">📅 Recent</span>;
+  if (score >= 85)
+    return (
+      <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 rounded-full px-2 py-0.5">
+        ⚡ Live
+      </span>
+    );
+  if (score >= 65)
+    return (
+      <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">
+        🔥 Hot
+      </span>
+    );
+  return (
+    <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold bg-slate-100 text-slate-500 rounded-full px-2 py-0.5">
+      📅 Recent
+    </span>
+  );
 }
 
 function ScoreBar({ value, color }: { value: number; color: string }) {
@@ -71,57 +92,72 @@ function ScoreBar({ value, color }: { value: number; color: string }) {
 }
 
 function TrendCard({ trend, onUse }: { trend: GlobalTrend; onUse: (t: GlobalTrend) => void }) {
-  const meta = CATEGORY_META[trend.category as TrendCategory] ?? CATEGORY_META["All"];
+  const meta =
+    CATEGORY_META[trend.category as TrendCategory] ?? CATEGORY_META["All"];
   const Icon = meta.icon;
   return (
     <div className="group flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 hover:border-primary/40 hover:shadow-md transition-all duration-200">
-      {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className={`h-8 w-8 rounded-lg bg-gradient-to-br ${meta.grad} text-white flex items-center justify-center shrink-0`}>
+          <span
+            className={`h-8 w-8 rounded-lg bg-gradient-to-br ${meta.grad} text-white flex items-center justify-center shrink-0`}
+          >
             <Icon className="h-4 w-4" />
           </span>
           <div>
-            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">{trend.category}</span>
+            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+              {trend.category}
+            </span>
             <FreshnessChip score={trend.freshness} />
           </div>
         </div>
-        <span className="text-[10px] text-muted-foreground whitespace-nowrap">{timeAgo(trend.synced_at)}</span>
+        <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+          {timeAgo(trend.synced_at)}
+        </span>
       </div>
 
-      {/* Title */}
       <p className="font-semibold text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors">
         {trend.title}
       </p>
 
-      {/* Summary */}
       {trend.summary && (
-        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">{trend.summary}</p>
+        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
+          {trend.summary}
+        </p>
       )}
 
-      {/* Scores */}
       <div className="space-y-1">
         <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-          <span>Popularity</span><span>Freshness</span>
+          <span>Popularity</span>
+          <span>Freshness</span>
         </div>
         <div className="flex gap-3">
-          <div className="flex-1"><ScoreBar value={trend.popularity} color="bg-primary" /></div>
-          <div className="flex-1"><ScoreBar value={trend.freshness} color="bg-amber-400" /></div>
+          <div className="flex-1">
+            <ScoreBar value={trend.popularity} color="bg-primary" />
+          </div>
+          <div className="flex-1">
+            <ScoreBar value={trend.freshness} color="bg-amber-400" />
+          </div>
         </div>
       </div>
 
-      {/* Source */}
       {trend.source_name && (
         <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
           <Globe2 className="h-3 w-3" />
           <span className="truncate">{trend.source_name}</span>
           {trend.source_url && (
-            <a href={trend.source_url} target="_blank" rel="noopener noreferrer" className="ml-auto text-primary hover:underline shrink-0">↗</a>
+            <a
+              href={trend.source_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-auto text-primary hover:underline shrink-0"
+            >
+              ↗
+            </a>
           )}
         </div>
       )}
 
-      {/* CTA */}
       <Button
         size="sm"
         className="w-full gap-1.5 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:opacity-90 text-white mt-auto"
@@ -143,12 +179,83 @@ function EmptyState({ onSync, syncing }: { onSync: () => void; syncing: boolean 
       </div>
       <h3 className="font-bold text-lg mb-1">No trends synced yet</h3>
       <p className="text-sm text-muted-foreground max-w-xs mb-6">
-        Hit <strong>Sync Trends</strong> to pull the latest global stories from across the web — AI, Finance, Startups, Funding and more.
+        Hit <strong>Sync Trends</strong> to pull the latest global stories from across the web.
       </p>
-      <Button onClick={onSync} disabled={syncing} className="gap-2 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white">
+      <Button
+        onClick={onSync}
+        disabled={syncing}
+        className="gap-2 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white"
+      >
         {syncing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
         {syncing ? "Syncing…" : "Sync Trends Now"}
       </Button>
+    </div>
+  );
+}
+
+// ── Keyword pill input ───────────────────────────────────────────────
+function KeywordInput({
+  keywords,
+  onChange,
+}: {
+  keywords: string[];
+  onChange: (kws: string[]) => void;
+}) {
+  const [draft, setDraft] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const add = () => {
+    const v = draft.trim();
+    if (v && !keywords.includes(v)) onChange([...keywords, v]);
+    setDraft("");
+  };
+
+  const remove = (kw: string) => onChange(keywords.filter((k) => k !== kw));
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-1.5 flex-wrap border border-border rounded-xl bg-white px-3 py-2 min-h-[44px] cursor-text" onClick={() => inputRef.current?.focus()}>
+        <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+        {keywords.map((kw) => (
+          <span
+            key={kw}
+            className="inline-flex items-center gap-1 bg-violet-100 text-violet-700 text-xs font-medium rounded-full px-2.5 py-0.5"
+          >
+            {kw}
+            <button onClick={() => remove(kw)} className="hover:text-violet-900">
+              <X className="h-3 w-3" />
+            </button>
+          </span>
+        ))}
+        <input
+          ref={inputRef}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === ",") {
+              e.preventDefault();
+              add();
+            } else if (e.key === "Backspace" && !draft && keywords.length) {
+              onChange(keywords.slice(0, -1));
+            }
+          }}
+          placeholder={keywords.length === 0 ? "Add brand / keyword and press Enter…" : ""}
+          className="flex-1 min-w-[180px] outline-none text-sm bg-transparent placeholder:text-muted-foreground"
+        />
+        {draft && (
+          <button
+            onClick={add}
+            className="shrink-0 text-xs text-violet-600 hover:text-violet-800 font-medium flex items-center gap-0.5"
+          >
+            <Plus className="h-3 w-3" /> Add
+          </button>
+        )}
+      </div>
+      {keywords.length > 0 && (
+        <p className="text-[11px] text-muted-foreground pl-1">
+          {keywords.length} keyword{keywords.length !== 1 ? "s" : ""} — will be synced alongside selected categories
+        </p>
+      )}
     </div>
   );
 }
@@ -163,11 +270,15 @@ export function TrendsPage() {
   const [activeCategory, setActiveCategory] = useState<TrendCategory | "All">("All");
   const [sort, setSort] = useState<"newest" | "hottest" | "freshest">("newest");
   const [custom, setCustom] = useState("");
+  // syncing is a ref so refetchInterval closure always sees the latest value
+  const syncingRef = useRef(false);
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  // Custom brand/keyword inputs
+  const [customKeywords, setCustomKeywords] = useState<string[]>([]);
+  const [showKeywordInput, setShowKeywordInput] = useState(false);
 
-  // Get auth token once
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setToken(data.session?.access_token ?? null);
@@ -176,14 +287,23 @@ export function TrendsPage() {
 
   const trendsQuery = useQuery({
     queryKey: ["global_trends", activeCategory, sort],
-    queryFn: () => listTrendsFn({ data: { category: activeCategory === "All" ? undefined : activeCategory, sort, limit: 60 } }),
-    staleTime: 2 * 60 * 1000, // 2 min cache
+    queryFn: () =>
+      listTrendsFn({
+        data: {
+          category: activeCategory === "All" ? undefined : activeCategory,
+          sort,
+          limit: 60,
+        },
+      }),
+    staleTime: 2 * 60 * 1000,
   });
 
+  // FIX: use syncingRef.current so the interval closure always reads fresh value
   const lastRunQuery = useQuery({
     queryKey: ["last_sync_run"],
     queryFn: () => lastRunFn(),
-    refetchInterval: syncing ? 3000 : false,
+    // Poll every 3s while syncing; stop as soon as syncingRef is false
+    refetchInterval: () => (syncingRef.current ? 3000 : false),
   });
 
   const startContent = useMutation({
@@ -199,19 +319,28 @@ export function TrendsPage() {
     },
   });
 
-  const handleSync = async () => {
+  const doSync = async (opts: { categories?: string[]; keywords?: string[] } = {}) => {
     if (!token) { setSyncMsg("Not authenticated."); return; }
+    syncingRef.current = true;
     setSyncing(true);
     setSyncMsg(null);
+    // Kick off the refetch interval
+    qc.invalidateQueries({ queryKey: ["last_sync_run"] });
     try {
       const res = await fetch("/api/trends-sync", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify(opts),
       });
-      const json = await res.json() as { ok?: boolean; added?: number; error?: string };
+      const json = (await res.json()) as {
+        ok?: boolean;
+        added?: number;
+        errors?: string[];
+        error?: string;
+      };
       if (json.ok) {
-        setSyncMsg(`✅ Synced! ${json.added ?? 0} new trends added.`);
+        const errNote = json.errors?.length ? ` (${json.errors.length} partial errors)` : "";
+        setSyncMsg(`✅ Synced! ${json.added ?? 0} new trends added.${errNote}`);
         await qc.invalidateQueries({ queryKey: ["global_trends"] });
         await qc.invalidateQueries({ queryKey: ["last_sync_run"] });
       } else {
@@ -220,34 +349,23 @@ export function TrendsPage() {
     } catch (e) {
       setSyncMsg(`❌ ${e instanceof Error ? e.message : "Network error"}`);
     } finally {
+      // FIX: clear ref THEN state so the interval stops on next tick
+      syncingRef.current = false;
       setSyncing(false);
     }
   };
 
-  const handleSyncCategory = async (cat: TrendCategory) => {
-    if (!token) return;
-    setSyncing(true);
-    setSyncMsg(null);
-    try {
-      const res = await fetch("/api/trends-sync", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ categories: [cat] }),
-      });
-      const json = await res.json() as { ok?: boolean; added?: number; error?: string };
-      if (json.ok) {
-        setSyncMsg(`✅ ${cat} synced — ${json.added ?? 0} new trends.`);
-        await qc.invalidateQueries({ queryKey: ["global_trends"] });
-        await qc.invalidateQueries({ queryKey: ["last_sync_run"] });
-      } else {
-        setSyncMsg(`⚠️ ${json.error ?? "Sync failed"}`);
-      }
-    } catch (e) {
-      setSyncMsg(`❌ ${e instanceof Error ? e.message : "Network error"}`);
-    } finally {
-      setSyncing(false);
-    }
-  };
+  const handleSync = () =>
+    doSync({ keywords: customKeywords.length > 0 ? customKeywords : undefined });
+
+  const handleSyncCategory = (cat: TrendCategory) =>
+    doSync({
+      categories: [cat],
+      keywords: customKeywords.length > 0 ? customKeywords : undefined,
+    });
+
+  const handleKeywordSync = () =>
+    doSync({ keywords: customKeywords });
 
   const lastRun = lastRunQuery.data;
   const trends = (trendsQuery.data ?? []) as GlobalTrend[];
@@ -266,7 +384,7 @@ export function TrendsPage() {
             <div>
               <h1 className="text-2xl font-bold tracking-tight">Global Trends</h1>
               <p className="text-sm text-muted-foreground">
-                Real-time intelligence from across the web — AI, Finance, Startups, Funding & more.
+                Real-time intelligence from across the web — AI, Finance, Startups & more.
               </p>
             </div>
           </div>
@@ -277,9 +395,31 @@ export function TrendsPage() {
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-card border border-border rounded-lg px-3 py-1.5">
                 <Clock className="h-3.5 w-3.5" />
                 <span>Last synced {timeAgo(lastRun.finished_at ?? lastRun.started_at)}</span>
-                <span className={`ml-1 h-2 w-2 rounded-full ${lastRun.status === "success" ? "bg-emerald-500" : lastRun.status === "error" ? "bg-red-500" : "bg-amber-400 animate-pulse"}`} />
+                <span
+                  className={`ml-1 h-2 w-2 rounded-full ${
+                    lastRun.status === "success"
+                      ? "bg-emerald-500"
+                      : lastRun.status === "error"
+                      ? "bg-red-500"
+                      : "bg-amber-400 animate-pulse"
+                  }`}
+                />
               </div>
             )}
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs"
+              onClick={() => setShowKeywordInput((v) => !v)}
+            >
+              <Tag className="h-3.5 w-3.5" />
+              {showKeywordInput ? "Hide Keywords" : "Brand Keywords"}
+              {customKeywords.length > 0 && (
+                <span className="ml-1 bg-violet-100 text-violet-700 rounded-full px-1.5 py-0.5 text-[10px] font-semibold">
+                  {customKeywords.length}
+                </span>
+              )}
+            </Button>
             <Button
               onClick={handleSync}
               disabled={syncing}
@@ -291,9 +431,40 @@ export function TrendsPage() {
           </div>
         </div>
 
+        {/* ── Brand / Keyword input panel ── */}
+        {showKeywordInput && (
+          <div className="rounded-2xl border border-violet-200 bg-violet-50/60 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-violet-900">Brand & Keyword Sync</p>
+                <p className="text-xs text-violet-600 mt-0.5">
+                  Add brand names, product names, or any topic — Vidzo will search live news for them.
+                </p>
+              </div>
+              {customKeywords.length > 0 && (
+                <Button
+                  size="sm"
+                  onClick={handleKeywordSync}
+                  disabled={syncing}
+                  className="gap-1.5 bg-violet-600 hover:bg-violet-700 text-white text-xs"
+                >
+                  {syncing ? <RefreshCw className="h-3 w-3 animate-spin" /> : <Search className="h-3 w-3" />}
+                  Sync Keywords
+                </Button>
+              )}
+            </div>
+            <KeywordInput keywords={customKeywords} onChange={setCustomKeywords} />
+          </div>
+        )}
+
         {/* Sync message */}
         {syncMsg && (
-          <div className="rounded-xl border border-border bg-card px-4 py-2.5 text-sm">{syncMsg}</div>
+          <div className="rounded-xl border border-border bg-card px-4 py-2.5 text-sm flex items-center justify-between gap-2">
+            <span>{syncMsg}</span>
+            <button onClick={() => setSyncMsg(null)} className="text-muted-foreground hover:text-foreground">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         )}
 
         {/* ── Custom search bar ── */}
@@ -337,14 +508,17 @@ export function TrendsPage() {
             );
           })}
 
-          {/* Per-category sync */}
           {activeCategory !== "All" && (
             <button
               onClick={() => handleSyncCategory(activeCategory as TrendCategory)}
               disabled={syncing}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-dashed border-primary text-primary bg-white hover:bg-primary/5 transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-dashed border-primary text-primary bg-white hover:bg-primary/5 transition-all disabled:opacity-50"
             >
-              {syncing ? <RefreshCw className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+              {syncing ? (
+                <RefreshCw className="h-3 w-3 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3 w-3" />
+              )}
               Sync {activeCategory}
             </button>
           )}
@@ -376,7 +550,10 @@ export function TrendsPage() {
         {trendsQuery.isLoading ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="rounded-2xl border border-border bg-card p-4 animate-pulse space-y-3">
+              <div
+                key={i}
+                className="rounded-2xl border border-border bg-card p-4 animate-pulse space-y-3"
+              >
                 <div className="h-8 w-8 rounded-lg bg-border" />
                 <div className="h-4 w-3/4 bg-border rounded" />
                 <div className="h-3 w-full bg-border rounded" />
@@ -395,7 +572,9 @@ export function TrendsPage() {
                 trend={tr}
                 onUse={(t) =>
                   startContent.mutate(
-                    `${t.category} trend: "${t.title}". ${t.summary ? `Context: ${t.summary}` : ""} Search live sources and generate a full detailed content pack.`,
+                    `${t.category} trend: "${t.title}". ${
+                      t.summary ? `Context: ${t.summary}` : ""
+                    } Search live sources and generate a full detailed content pack.`,
                   )
                 }
               />
