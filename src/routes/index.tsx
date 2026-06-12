@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight, Mic, Image as ImageIcon, FileText, Hash, BookOpen, Sparkles,
@@ -9,8 +9,19 @@ import { supabase } from "@/integrations/supabase/client";
 import gsap from "gsap";
 import { VidzoLogo } from "@/components/vidzo-logo";
 import { AuthDialog } from "@/components/auth-dialog";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export const Route = createFileRoute("/")({
+  ssr: false,
+  beforeLoad: async () => {
+    try {
+      const { data } = await supabase.auth.getUser();
+      if (data.user) throw redirect({ to: "/chat/dashboard" });
+    } catch (e: unknown) {
+      // Re-throw redirect; swallow other errors so landing still renders.
+      if (e && typeof e === "object" && "isRedirect" in e) throw e;
+    }
+  },
   head: () => ({
     meta: [
       { title: "Vidzo · AI production room for creators" },
@@ -24,19 +35,10 @@ export const Route = createFileRoute("/")({
 
 function Landing() {
   const navigate = useNavigate();
-  const [signedIn, setSignedIn] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const rootRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        setSignedIn(true);
-        navigate({ to: "/chat/dashboard" });
-      }
-    });
-  }, [navigate]);
 
   useEffect(() => {
     if (signedIn) return;
