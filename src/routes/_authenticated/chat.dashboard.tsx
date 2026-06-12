@@ -56,17 +56,12 @@ function Dashboard() {
   const scripts = useQuery({ queryKey: ["scripts"], queryFn: () => scriptsFn() });
   const threads = useQuery({ queryKey: ["threads"], queryFn: () => threadsFn() });
 
-  const startMut = useMutation({
-    mutationFn: async (firstMessage: string) => {
-      const t = await create({ data: { title: firstMessage.slice(0, 60), contextBrief: firstMessage } });
-      return { thread: t, firstMessage };
-    },
-    onSuccess: ({ thread, firstMessage }) => {
-      qc.invalidateQueries({ queryKey: ["threads"] });
-      sessionStorage.setItem(`pending:${thread!.id}`, firstMessage);
-      navigate({ to: "/chat/$threadId", params: { threadId: thread!.id } });
-    },
-  });
+  const goToNewThread = (prompt: string) => {
+    navigate({
+      to: "/chat/new",
+      search: { prompt, title: prompt.slice(0, 60) },
+    });
+  };
 
   const handleGenerate = () => {
     const idea = brief.trim();
@@ -75,13 +70,14 @@ function Dashboard() {
       return;
     }
     const fullPrompt = `Create a ${length} ${format} in ${language} with a ${tone} tone based on this idea: ${idea}.`;
-    startMut.mutate(fullPrompt);
+    goToNewThread(fullPrompt);
   };
 
   const handleTrend = (title: string) => {
     const fullPrompt = `Trend topic: "${title}". Search live sources and build a ${length} ${format} in ${language} with a ${tone} tone for this topic.`;
-    startMut.mutate(fullPrompt);
+    goToNewThread(fullPrompt);
   };
+
 
   // Compute REAL average quality from the user's actual generated packs.
   const scriptItems = (scripts.data ?? []) as Array<{ id: string; topic: string; data: unknown }>;
