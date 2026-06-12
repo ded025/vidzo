@@ -12,14 +12,15 @@ function applyTheme(t: Theme) {
 }
 
 export function getStoredTheme(): Theme {
-  if (typeof window === "undefined") return "light";
+  if (typeof window === "undefined") return "dark";
   const v = window.localStorage.getItem("vidzo-theme");
-  if (v === "dark" || v === "light") return v;
-  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  if (v === "light") return "light";
+  // Default is dark unless user explicitly chose light
+  return "dark";
 }
 
 export function ThemeToggle({ className = "" }: { className?: string }) {
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<Theme>("dark");
   useEffect(() => {
     const t = getStoredTheme();
     setTheme(t);
@@ -44,4 +45,4 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
 }
 
 // Inline script string for SSR — applied before hydration to avoid flash.
-export const THEME_INIT_SCRIPT = `(function(){try{var k='vidzo-theme';var v=localStorage.getItem(k);if(!v){v=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}var r=document.documentElement;if(v==='dark')r.classList.add('dark');r.style.colorScheme=v;}catch(e){}})();`;
+export const THEME_INIT_SCRIPT = `(function(){try{var k='vidzo-theme';var v=localStorage.getItem(k);var r=document.documentElement;if(v==='light'){r.style.colorScheme='light';}else{r.classList.add('dark');r.style.colorScheme='dark';if(!v)localStorage.setItem(k,'dark');}}catch(e){}})();`;
