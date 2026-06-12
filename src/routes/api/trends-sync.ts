@@ -4,13 +4,8 @@ import { CATEGORY_QUERIES, type TrendCategory } from "@/lib/trends.functions";
 
 // ─────────────────────────────────────────────────────────────────────
 // POST /api/trends-sync
-// Fires a live Firecrawl search per category, upserts into global_trends.
 // ─────────────────────────────────────────────────────────────────────
 
-// Firecrawl v2 /search response shape:
-// { success: true, data: { web: [ { title, url, description, publishedDate? } ] } }
-// When `sources` is omitted it defaults to web, but returns flat array.
-// We explicitly pass sources:[{type:"web"}] to always get data.web array.
 type FirecrawlResult = {
   title: string;
   url: string;
@@ -22,8 +17,8 @@ type FirecrawlResponse = {
   success?: boolean;
   data?: {
     web?: FirecrawlResult[];
+    news?: FirecrawlResult[];
   };
-  // v1 fallback: flat array at data
   error?: string;
 };
 
@@ -56,7 +51,7 @@ async function firecrawlSearch(
     body: JSON.stringify({
       query,
       limit: 8,
-      tbs: "qdr:d", // past 24h
+      tbs: "qdr:d",
       sources: [{ type: "web" }, { type: "news" }],
     }),
   });
@@ -67,11 +62,8 @@ async function firecrawlSearch(
   }
 
   const fc = (await res.json()) as FirecrawlResponse;
-
-  // v2 with sources returns { data: { web: [...], news: [...] } }
   const webItems: FirecrawlResult[] = fc?.data?.web ?? [];
-  // also grab news items if present, merge them
-  const newsItems = (fc?.data as Record<string, FirecrawlResult[]>)?.news ?? [];
+  const newsItems: FirecrawlResult[] = fc?.data?.news ?? [];
   return [...webItems, ...newsItems];
 }
 
@@ -99,21 +91,22 @@ export const Route = createFileRoute("/api/trends-sync")(
             );
           }
 
+          // Service-role client — used for all DB writes AND JWT verification.
+          // supabase.auth.getUser(token) with the service-role key is the correct
+          // server-side way to verify a user JWT; the anon-key approach was wrong.
           const supabase = createClient(supaUrl, supaServiceKey, {
             auth: { persistSession: false, autoRefreshToken: false },
           });
 
           if (!isCron) {
-            const userSupabase = createClient(
-              supaUrl,
-              process.env.SUPABASE_PUBLISHABLE_KEY!,
-              {
-                global: { headers: { Authorization: `Bearer ${token}` } },
-                auth: { persistSession: false, autoRefreshToken: false },
-              },
-            );
-            const { data: userRes } = await userSupabase.auth.getUser(token);
-            if (!userRes?.user?.id) {
+            if (!token) {
+              return new Response(JSON.stringify({ error: "Unauthorized" }), {
+                status: 401,
+                headers: { "Content-Type": "application/json" },
+              });
+            }
+            const { data: userRes, error: userErr } = await supabase.auth.getUser(token);
+            if (userErr || !userRes?.user?.id) {
               return new Response(JSON.stringify({ error: "Unauthorized" }), {
                 status: 401,
                 headers: { "Content-Type": "application/json" },
@@ -121,8 +114,8 @@ export const Route = createFileRoute("/api/trends-sync")(
             }
           }
 
-          // Read body ONCE before any other awaits that might consume it
-          const body = await request.json().catch(() => ({})) as {
+          // Read body ONCE before any other async calls
+          const body = (await request.json().catch(() => ({}))) as {
             categories?: string[];
             keywords?: string[];
           };
@@ -138,16 +131,13 @@ export const Route = createFileRoute("/api/trends-sync")(
           const requestedCats = (body.categories ?? []) as TrendCategory[];
           const customKeywords = (body.keywords ?? []) as string[];
 
-          // Build list of {category, query} pairs to run
           type SyncTask = { category: TrendCategory | "Custom"; query: string };
           const tasks: SyncTask[] = [];
 
-          // Custom keyword tasks (brand/topic searches)
           for (const kw of customKeywords) {
             tasks.push({ category: "Custom" as TrendCategory, query: kw });
           }
 
-          // Category tasks
           const categoriesToSync: TrendCategory[] =
             requestedCats.length > 0
               ? requestedCats
@@ -202,7 +192,9 @@ export const Route = createFileRoute("/api/trends-sync")(
                 }
               }
             } catch (e) {
-              errors.push(`${category} ["${query}"]: ${e instanceof Error ? e.message : String(e)}`);
+              errors.push(
+                `${category} ["${query}"]: ${e instanceof Error ? e.message : String(e)}`,
+              );
             }
           }
 
@@ -210,7 +202,6 @@ export const Route = createFileRoute("/api/trends-sync")(
           const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
           await supabase.from("global_trends").delete().lt("synced_at", cutoff);
 
-          // Finalize sync run
           if (runId) {
             await supabase
               .from("trend_sync_runs")
