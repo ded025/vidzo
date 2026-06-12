@@ -40,18 +40,33 @@ const ContentPackSchema = z.object({
         onScreenText: z.string().optional(),
         imagePrompt: z
           .string()
-          .describe("Detailed image-gen prompt: subject, camera, lighting, style, mood."),
+          .min(300)
+          .describe(
+            "DETAILED 9:16 PORTRAIT image-gen prompt, MINIMUM 80 words. MUST start with: '9:16 vertical portrait format, 1080x1920px, shot for Instagram Reels / YouTube Shorts'. Then include ALL of: (1) SUBJECT with exact age/ethnicity/clothing/expression/body language/frame position, (2) SCENE with specific location/environment/time-of-day, (3) CAMERA with lens choice/angle/shot type/depth-of-field, (4) LIGHTING with direction/quality/color temperature/practical sources, (5) STYLE with cinematic reference/color grade, (6) MOOD in 1-2 words, (7) any TEXT OVERLAY with exact wording/font/placement/color, (8) end with '--ar 9:16 --style raw --v 6.1'. Absolute minimum 80 words. No one-liners.",
+          ),
         videoPrompt: z
           .string()
-          .describe("Detailed video-gen prompt: motion, camera move, duration, style."),
+          .min(200)
+          .describe(
+            "DETAILED 9:16 PORTRAIT video-gen prompt, MINIMUM 60 words. MUST start with: '9:16 vertical portrait video, 1080x1920, for short-form'. Then include ALL of: (1) DURATION in seconds, (2) OPENING FRAME exact description, (3) MOTION/ACTION specifying camera movement (dolly/pan/push/handheld) AND subject motion AND environment motion, (4) ENDING FRAME description, (5) CAMERA STYLE (handheld/cinematic/drone), (6) STYLE REFERENCE, (7) LIGHTING & COLOR GRADE. Minimum 60 words. No one-liners.",
+          ),
       }),
     )
     .min(3)
     .max(8),
   thumbnailPrompts: z
-    .array(z.string())
+    .array(
+      z
+        .string()
+        .min(500)
+        .describe(
+          "FULL DETAILED thumbnail prompt, MINIMUM 100 words. MUST start with: '9:16 vertical portrait thumbnail, 1080x1920px, high-impact, for YouTube Shorts / Instagram Reels'. Then include ALL of: (1) LAYOUT CONCEPT naming the composition (split/full-bleed/three-part-stack), (2) SUBJECT with extreme close-up face, exact expression, eye detail, clothing, (3) BACKGROUND color/gradient/pattern, (4) TEXT OVERLAYS: MAIN HEADLINE with exact 2-5 word text + font style + color + size + stroke/shadow, SUBTEXT placement, any emojis, (5) COLOR PALETTE 3 specific hex colors, (6) LIGHTING on subject with rim light/dramatic shadows/catchlights, (7) STYLE reference, (8) end with '--ar 9:16 --style raw --v 6.1 --q 2'. Minimum 100 words. Be brutally specific — this determines click-through rate.",
+        ),
+    )
     .length(3)
-    .describe("Three full image-gen prompts with composition + on-frame text."),
+    .describe(
+      "EXACTLY 3 thumbnail prompts. Each is a FULL 100-180 word detailed image-gen prompt for a 9:16 portrait YouTube Shorts / Reels thumbnail. Each must have radically different composition and layout from the others. Thumbnails are the most important CTR asset — treat each one as a complete creative brief.",
+    ),
   caption: z.string(),
   hashtags: z.array(z.string()).min(8).max(15),
   sources: z
@@ -174,14 +189,12 @@ export const Route = createFileRoute("/api/chat")({
           }),
           generate_content_pack: tool({
             description:
-              "Generate a structured, AI-ready content pack: ElevenLabs voiceover, beat-by-beat image AND video prompts, 3 thumbnail prompts, caption, hashtags, and verified sources. Use for EVERY final output.",
+              "Generate a structured, AI-ready content pack: ElevenLabs voiceover, beat-by-beat 9:16 portrait image AND video prompts (each 80+ words), 3 detailed 9:16 thumbnail prompts (each 100+ words), caption, hashtags, and verified sources. Use for EVERY final output. All visual prompts MUST be portrait/vertical/9:16 for Shorts & Reels.",
             inputSchema: ContentPackSchema,
             execute: async (rawInput) => {
               const input = rawInput as ContentPack;
 
               // ===== VALIDATION LAYER =====
-              // Re-pass the draft through a validator that silently strips any claim
-              // not backed by collected sources. Returns sanitized pack.
               let sanitized: ContentPack = input;
               try {
                 const validatorSchema = ContentPackSchema;
@@ -195,7 +208,8 @@ export const Route = createFileRoute("/api/chat")({
 2. If a claim is NOT supported, rewrite the sentence to be generic / opinion / hypothetical, OR remove it. Never invent a source.
 3. Only keep entries in "sources" that exactly match a URL from the pool.
 4. Preserve voice, tone, length. Never add new factual claims.
-5. Output ONLY valid JSON matching the same schema as the input. No markdown, no commentary.`,
+5. IMPORTANT: Do NOT shorten or modify imagePrompt, videoPrompt, or thumbnailPrompts fields — preserve them exactly as-is.
+6. Output ONLY valid JSON matching the same schema as the input. No markdown, no commentary.`,
                   prompt: `SOURCE POOL:\n${sourcePool || "(no sources collected)"}\n\nDRAFT PACK:\n${JSON.stringify(input)}\n\nReturn the sanitized pack as JSON.`,
                 });
                 const jsonStr = validatedJson
