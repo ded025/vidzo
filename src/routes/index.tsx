@@ -129,7 +129,7 @@ function Landing() {
               Solution: use `dark:from-white dark:to-white/80` to force white in dark mode.
             */}
             <span
-              className="hero-word block bg-gradient-to-r from-foreground to-foreground/80 dark:from-white dark:to-white/80 bg-clip-text text-transparent"
+              className="hero-word block text-foreground"
               style={{ fontSize: "clamp(2.6rem, 7vw, 5.5rem)" }}
             >
               One idea in.
