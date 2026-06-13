@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import {
-  ArrowRight, CheckCircle2, Coins, Crown, Sparkles, Star, Zap,
+  ArrowRight, CheckCircle2, Coins, Sparkles, Star, Zap,
   FileText, Mic, ImageIcon, Hash, BookOpen, Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,9 +26,10 @@ const PLANS = [
     credits: 5,
     price: "₹0",
     sub: "forever",
-    grad: "from-secondary/80 to-secondary/40",
-    accent: "from-foreground to-foreground/80",
-    iconAccent: "from-gray-400 to-gray-600",
+    cardBg: "bg-card",
+    borderClass: "border-border",
+    iconGrad: "from-gray-400 to-gray-500",
+    ctaGrad: null,
     features: [
       "5 free script credits on signup",
       "3 free tweaks per chat",
@@ -36,7 +37,7 @@ const PLANS = [
       "Script, visuals, captions, hashtags",
     ],
     cta: "Start free",
-    ctaVariant: "outline" as const,
+    popular: false,
   },
   {
     id: "starter",
@@ -44,9 +45,10 @@ const PLANS = [
     credits: 10,
     price: "₹199",
     sub: "one-time",
-    grad: "from-pink-500/15 to-rose-500/5",
-    accent: "from-pink-500 to-rose-500",
-    iconAccent: "from-pink-500 to-rose-500",
+    cardBg: "bg-card",
+    borderClass: "border-border",
+    iconGrad: "from-pink-500 to-rose-500",
+    ctaGrad: "from-pink-500 to-rose-500",
     features: [
       "10 script credits",
       "3 free tweaks per chat",
@@ -54,17 +56,18 @@ const PLANS = [
       "No expiry",
     ],
     cta: "Buy Starter",
-    ctaVariant: "default" as const,
+    popular: false,
   },
   {
     id: "creator",
     name: "Creator",
     credits: 30,
     price: "₹499",
-    sub: "one-time · most popular",
-    grad: "from-[var(--vidzo-magenta)]/15 to-[var(--vidzo-blue)]/5",
-    accent: "from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)]",
-    iconAccent: "from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)]",
+    sub: "one-time",
+    cardBg: "bg-card",
+    borderClass: "border-[var(--vidzo-magenta)]/60",
+    iconGrad: "from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)]",
+    ctaGrad: "from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)]",
     features: [
       "30 script credits",
       "3 free tweaks per chat",
@@ -72,26 +75,7 @@ const PLANS = [
       "No expiry",
     ],
     cta: "Buy Creator",
-    ctaVariant: "default" as const,
     popular: true,
-  },
-  {
-    id: "studio",
-    name: "Studio",
-    credits: 100,
-    price: "₹1,299",
-    sub: "one-time",
-    grad: "from-amber-400/15 to-orange-500/5",
-    accent: "from-amber-400 to-orange-500",
-    iconAccent: "from-amber-400 to-orange-500",
-    features: [
-      "100 script credits",
-      "3 free tweaks per chat",
-      "Priority generation",
-      "Team sharing soon",
-    ],
-    cta: "Buy Studio",
-    ctaVariant: "default" as const,
   },
 ];
 
@@ -99,7 +83,6 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   free: Shield,
   starter: Zap,
   creator: Sparkles,
-  studio: Crown,
 };
 
 function PricingPage() {
@@ -115,6 +98,11 @@ function PricingPage() {
             <Link to="/" className="flex items-center">
               <VidzoLogo className="h-7 sm:h-8 w-auto" />
             </Link>
+            <nav className="hidden md:flex items-center gap-7 text-sm font-medium">
+              <Link to="/" className="hover:text-primary transition-colors">Home</Link>
+              <Link to="/about" className="hover:text-primary transition-colors">About</Link>
+              <Link to="/contact" className="hover:text-primary transition-colors">Contact</Link>
+            </nav>
             <div className="flex items-center gap-2">
               <ThemeToggle className="hidden sm:inline-flex" />
               <Button variant="ghost" size="sm" onClick={() => setAuthOpen(true)}>Sign in</Button>
@@ -138,7 +126,7 @@ function PricingPage() {
             Simple, creator-first pricing
           </div>
           <h1
-            className="font-black tracking-[-0.03em] leading-[1.05] bg-gradient-to-r from-foreground to-foreground/80 dark:from-white dark:to-white/80 bg-clip-text text-transparent"
+            className="font-black tracking-[-0.03em] leading-[1.05] text-foreground"
             style={{ fontSize: "clamp(2.4rem, 6vw, 5rem)" }}
           >
             Pay for what you create.
@@ -150,22 +138,20 @@ function PricingPage() {
       </section>
 
       {/* PRICING GRID */}
-      <section className="max-w-6xl mx-auto px-4 pb-20">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <section className="max-w-5xl mx-auto px-4 pb-20">
+        <div className="grid sm:grid-cols-3 gap-5">
           {PLANS.map((plan) => {
             const Icon = ICON_MAP[plan.id];
             return (
               <div
                 key={plan.id}
-                className={`relative rounded-2xl border ${
-                  plan.popular
-                    ? "border-[var(--vidzo-magenta)]/50 shadow-xl"
-                    : "border-border"
-                } bg-gradient-to-br ${plan.grad} p-6 flex flex-col`}
+                className={`relative rounded-2xl border ${plan.borderClass} ${plan.cardBg} p-6 flex flex-col ${
+                  plan.popular ? "shadow-lg" : ""
+                }`}
               >
                 {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <div className="flex items-center gap-1 rounded-full bg-gradient-to-r from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)] px-3 py-1 text-[11px] font-bold text-white">
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                    <div className="flex items-center gap-1 rounded-full bg-gradient-to-r from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)] px-3 py-1 text-[11px] font-bold text-white whitespace-nowrap">
                       <Star className="h-3 w-3" />
                       Most popular
                     </div>
@@ -173,15 +159,15 @@ function PricingPage() {
                 )}
 
                 <div
-                  className={`inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${plan.iconAccent} text-white mb-4`}
+                  className={`inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${plan.iconGrad} text-white mb-4`}
                 >
                   <Icon className="h-5 w-5" />
                 </div>
 
                 <div className="mb-4">
-                  <div className="text-lg font-black">{plan.name}</div>
+                  <div className="text-lg font-black text-foreground">{plan.name}</div>
                   <div className="flex items-baseline gap-1.5 mt-1">
-                    <span className="text-3xl font-black">{plan.price}</span>
+                    <span className="text-3xl font-black text-foreground">{plan.price}</span>
                   </div>
                   <div className="text-xs text-muted-foreground mt-0.5">{plan.sub}</div>
                 </div>
@@ -191,10 +177,10 @@ function PricingPage() {
                   <div className="text-xs text-muted-foreground">script credits</div>
                 </div>
 
-                <ul className="space-y-2 mb-6 flex-1">
+                <ul className="space-y-2.5 mb-6 flex-1">
                   {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                    <li key={f} className="flex items-start gap-2 text-sm text-foreground">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
                       {f}
                     </li>
                   ))}
@@ -203,7 +189,7 @@ function PricingPage() {
                 {plan.id === "free" ? (
                   <Button
                     variant="outline"
-                    className="w-full font-bold"
+                    className="w-full font-bold h-11"
                     onClick={() => setAuthOpen(true)}
                   >
                     Start free
@@ -211,7 +197,7 @@ function PricingPage() {
                   </Button>
                 ) : (
                   <Button
-                    className={`w-full font-bold bg-gradient-to-r ${plan.accent} text-white border-0 hover:opacity-90`}
+                    className={`w-full font-bold h-11 bg-gradient-to-r ${plan.ctaGrad} text-white border-0 hover:opacity-90`}
                     onClick={() => alert(`Payment integration coming soon! Plan: ${plan.name}`)}
                   >
                     {plan.cta}
@@ -237,7 +223,7 @@ function PricingPage() {
                 { icon: FileText, label: "Script + voiceover dialogue", body: "ElevenLabs-ready text, paced and formatted." },
                 { icon: ImageIcon, label: "Beat-by-beat visual plan", body: "Detailed 9:16 image & video prompts for every scene." },
                 { icon: Sparkles, label: "3 thumbnail concepts", body: "100-word+ prompts designed for maximum CTR." },
-                { icon: Mic, label: "Voice direction", body: "Tone, pace, emotion, pauses — ready to record."},
+                { icon: Mic, label: "Voice direction", body: "Tone, pace, emotion, pauses — ready to record." },
                 { icon: Hash, label: "Caption + hashtags", body: "Platform-optimised post-ready text." },
                 { icon: BookOpen, label: "Source-backed research", body: "Every claim backed by a cited URL." },
               ].map((item) => (
@@ -246,7 +232,7 @@ function PricingPage() {
                     <item.icon className="h-4 w-4 text-white" />
                   </div>
                   <div>
-                    <div className="font-bold text-sm">{item.label}</div>
+                    <div className="font-bold text-sm text-white">{item.label}</div>
                     <div className="text-xs text-background/70 mt-0.5">{item.body}</div>
                   </div>
                 </div>
@@ -267,7 +253,7 @@ function PricingPage() {
               { q: "What payment methods are accepted?", a: "UPI, debit/credit cards via Razorpay. Payment integration coming very soon." },
             ].map(({ q, a }) => (
               <div key={q} className="rounded-xl border border-border bg-card p-5">
-                <div className="font-bold text-sm mb-1">{q}</div>
+                <div className="font-bold text-sm text-foreground mb-1">{q}</div>
                 <div className="text-sm text-muted-foreground">{a}</div>
               </div>
             ))}

@@ -96,7 +96,7 @@ function Landing() {
               <a href="#what" className="hover:text-primary transition-colors">What we do</a>
               <a href="#how" className="hover:text-primary transition-colors">How it works</a>
               <a href="#product" className="hover:text-primary transition-colors">Product</a>
-              <a href="#pricing" className="hover:text-primary transition-colors">Pricing</a>
+              <Link to="/pricing" className="hover:text-primary transition-colors">Pricing</Link>
               <Link to="/about" className="hover:text-primary transition-colors">About</Link>
             </nav>
             <div className="flex items-center gap-2">
@@ -444,94 +444,6 @@ function Landing() {
         </div>
       </section>
 
-      {/* SECTION 6: Pricing */}
-      <section id="pricing" className="max-w-7xl mx-auto px-4 sm:px-8 py-20 sm:py-28">
-        <div className="max-w-3xl">
-          <div className="text-xs uppercase tracking-[0.2em] font-bold text-[var(--vidzo-blue)]">Pricing</div>
-          <h2 className="mt-3 text-4xl sm:text-6xl font-black tracking-tight">
-            Simple, creator-first pricing.
-          </h2>
-          <p className="mt-4 text-lg text-muted-foreground">Start free. Upgrade when you need more packs.</p>
-        </div>
-        <div className="mt-12 grid md:grid-cols-3 gap-6">
-          {[
-            {
-              name: "Free",
-              price: "₹0",
-              period: "forever",
-              desc: "Try Vidzo with no commitment.",
-              features: ["5 content packs / month", "Script + voiceover", "Basic visual plan", "Community support"],
-              cta: "Start free",
-              highlight: false,
-              grad: "from-border to-border",
-            },
-            {
-              name: "Creator",
-              price: "₹799",
-              period: "/ month",
-              desc: "For creators publishing consistently.",
-              features: ["Unlimited content packs", "All 6 pack outputs", "Trends + source research", "Priority generation", "Email support"],
-              cta: "Get Creator",
-              highlight: true,
-              grad: "from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)]",
-            },
-            {
-              name: "Studio",
-              price: "₹2,499",
-              period: "/ month",
-              desc: "For agencies and content teams.",
-              features: ["Everything in Creator", "5 team seats", "Custom brand presets", "API access", "Dedicated support"],
-              cta: "Get Studio",
-              highlight: false,
-              grad: "from-border to-border",
-            },
-          ].map((plan) => (
-            <div
-              key={plan.name}
-              className={`relative rounded-3xl border ${
-                plan.highlight
-                  ? "border-transparent bg-gradient-to-br from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)] p-[2px]"
-                  : "border-border"
-              }`}
-            >
-              <div className={`rounded-[22px] p-7 h-full flex flex-col ${
-                plan.highlight ? "bg-background" : "bg-background"
-              }`}>
-                {plan.highlight && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-bold text-white bg-gradient-to-r from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)] whitespace-nowrap">
-                    Most popular
-                  </div>
-                )}
-                <div className="text-xs uppercase tracking-[0.15em] font-bold text-muted-foreground">{plan.name}</div>
-                <div className="mt-3 flex items-end gap-1">
-                  <span className="text-4xl font-black tracking-tight">{plan.price}</span>
-                  <span className="text-sm text-muted-foreground mb-1">{plan.period}</span>
-                </div>
-                <p className="mt-2 text-sm text-muted-foreground">{plan.desc}</p>
-                <ul className="mt-5 space-y-2.5 flex-1">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-sm">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  className={`mt-7 w-full h-11 font-semibold ${
-                    plan.highlight
-                      ? "bg-gradient-to-r from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)] text-white hover:opacity-90 border-0"
-                      : "bg-foreground text-background hover:bg-foreground/90"
-                  }`}
-                  onClick={() => openAuth("signup")}
-                >
-                  {plan.cta}
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* CTA */}
       <section className="max-w-7xl mx-auto px-4 sm:px-8 py-20 sm:py-28">
         <div className="rounded-3xl bg-gradient-to-br from-[var(--vidzo-magenta)] via-[var(--vidzo-blue)] to-[var(--vidzo-yellow)] p-10 sm:p-16 text-white relative overflow-hidden">
@@ -563,7 +475,7 @@ function Landing() {
           <nav className="flex flex-wrap gap-x-6 gap-y-2 sm:justify-end text-sm font-medium">
             <a href="#what" className="hover:text-primary">What we do</a>
             <a href="#how" className="hover:text-primary">How it works</a>
-            <a href="#pricing" className="hover:text-primary">Pricing</a>
+            <Link to="/pricing" className="hover:text-primary">Pricing</Link>
             <Link to="/about" className="hover:text-primary">About</Link>
             <Link to="/contact" className="hover:text-primary">Contact</Link>
             <Link to="/terms" className="hover:text-primary">Terms</Link>
