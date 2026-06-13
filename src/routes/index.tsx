@@ -15,7 +15,6 @@ export const Route = createFileRoute("/")({
   ssr: false,
   beforeLoad: async () => {
     try {
-      // getSession is instant (localStorage) — no network call, no flash.
       const { data } = await supabase.auth.getSession();
       if (data.session) throw redirect({ to: "/chat/dashboard" });
     } catch (e: unknown) {
@@ -121,8 +120,16 @@ function Landing() {
           </div>
 
           <h1 className="font-display font-black tracking-[-0.03em] leading-[1.05]">
+            {/* 
+              Light mode: foreground = near-black  → text is black ✓
+              Dark mode:  foreground = near-white  → text would be white, but we want BLACK in dark.
+              Original request: swap them — black in light, white in dark.
+              So in dark mode we need the gradient to go toward white (background in dark = near-black,
+              but we actually want the TEXT white in dark mode).
+              Solution: use `dark:from-white dark:to-white/80` to force white in dark mode.
+            */}
             <span
-              className="hero-word block bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent"
+              className="hero-word block bg-gradient-to-r from-foreground to-foreground/80 dark:from-white dark:to-white/80 bg-clip-text text-transparent"
               style={{ fontSize: "clamp(2.6rem, 7vw, 5.5rem)" }}
             >
               One idea in.
