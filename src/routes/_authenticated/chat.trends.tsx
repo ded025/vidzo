@@ -74,7 +74,7 @@ function FreshnessChip({ score }: { score: number }) {
       </span>
     );
   return (
-    <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold bg-slate-100 text-slate-500 rounded-full px-2 py-0.5">
+    <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold bg-muted text-muted-foreground rounded-full px-2 py-0.5">
       📅 Recent
     </span>
   );
