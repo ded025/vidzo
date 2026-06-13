@@ -1,5 +1,6 @@
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import { MASTER_SYSTEM_PROMPT } from "@/lib/prompts";
+import { checkAndConsume } from "@/lib/credits.server";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   convertToModelMessages,
@@ -107,6 +108,39 @@ export const Route = createFileRoute("/api/chat")({
         const userId = userRes?.user?.id;
         if (!userId) return new Response("Unauthorized", { status: 401 });
 
+        // ── Credit check: is this a tweak or a fresh script request? ──────────
+        // A "tweak" is any message after the first user message in the thread.
+        // We determine this by looking at how many user messages exist already.
+        const existingUserMessages = (messages as UIMessage[]).filter((m) => m.role === "user");
+        const isTweak = existingUserMessages.length > 1; // first message = script, subsequent = tweak
+
+        const creditResult = await checkAndConsume(
+          supabase,
+          userId,
+          token,
+          threadId ?? null,
+          isTweak ? "tweak" : "script",
+        );
+
+        if (!creditResult.allowed) {
+          const reason = creditResult.reason;
+          const msg =
+            reason === "no_scripts"
+              ? JSON.stringify({
+                  creditError: true,
+                  type: "no_scripts",
+                  message: "You've used all 5 free scripts. Top up credits to keep creating.",
+                })
+              : JSON.stringify({
+                  creditError: true,
+                  type: "no_tweaks",
+                  message: `You've used all 3 free tweaks for this script. Start a new chat or top up credits.`,
+                  tweakCount: creditResult.tweakCount,
+                });
+          return new Response(msg, { status: 402, headers: { "Content-Type": "application/json" } });
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
         // Load thread context_brief + active preset
         let contextBrief: string | null = null;
         if (threadId) {
@@ -143,8 +177,6 @@ export const Route = createFileRoute("/api/chat")({
         const model = gateway("google/gemini-3-flash-preview");
 
         const firecrawlKey = process.env.FIRECRAWL_API_KEY;
-
-        // Collect sources gathered by tool calls across this turn (for the validator)
         const collectedSources: Array<{ title: string; url: string; snippet: string }> = [];
 
         const tools = {
@@ -189,12 +221,10 @@ export const Route = createFileRoute("/api/chat")({
           }),
           generate_content_pack: tool({
             description:
-              "Generate a structured, AI-ready content pack: ElevenLabs voiceover, beat-by-beat 9:16 portrait image AND video prompts (each 80+ words), 3 detailed 9:16 thumbnail prompts (each 100+ words), caption, hashtags, and verified sources. Use for EVERY final output. All visual prompts MUST be portrait/vertical/9:16 for Shorts & Reels.",
+              "Generate a structured, AI-ready content pack: ElevenLabs voiceover, beat-by-beat 9:16 portrait image AND video prompts (each 80+ words), 3 detailed 9:16 thumbnail prompts (each 100+ words), caption, hashtags, and verified sources.",
             inputSchema: ContentPackSchema,
             execute: async (rawInput) => {
               const input = rawInput as ContentPack;
-
-              // ===== VALIDATION LAYER =====
               let sanitized: ContentPack = input;
               try {
                 const validatorSchema = ContentPackSchema;
@@ -203,13 +233,7 @@ export const Route = createFileRoute("/api/chat")({
                   .join("\n\n");
                 const { text: validatedJson } = await generateText({
                   model,
-                  system: `You are a strict fact validator for a content pack. Given a draft content pack and a pool of source URLs+snippets, you must:
-1. For every factual claim (numbers, dates, names of real companies/founders, funding amounts, rankings, quotes), check if the source pool supports it.
-2. If a claim is NOT supported, rewrite the sentence to be generic / opinion / hypothetical, OR remove it. Never invent a source.
-3. Only keep entries in "sources" that exactly match a URL from the pool.
-4. Preserve voice, tone, length. Never add new factual claims.
-5. IMPORTANT: Do NOT shorten or modify imagePrompt, videoPrompt, or thumbnailPrompts fields — preserve them exactly as-is.
-6. Output ONLY valid JSON matching the same schema as the input. No markdown, no commentary.`,
+                  system: `You are a strict fact validator for a content pack. Given a draft content pack and a pool of source URLs+snippets, you must:\n1. For every factual claim (numbers, dates, names of real companies/founders, funding amounts, rankings, quotes), check if the source pool supports it.\n2. If a claim is NOT supported, rewrite the sentence to be generic / opinion / hypothetical, OR remove it. Never invent a source.\n3. Only keep entries in "sources" that exactly match a URL from the pool.\n4. Preserve voice, tone, length. Never add new factual claims.\n5. IMPORTANT: Do NOT shorten or modify imagePrompt, videoPrompt, or thumbnailPrompts fields — preserve them exactly as-is.\n6. Output ONLY valid JSON matching the same schema as the input. No markdown, no commentary.`,
                   prompt: `SOURCE POOL:\n${sourcePool || "(no sources collected)"}\n\nDRAFT PACK:\n${JSON.stringify(input)}\n\nReturn the sanitized pack as JSON.`,
                 });
                 const jsonStr = validatedJson
@@ -221,7 +245,6 @@ export const Route = createFileRoute("/api/chat")({
                 const parsed = validatorSchema.safeParse(JSON.parse(jsonStr));
                 if (parsed.success) {
                   sanitized = parsed.data as ContentPack;
-                  // Final hard filter: sources must be from pool
                   const allowedUrls = new Set(collectedSources.map((s) => s.url));
                   if (allowedUrls.size > 0) {
                     sanitized.sources = sanitized.sources.filter((s) => allowedUrls.has(s.url));

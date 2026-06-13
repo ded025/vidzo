@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Plus, Trash2, MessageSquare, FileText, LogOut, Menu, X,
-  LayoutDashboard, Sliders, TrendingUp, Library, Settings, Home,
+  LayoutDashboard, Sliders, TrendingUp, Library, Settings, Home, Coins,
 } from "lucide-react";
 import { toast } from "sonner";
 import { VidzoLogo } from "@/components/vidzo-logo";
@@ -30,10 +30,18 @@ function ChatLayout() {
   const create = useServerFn(createThread);
   const del = useServerFn(deleteThread);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [balance, setBalance] = useState<number | null>(null);
 
   useEffect(() => {
     setSidebarOpen(false);
   }, [pathname]);
+
+  // Load credit balance for sidebar display
+  useEffect(() => {
+    supabase.from("user_credits").select("balance").maybeSingle().then(({ data }) => {
+      if (data) setBalance(data.balance);
+    });
+  }, [pathname]); // re-fetch on nav so it stays fresh
 
   const threadsQ = useQuery({
     queryKey: ["threads"],
@@ -101,6 +109,7 @@ function ChatLayout() {
         <NavItem to="/chat/trends" icon={TrendingUp} label="Trends" />
         <NavItem to="/chat/library" icon={FileText} label="Library" />
         <NavItem to="/chat/presets" icon={Sliders} label="Presets" />
+        <NavItem to="/chat/credits" icon={Coins} label="Credits" />
       </div>
       <div className="px-3 pt-2 pb-1">
         <Button
@@ -151,6 +160,20 @@ function ChatLayout() {
           </div>
         )}
       </nav>
+      {/* Credit balance chip */}
+      {balance !== null && (
+        <Link
+          to="/chat/credits"
+          className="mx-3 mb-2 flex items-center gap-2 rounded-lg border border-border bg-secondary/40 px-3 py-2 text-xs hover:bg-secondary transition-colors"
+        >
+          <Coins className="h-3.5 w-3.5 text-[var(--vidzo-magenta)]" />
+          <span className="font-semibold text-foreground">{balance}</span>
+          <span className="text-muted-foreground">credits</span>
+          {balance <= 2 && (
+            <span className="ml-auto text-amber-500 font-medium">Low →</span>
+          )}
+        </Link>
+      )}
       <div className="border-t border-border p-2 flex items-center gap-2">
         <button
           onClick={signOut}
@@ -164,24 +187,20 @@ function ChatLayout() {
     </>
   );
 
-  // Bottom nav items for mobile
   const bottomNav = [
     { to: "/chat/dashboard", icon: Home, label: "Home" },
     { to: "/chat/trends", icon: TrendingUp, label: "Trends" },
     { to: "/chat/library", icon: Library, label: "Library" },
     { to: "/chat/new", icon: Plus, label: "Create", isCreate: true },
-    { to: "/chat/presets", icon: Settings, label: "Settings" },
+    { to: "/chat/credits", icon: Coins, label: "Credits" },
   ];
 
   return (
     <div className="h-[100dvh] flex flex-col bg-background text-foreground">
       <div className="flex flex-1 min-h-0">
-        {/* Desktop sidebar */}
         <aside className="hidden md:flex w-64 border-r border-border flex-col shrink-0">
           {sidebar}
         </aside>
-
-        {/* Mobile overlay sidebar */}
         {sidebarOpen && (
           <div className="md:hidden fixed inset-0 z-50 flex">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
@@ -190,9 +209,7 @@ function ChatLayout() {
             </aside>
           </div>
         )}
-
         <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
-          {/* Mobile top bar */}
           <div className="md:hidden h-12 shrink-0 border-b border-border flex items-center px-2 gap-2">
             <button
               type="button"
@@ -215,14 +232,12 @@ function ChatLayout() {
               <Plus className="h-4 w-4" />
             </Button>
           </div>
-          {/* Main content — add bottom padding on mobile so content isn't hidden behind bottom nav */}
           <div className="flex-1 min-h-0 overflow-hidden md:pb-0 pb-[calc(64px+env(safe-area-inset-bottom,0px))]">
             <Outlet />
           </div>
         </main>
       </div>
 
-      {/* MOBILE BOTTOM NAV */}
       <nav
         className="md:hidden fixed bottom-0 inset-x-0 z-40 flex items-stretch"
         style={{
@@ -235,7 +250,7 @@ function ChatLayout() {
         }}
       >
         {bottomNav.map(({ to, icon: Icon, label, isCreate }) => {
-          const active = pathname === to || (to !== "/chat" && to !== "/chat/new" && pathname.startsWith(to));
+          const active = pathname === to || (to !== "/chat" && to !== "/chat/new" && to !== "/chat/credits" && pathname.startsWith(to));
           if (isCreate) {
             return (
               <button

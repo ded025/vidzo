@@ -1,4 +1,4 @@
-import { createLazyFileRoute, getRouteApi } from "@tanstack/react-router";
+import { createLazyFileRoute, getRouteApi, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useChat } from "@ai-sdk/react";
@@ -24,13 +24,18 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { ContentPackCard, type ContentPackData } from "@/components/content-pack-card";
-import { Loader2, ShieldCheck } from "lucide-react";
+import { Loader2, ShieldCheck, Coins, Sparkles, Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "@tanstack/react-router";
 
 const routeApi = getRouteApi("/_authenticated/chat/$threadId");
 
 export const Route = createLazyFileRoute("/_authenticated/chat/$threadId")({
   component: ThreadView,
 });
+
+const FREE_SCRIPTS = 5;
+const FREE_TWEAKS = 3;
 
 function ThreadView() {
   const { threadId } = routeApi.useParams();
@@ -58,6 +63,81 @@ function ThreadView() {
   );
 }
 
+type CreditError = {
+  creditError: true;
+  type: "no_scripts" | "no_tweaks";
+  message: string;
+  tweakCount?: number;
+};
+
+function CreditWall({ err, threadId }: { err: CreditError; threadId: string }) {
+  const navigate = useNavigate();
+  const isNoScripts = err.type === "no_scripts";
+  return (
+    <div className="flex-1 flex items-center justify-center p-6">
+      <div className="max-w-md w-full rounded-2xl border border-border bg-gradient-to-br from-card to-card/80 p-8 text-center shadow-lg">
+        <div className="mx-auto mb-5 h-16 w-16 rounded-full bg-gradient-to-br from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)] flex items-center justify-center">
+          <Lock className="h-7 w-7 text-white" />
+        </div>
+        <h3 className="text-xl font-black tracking-tight mb-2">
+          {isNoScripts ? "Script credits used up" : "Tweak limit reached"}
+        </h3>
+        <p className="text-sm text-muted-foreground mb-6 leading-relaxed">{err.message}</p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          {!isNoScripts && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate({ to: "/chat/new" })}
+            >
+              Start new chat
+            </Button>
+          )}
+          <Link to="/credits">
+            <Button
+              size="sm"
+              className="w-full bg-gradient-to-r from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)] text-white border-0 hover:opacity-90"
+            >
+              <Coins className="h-4 w-4 mr-1.5" />
+              Get more credits
+            </Button>
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CreditBar({
+  balance,
+  tweakCount,
+  isTweak,
+}: {
+  balance: number;
+  tweakCount: number;
+  isTweak: boolean;
+}) {
+  const tweaksLeft = Math.max(0, FREE_TWEAKS - tweakCount);
+  const scriptsLeft = balance;
+  return (
+    <div className="flex items-center gap-3 px-4 py-2 border-b border-border bg-secondary/30 text-xs text-muted-foreground">
+      <Sparkles className="h-3.5 w-3.5 text-[var(--vidzo-magenta)] shrink-0" />
+      <span>
+        {isTweak
+          ? tweaksLeft > 0
+            ? `${tweaksLeft} free tweak${tweaksLeft !== 1 ? "s" : ""} left in this chat`
+            : `Free tweaks used — credits will be consumed`
+          : scriptsLeft > 0
+          ? `${scriptsLeft} free script${scriptsLeft !== 1 ? "s" : ""} remaining`
+          : "No free scripts — credits will be consumed"}
+      </span>
+      <Link to="/credits" className="ml-auto text-[var(--vidzo-blue)] hover:underline font-medium">
+        {scriptsLeft <= 1 ? "Top up →" : null}
+      </Link>
+    </div>
+  );
+}
+
 function ChatWindow({
   threadId,
   initialMessages,
@@ -69,6 +149,9 @@ function ChatWindow({
   const bearerRef = useRef<string | null>(null);
   const [bearerReady, setBearerReady] = useState(false);
   const sentPending = useRef(false);
+  const [creditError, setCreditError] = useState<CreditError | null>(null);
+  const [balance, setBalance] = useState<number>(FREE_SCRIPTS);
+  const [tweakCount, setTweakCount] = useState<number>(0);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -82,6 +165,25 @@ function ChatWindow({
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  // Fetch credit info
+  useEffect(() => {
+    if (!bearerReady) return;
+    supabase
+      .from("user_credits")
+      .select("balance")
+      .then(({ data }) => {
+        if (data?.[0]) setBalance(data[0].balance);
+      });
+    supabase
+      .from("threads")
+      .select("tweak_count")
+      .eq("id", threadId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setTweakCount(data.tweak_count ?? 0);
+      });
+  }, [bearerReady, threadId]);
+
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
@@ -89,6 +191,12 @@ function ChatWindow({
         headers: (): Record<string, string> =>
           bearerRef.current ? { Authorization: `Bearer ${bearerRef.current}` } : {},
         body: { threadId },
+        async onResponse(response) {
+          if (response.status === 402) {
+            const json = (await response.clone().json()) as CreditError;
+            setCreditError(json);
+          }
+        },
       }),
     [threadId],
   );
@@ -113,18 +221,28 @@ function ChatWindow({
     }
   }, [bearerReady, threadId, messages.length, sendMessage]);
 
+  const isTweak = messages.filter((m) => m.role === "user").length >= 1;
+
   const handleSubmit = (message: { text?: string }) => {
     const text = (message.text ?? input).trim();
     if (!text) return;
     if (!bearerRef.current) return;
+    setCreditError(null);
     setInput("");
     sendMessage({ text });
+    // Optimistically update tweak counter
+    if (isTweak) setTweakCount((c) => c + 1);
   };
 
   const isLoading = status === "submitted" || status === "streaming";
+  const tweaksLeft = Math.max(0, FREE_TWEAKS - tweakCount);
+  const inputBlocked = !!(creditError);
 
   return (
     <div className="h-full flex flex-col">
+      {/* Credit status bar */}
+      <CreditBar balance={balance} tweakCount={tweakCount} isTweak={isTweak} />
+
       <Conversation className="flex-1">
         <ConversationContent className="max-w-3xl mx-auto w-full px-4 py-6">
           {messages.length === 0 && (
@@ -210,21 +328,37 @@ function ChatWindow({
         <ConversationScrollButton />
       </Conversation>
 
-      <div className="border-t border-border p-4">
-        <div className="max-w-3xl mx-auto">
-          <PromptInput onSubmit={handleSubmit}>
-            <PromptInputTextarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Tweak your brief, ask for trends, or request a new pack…"
-              autoFocus
-            />
-            <PromptInputFooter className="justify-end">
-              <PromptInputSubmit status={status} disabled={isLoading && !input} />
-            </PromptInputFooter>
-          </PromptInput>
+      {creditError ? (
+        <CreditWall err={creditError} threadId={threadId} />
+      ) : (
+        <div className="border-t border-border p-4">
+          <div className="max-w-3xl mx-auto">
+            {isTweak && tweaksLeft === 0 && (
+              <p className="text-xs text-amber-500 mb-2 flex items-center gap-1.5">
+                <Coins className="h-3 w-3" />
+                Next tweak will use 1 credit from your balance.
+              </p>
+            )}
+            <PromptInput onSubmit={handleSubmit}>
+              <PromptInputTextarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={
+                  isTweak
+                    ? tweaksLeft > 0
+                      ? `Tweak ${tweaksLeft} of ${FREE_TWEAKS} free tweaks left…`
+                      : "Tweak using credits…"
+                    : "Describe your video idea…"
+                }
+                autoFocus
+              />
+              <PromptInputFooter className="justify-end">
+                <PromptInputSubmit status={status} disabled={isLoading && !input} />
+              </PromptInputFooter>
+            </PromptInput>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
