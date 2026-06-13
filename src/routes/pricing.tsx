@@ -19,6 +19,10 @@ export const Route = createFileRoute("/pricing")({
   }),
 });
 
+const MAGENTA = "#e91e8c";
+const BLUE = "#1565c0";
+const YELLOW = "#f5a623";
+
 const PLANS = [
   {
     id: "free",
@@ -26,10 +30,10 @@ const PLANS = [
     credits: 5,
     price: "₹0",
     sub: "forever",
-    cardBg: "bg-card",
-    borderClass: "border-border",
-    iconGrad: "from-gray-400 to-gray-500",
-    ctaGrad: null,
+    popular: false,
+    iconColor: "#6b7280",
+    accentFrom: "#9ca3af",
+    accentTo: "#6b7280",
     features: [
       "5 free script credits on signup",
       "3 free tweaks per chat",
@@ -37,7 +41,6 @@ const PLANS = [
       "Script, visuals, captions, hashtags",
     ],
     cta: "Start free",
-    popular: false,
   },
   {
     id: "starter",
@@ -45,10 +48,10 @@ const PLANS = [
     credits: 10,
     price: "₹199",
     sub: "one-time",
-    cardBg: "bg-card",
-    borderClass: "border-border",
-    iconGrad: "from-pink-500 to-rose-500",
-    ctaGrad: "from-pink-500 to-rose-500",
+    popular: false,
+    iconColor: "#ec4899",
+    accentFrom: "#ec4899",
+    accentTo: "#f43f5e",
     features: [
       "10 script credits",
       "3 free tweaks per chat",
@@ -56,7 +59,6 @@ const PLANS = [
       "No expiry",
     ],
     cta: "Buy Starter",
-    popular: false,
   },
   {
     id: "creator",
@@ -64,10 +66,10 @@ const PLANS = [
     credits: 30,
     price: "₹499",
     sub: "one-time",
-    cardBg: "bg-card",
-    borderClass: "border-[var(--vidzo-magenta)]/60",
-    iconGrad: "from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)]",
-    ctaGrad: "from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)]",
+    popular: true,
+    iconColor: MAGENTA,
+    accentFrom: MAGENTA,
+    accentTo: BLUE,
     features: [
       "30 script credits",
       "3 free tweaks per chat",
@@ -75,7 +77,6 @@ const PLANS = [
       "No expiry",
     ],
     cta: "Buy Creator",
-    popular: true,
   },
 ];
 
@@ -91,6 +92,11 @@ function PricingPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden" style={{ fontFamily: '"Roboto Flex", sans-serif' }}>
+      {/* Roboto Flex font */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,300..900&display=swap" rel="stylesheet" />
+
       {/* NAV */}
       <header className="fixed top-3 inset-x-3 sm:inset-x-6 z-50">
         <div className="max-w-6xl mx-auto glass-header rounded-2xl">
@@ -116,20 +122,25 @@ function PricingPage() {
       <section
         className="relative pt-32 pb-16 px-4 text-center overflow-hidden"
         style={{
-          background:
-            "radial-gradient(ellipse 80% 50% at 50% 0%, color-mix(in oklab, var(--vidzo-magenta) 15%, transparent), transparent 70%)",
+          background: `radial-gradient(ellipse 80% 50% at 50% 0%, color-mix(in oklab, ${MAGENTA} 18%, transparent), transparent 70%)`,
         }}
       >
         <div className="relative max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold mb-6">
-            <Coins className="h-3.5 w-3.5 text-[var(--vidzo-magenta)]" />
+            <Coins className="h-3.5 w-3.5" style={{ color: MAGENTA }} />
             Simple, creator-first pricing
           </div>
           <h1
             className="font-black tracking-[-0.03em] leading-[1.05] text-foreground"
             style={{ fontSize: "clamp(2.4rem, 6vw, 5rem)" }}
           >
-            Pay for what you create.
+            Pay for what you{" "}
+            <span
+              className="bg-clip-text text-transparent"
+              style={{ backgroundImage: `linear-gradient(90deg, ${MAGENTA}, ${BLUE})` }}
+            >
+              create.
+            </span>
           </h1>
           <p className="mt-5 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
             Start with 5 free scripts. No subscription ever. Top up credits when you need more.
@@ -138,32 +149,42 @@ function PricingPage() {
       </section>
 
       {/* PRICING GRID */}
-      <section className="max-w-5xl mx-auto px-4 pb-20">
+      <section className="max-w-4xl mx-auto px-4 pb-20">
         <div className="grid sm:grid-cols-3 gap-5">
           {PLANS.map((plan) => {
             const Icon = ICON_MAP[plan.id];
             return (
               <div
                 key={plan.id}
-                className={`relative rounded-2xl border ${plan.borderClass} ${plan.cardBg} p-6 flex flex-col ${
-                  plan.popular ? "shadow-lg" : ""
-                }`}
+                className="relative rounded-2xl bg-card flex flex-col p-6"
+                style={{
+                  border: plan.popular
+                    ? `2px solid ${MAGENTA}99`
+                    : "1px solid hsl(var(--border))",
+                  boxShadow: plan.popular ? `0 0 0 4px ${MAGENTA}12` : undefined,
+                }}
               >
                 {plan.popular && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                    <div className="flex items-center gap-1 rounded-full bg-gradient-to-r from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)] px-3 py-1 text-[11px] font-bold text-white whitespace-nowrap">
+                    <div
+                      className="flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold text-white whitespace-nowrap"
+                      style={{ background: `linear-gradient(90deg, ${MAGENTA}, ${BLUE})` }}
+                    >
                       <Star className="h-3 w-3" />
                       Most popular
                     </div>
                   </div>
                 )}
 
+                {/* Icon */}
                 <div
-                  className={`inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${plan.iconGrad} text-white mb-4`}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-white mb-4"
+                  style={{ background: `linear-gradient(135deg, ${plan.accentFrom}, ${plan.accentTo})` }}
                 >
                   <Icon className="h-5 w-5" />
                 </div>
 
+                {/* Name + price */}
                 <div className="mb-4">
                   <div className="text-lg font-black text-foreground">{plan.name}</div>
                   <div className="flex items-baseline gap-1.5 mt-1">
@@ -172,20 +193,28 @@ function PricingPage() {
                   <div className="text-xs text-muted-foreground mt-0.5">{plan.sub}</div>
                 </div>
 
+                {/* Credits */}
                 <div className="mb-4">
-                  <div className="text-4xl font-black text-foreground">{plan.credits}</div>
+                  <div
+                    className="text-4xl font-black"
+                    style={{ color: plan.popular ? MAGENTA : "hsl(var(--foreground))" }}
+                  >
+                    {plan.credits}
+                  </div>
                   <div className="text-xs text-muted-foreground">script credits</div>
                 </div>
 
+                {/* Features */}
                 <ul className="space-y-2.5 mb-6 flex-1">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2 text-sm text-foreground">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" style={{ color: "#10b981" }} />
                       {f}
                     </li>
                   ))}
                 </ul>
 
+                {/* CTA */}
                 {plan.id === "free" ? (
                   <Button
                     variant="outline"
@@ -197,7 +226,8 @@ function PricingPage() {
                   </Button>
                 ) : (
                   <Button
-                    className={`w-full font-bold h-11 bg-gradient-to-r ${plan.ctaGrad} text-white border-0 hover:opacity-90`}
+                    className="w-full font-bold h-11 text-white border-0 hover:opacity-90"
+                    style={{ background: `linear-gradient(90deg, ${plan.accentFrom}, ${plan.accentTo})` }}
                     onClick={() => alert(`Payment integration coming soon! Plan: ${plan.name}`)}
                   >
                     {plan.cta}
@@ -210,13 +240,16 @@ function PricingPage() {
         </div>
 
         {/* What's in a pack */}
-        <div className="mt-16 rounded-3xl bg-foreground text-background p-10 sm:p-14 relative overflow-hidden">
-          <div className="absolute inset-0 opacity-25">
-            <div className="absolute top-0 left-1/4 w-64 h-64 rounded-full bg-[var(--vidzo-magenta)] blur-[100px]" />
-            <div className="absolute bottom-0 right-1/4 w-64 h-64 rounded-full bg-[var(--vidzo-blue)] blur-[100px]" />
+        <div
+          className="mt-16 rounded-3xl p-10 sm:p-14 relative overflow-hidden"
+          style={{ background: "hsl(var(--foreground))", color: "hsl(var(--background))" }}
+        >
+          <div className="absolute inset-0 opacity-25 pointer-events-none">
+            <div className="absolute top-0 left-1/4 w-64 h-64 rounded-full blur-[100px]" style={{ background: MAGENTA }} />
+            <div className="absolute bottom-0 right-1/4 w-64 h-64 rounded-full blur-[100px]" style={{ background: BLUE }} />
           </div>
           <div className="relative">
-            <div className="text-xs uppercase tracking-[0.2em] font-bold text-[var(--vidzo-yellow)] mb-3">What 1 credit gets you</div>
+            <div className="text-xs uppercase tracking-[0.2em] font-bold mb-3" style={{ color: YELLOW }}>What 1 credit gets you</div>
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-8">One complete video production pack.</h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {[
@@ -228,12 +261,12 @@ function PricingPage() {
                 { icon: BookOpen, label: "Source-backed research", body: "Every claim backed by a cited URL." },
               ].map((item) => (
                 <div key={item.label} className="flex gap-3">
-                  <div className="h-8 w-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
-                    <item.icon className="h-4 w-4 text-white" />
+                  <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.12)" }}>
+                    <item.icon className="h-4 w-4" style={{ color: "hsl(var(--background))" }} />
                   </div>
                   <div>
-                    <div className="font-bold text-sm text-white">{item.label}</div>
-                    <div className="text-xs text-background/70 mt-0.5">{item.body}</div>
+                    <div className="font-bold text-sm" style={{ color: "hsl(var(--background))" }}>{item.label}</div>
+                    <div className="text-xs mt-0.5" style={{ color: "hsl(var(--background) / 0.65)" }}>{item.body}</div>
                   </div>
                 </div>
               ))}
@@ -258,6 +291,21 @@ function PricingPage() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Bottom CTA */}
+        <div className="mt-14 text-center">
+          <p className="text-muted-foreground text-sm mb-4">Ready to start creating?</p>
+          <Button
+            size="lg"
+            className="text-base h-12 px-8 text-white font-bold border-0 hover:opacity-90"
+            style={{ background: `linear-gradient(90deg, ${MAGENTA}, ${BLUE})` }}
+            onClick={() => setAuthOpen(true)}
+          >
+            Get 5 free scripts
+            <ArrowRight className="ml-1 h-5 w-5" />
+          </Button>
+          <p className="mt-3 text-xs text-muted-foreground">No credit card required</p>
         </div>
       </section>
 
