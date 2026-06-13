@@ -16,6 +16,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiTrendsSyncRouteImport } from './routes/api/trends-sync'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
@@ -58,6 +59,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTrendsSyncRoute = ApiTrendsSyncRouteImport.update({
+  id: '/api/trends-sync',
+  path: '/api/trends-sync',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiChatRoute = ApiChatRouteImport.update({
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/chat': typeof AuthenticatedChatRouteWithChildren
   '/api/chat': typeof ApiChatRoute
+  '/api/trends-sync': typeof ApiTrendsSyncRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/chat/dashboard': typeof AuthenticatedChatDashboardRoute
   '/chat/library': typeof AuthenticatedChatLibraryRoute
@@ -137,6 +144,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/trends-sync': typeof ApiTrendsSyncRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/chat/dashboard': typeof AuthenticatedChatDashboardRoute
   '/chat/library': typeof AuthenticatedChatLibraryRoute
@@ -156,6 +164,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/_authenticated/chat': typeof AuthenticatedChatRouteWithChildren
   '/api/chat': typeof ApiChatRoute
+  '/api/trends-sync': typeof ApiTrendsSyncRoute
   '/_authenticated/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/_authenticated/chat/dashboard': typeof AuthenticatedChatDashboardRoute
   '/_authenticated/chat/library': typeof AuthenticatedChatLibraryRoute
@@ -175,6 +184,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/chat'
     | '/api/chat'
+    | '/api/trends-sync'
     | '/chat/$threadId'
     | '/chat/dashboard'
     | '/chat/library'
@@ -191,6 +201,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/terms'
     | '/api/chat'
+    | '/api/trends-sync'
     | '/chat/$threadId'
     | '/chat/dashboard'
     | '/chat/library'
@@ -209,6 +220,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/_authenticated/chat'
     | '/api/chat'
+    | '/api/trends-sync'
     | '/_authenticated/chat/$threadId'
     | '/_authenticated/chat/dashboard'
     | '/_authenticated/chat/library'
@@ -227,6 +239,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiTrendsSyncRoute: typeof ApiTrendsSyncRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -278,6 +291,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/trends-sync': {
+      id: '/api/trends-sync'
+      path: '/api/trends-sync'
+      fullPath: '/api/trends-sync'
+      preLoaderRoute: typeof ApiTrendsSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/chat': {
@@ -389,7 +409,18 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiTrendsSyncRoute: ApiTrendsSyncRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
