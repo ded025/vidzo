@@ -79,6 +79,12 @@ function Landing() {
 
   return (
     <div ref={rootRef} className="min-h-screen bg-background text-foreground overflow-x-hidden" style={{ fontFamily: '"Roboto Flex", sans-serif' }}>
+
+      {/* Playfair Display font */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&display=swap" rel="stylesheet" />
+
       {/* FLOATING GLASS NAV */}
       <header className="fixed top-3 inset-x-3 sm:inset-x-6 z-50">
         <div className="max-w-6xl mx-auto glass-header rounded-2xl">
@@ -90,6 +96,7 @@ function Landing() {
               <a href="#what" className="hover:text-primary transition-colors">What we do</a>
               <a href="#how" className="hover:text-primary transition-colors">How it works</a>
               <a href="#product" className="hover:text-primary transition-colors">Product</a>
+              <a href="#pricing" className="hover:text-primary transition-colors">Pricing</a>
               <Link to="/about" className="hover:text-primary transition-colors">About</Link>
             </nav>
             <div className="flex items-center gap-2">
@@ -109,11 +116,31 @@ function Landing() {
               <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
               AI production room for creators
             </div>
-            <h1 className="text-[42px] leading-[0.95] sm:text-7xl lg:text-[88px] font-black tracking-[-0.04em]">
-              <span className="hero-word inline-block">One idea in.</span>{" "}
-              <span className="hero-word inline-block">Full video</span>{" "}
-              <span className="hero-word inline-block bg-gradient-to-r from-[var(--vidzo-magenta)] via-[var(--vidzo-blue)] to-[var(--vidzo-yellow)] bg-clip-text text-transparent">pack out.</span>
+
+            {/* Hero heading — Playfair Display, two lines, pack out italic */}
+            <h1
+              style={{
+                fontFamily: '"Playfair Display", Georgia, serif',
+                fontSize: "clamp(2.6rem, 6.5vw, 5.5rem)",
+                fontWeight: 900,
+                lineHeight: 1.08,
+                letterSpacing: "-0.02em",
+              }}
+            >
+              <span className="hero-word block">
+                One idea in.
+              </span>
+              <span className="hero-word block">
+                Full video{" "}
+                <span
+                  className="bg-gradient-to-r from-[var(--vidzo-magenta)] via-[var(--vidzo-blue)] to-[var(--vidzo-yellow)] bg-clip-text text-transparent"
+                  style={{ fontStyle: "italic" }}
+                >
+                  pack out.
+                </span>
+              </span>
             </h1>
+
             <p className="hero-sub mt-6 text-lg sm:text-xl text-muted-foreground max-w-xl">
               Vidzo turns your rough content idea into a ready-to-record script, voiceover dialogue, scene-by-scene visuals, thumbnail direction, captions, hashtags, and source-backed research — all in one flow.
             </p>
@@ -180,7 +207,7 @@ function Landing() {
         </div>
       </section>
 
-      {/* SECTION 2: Features (6 cards, uniform) */}
+      {/* SECTION 2: Features */}
       <section id="what" className="max-w-7xl mx-auto px-4 sm:px-8 py-20 sm:py-28">
         <div className="max-w-3xl">
           <div className="text-xs uppercase tracking-[0.2em] font-bold text-[var(--vidzo-magenta)]">The content pack</div>
@@ -289,7 +316,6 @@ function Landing() {
 
           <div className="dashboard-preview mt-12 rounded-3xl bg-background text-foreground border border-border overflow-hidden">
             <div className="grid lg:grid-cols-[220px,1fr] min-h-[560px]">
-              {/* Sidebar */}
               <aside className="bg-[#0b0d14] text-white p-4 hidden lg:flex flex-col gap-2">
                 <div className="px-1 pb-3"><VidzoLogo className="h-7 w-auto" /></div>
                 {[
@@ -309,7 +335,6 @@ function Landing() {
                 ))}
               </aside>
 
-              {/* Main */}
               <div className="p-5 sm:p-7 space-y-5 bg-[#fafaf7]">
                 <div className="flex flex-wrap justify-between gap-3 items-start">
                   <div>
@@ -358,7 +383,6 @@ function Landing() {
                     </div>
                   </div>
 
-                  {/* Content Quality */}
                   <div className="rounded-2xl border border-border bg-white p-4">
                     <div className="flex items-center justify-between">
                       <div className="font-bold text-sm">📈 Content Quality</div>
@@ -386,7 +410,6 @@ function Landing() {
                   </div>
                 </div>
 
-                {/* Trends */}
                 <div className="rounded-2xl border border-border bg-white p-4">
                   <div className="flex justify-between items-center mb-3">
                     <div className="font-bold text-sm">📈 Trends</div>
@@ -421,6 +444,94 @@ function Landing() {
         </div>
       </section>
 
+      {/* SECTION 6: Pricing */}
+      <section id="pricing" className="max-w-7xl mx-auto px-4 sm:px-8 py-20 sm:py-28">
+        <div className="max-w-3xl">
+          <div className="text-xs uppercase tracking-[0.2em] font-bold text-[var(--vidzo-blue)]">Pricing</div>
+          <h2 className="mt-3 text-4xl sm:text-6xl font-black tracking-tight">
+            Simple, creator-first pricing.
+          </h2>
+          <p className="mt-4 text-lg text-muted-foreground">Start free. Upgrade when you need more packs.</p>
+        </div>
+        <div className="mt-12 grid md:grid-cols-3 gap-6">
+          {[
+            {
+              name: "Free",
+              price: "₹0",
+              period: "forever",
+              desc: "Try Vidzo with no commitment.",
+              features: ["5 content packs / month", "Script + voiceover", "Basic visual plan", "Community support"],
+              cta: "Start free",
+              highlight: false,
+              grad: "from-border to-border",
+            },
+            {
+              name: "Creator",
+              price: "₹799",
+              period: "/ month",
+              desc: "For creators publishing consistently.",
+              features: ["Unlimited content packs", "All 6 pack outputs", "Trends + source research", "Priority generation", "Email support"],
+              cta: "Get Creator",
+              highlight: true,
+              grad: "from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)]",
+            },
+            {
+              name: "Studio",
+              price: "₹2,499",
+              period: "/ month",
+              desc: "For agencies and content teams.",
+              features: ["Everything in Creator", "5 team seats", "Custom brand presets", "API access", "Dedicated support"],
+              cta: "Get Studio",
+              highlight: false,
+              grad: "from-border to-border",
+            },
+          ].map((plan) => (
+            <div
+              key={plan.name}
+              className={`relative rounded-3xl border ${
+                plan.highlight
+                  ? "border-transparent bg-gradient-to-br from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)] p-[2px]"
+                  : "border-border"
+              }`}
+            >
+              <div className={`rounded-[22px] p-7 h-full flex flex-col ${
+                plan.highlight ? "bg-background" : "bg-background"
+              }`}>
+                {plan.highlight && (
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-bold text-white bg-gradient-to-r from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)] whitespace-nowrap">
+                    Most popular
+                  </div>
+                )}
+                <div className="text-xs uppercase tracking-[0.15em] font-bold text-muted-foreground">{plan.name}</div>
+                <div className="mt-3 flex items-end gap-1">
+                  <span className="text-4xl font-black tracking-tight">{plan.price}</span>
+                  <span className="text-sm text-muted-foreground mb-1">{plan.period}</span>
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">{plan.desc}</p>
+                <ul className="mt-5 space-y-2.5 flex-1">
+                  {plan.features.map((f) => (
+                    <li key={f} className="flex items-center gap-2 text-sm">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  className={`mt-7 w-full h-11 font-semibold ${
+                    plan.highlight
+                      ? "bg-gradient-to-r from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)] text-white hover:opacity-90 border-0"
+                      : "bg-foreground text-background hover:bg-foreground/90"
+                  }`}
+                  onClick={() => openAuth("signup")}
+                >
+                  {plan.cta}
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="max-w-7xl mx-auto px-4 sm:px-8 py-20 sm:py-28">
         <div className="rounded-3xl bg-gradient-to-br from-[var(--vidzo-magenta)] via-[var(--vidzo-blue)] to-[var(--vidzo-yellow)] p-10 sm:p-16 text-white relative overflow-hidden">
@@ -452,6 +563,7 @@ function Landing() {
           <nav className="flex flex-wrap gap-x-6 gap-y-2 sm:justify-end text-sm font-medium">
             <a href="#what" className="hover:text-primary">What we do</a>
             <a href="#how" className="hover:text-primary">How it works</a>
+            <a href="#pricing" className="hover:text-primary">Pricing</a>
             <Link to="/about" className="hover:text-primary">About</Link>
             <Link to="/contact" className="hover:text-primary">Contact</Link>
             <Link to="/terms" className="hover:text-primary">Terms</Link>
