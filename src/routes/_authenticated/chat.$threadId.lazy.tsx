@@ -93,7 +93,7 @@ function CreditWall({ err, threadId }: { err: CreditError; threadId: string }) {
               Start new chat
             </Button>
           )}
-          <Link to="/credits">
+          <Link to="/chat/credits">
             <Button
               size="sm"
               className="w-full bg-gradient-to-r from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)] text-white border-0 hover:opacity-90"
@@ -131,7 +131,7 @@ function CreditBar({
           ? `${scriptsLeft} free script${scriptsLeft !== 1 ? "s" : ""} remaining`
           : "No free scripts — credits will be consumed"}
       </span>
-      <Link to="/credits" className="ml-auto text-[var(--vidzo-blue)] hover:underline font-medium">
+      <Link to="/chat/credits" className="ml-auto text-[var(--vidzo-blue)] hover:underline font-medium">
         {scriptsLeft <= 1 ? "Top up →" : null}
       </Link>
     </div>
