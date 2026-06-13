@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      global_trends: {
+        Row: {
+          category: string
+          content_ready: boolean
+          created_at: string
+          dedup_key: string
+          freshness: number
+          id: string
+          platform_signals: string[]
+          popularity: number
+          published_at: string | null
+          source_name: string | null
+          source_url: string | null
+          sub_tags: string[]
+          summary: string | null
+          synced_at: string
+          title: string
+        }
+        Insert: {
+          category: string
+          content_ready?: boolean
+          created_at?: string
+          dedup_key: string
+          freshness?: number
+          id?: string
+          platform_signals?: string[]
+          popularity?: number
+          published_at?: string | null
+          source_name?: string | null
+          source_url?: string | null
+          sub_tags?: string[]
+          summary?: string | null
+          synced_at?: string
+          title: string
+        }
+        Update: {
+          category?: string
+          content_ready?: boolean
+          created_at?: string
+          dedup_key?: string
+          freshness?: number
+          id?: string
+          platform_signals?: string[]
+          popularity?: number
+          published_at?: string | null
+          source_name?: string | null
+          source_url?: string | null
+          sub_tags?: string[]
+          summary?: string | null
+          synced_at?: string
+          title?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           created_at: string
@@ -156,6 +210,33 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      trend_sync_runs: {
+        Row: {
+          error_msg: string | null
+          finished_at: string | null
+          id: string
+          started_at: string
+          status: string
+          trends_added: number
+        }
+        Insert: {
+          error_msg?: string | null
+          finished_at?: string | null
+          id?: string
+          started_at?: string
+          status?: string
+          trends_added?: number
+        }
+        Update: {
+          error_msg?: string | null
+          finished_at?: string | null
+          id?: string
+          started_at?: string
+          status?: string
+          trends_added?: number
         }
         Relationships: []
       }

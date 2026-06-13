@@ -103,26 +103,25 @@ body {
 }
 
 /* ─── GLASS HEADER (Apple-style) ─────────────────────────────────────────── */
+/* No -webkit-backdrop-filter: Lightning CSS drops the standard property,
+   breaking the effect on Chrome in the built site. */
 .glass-header {
-  /* Light mode */
-  background: rgba(250, 249, 246, 0.65);
-  backdrop-filter: blur(28px) saturate(200%) brightness(1.05);
-  -webkit-backdrop-filter: blur(28px) saturate(200%) brightness(1.05);
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: rgba(250, 249, 246, 0.55);
+  backdrop-filter: blur(32px) saturate(220%) brightness(1.08);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.6) inset,
-    0 8px 32px rgba(0, 0, 0, 0.06),
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 10px 40px rgba(0, 0, 0, 0.08),
     0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .dark .glass-header {
-  background: rgba(12, 12, 20, 0.72);
-  backdrop-filter: blur(28px) saturate(180%) brightness(0.95);
-  -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(0.95);
+  background: rgba(12, 12, 20, 0.55);
+  backdrop-filter: blur(32px) saturate(200%) brightness(0.92);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.06) inset,
-    0 8px 32px rgba(0, 0, 0, 0.35),
+    0 10px 40px rgba(0, 0, 0, 0.4),
     0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
