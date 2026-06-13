@@ -111,7 +111,7 @@ function Dashboard() {
               { n: (stats.data as { sourcesUsed?: number } | undefined)?.sourcesUsed ?? 0, l: "Sources Used", icon: BookOpen, c: "text-blue-500" },
               { n: Math.max(0, (stats.data?.threadsTotal ?? 0) - (stats.data?.scriptsTotal ?? 0)), l: "Drafts Cooking", icon: FileText, c: "text-amber-500" },
             ].map((s) => (
-              <div key={s.l} className="flex items-center gap-2 rounded-xl bg-white border border-border px-3 py-2 min-w-[120px]">
+              <div key={s.l} className="flex items-center gap-2 rounded-xl bg-card border border-border px-3 py-2 min-w-[120px]">
                 <div className={`h-8 w-8 rounded-lg bg-secondary flex items-center justify-center ${s.c}`}>
                   <s.icon className="h-4 w-4" />
                 </div>
@@ -141,7 +141,7 @@ function Dashboard() {
                   onChange={(e) => setBrief(e.target.value)}
                   placeholder="Create a 40-second reel on how a small D2C brand went viral."
                   rows={2}
-                  className="mt-4 w-full resize-none rounded-xl bg-white border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  className="mt-4 w-full resize-none rounded-xl bg-card border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                 />
                 <div className="mt-4 space-y-2 text-xs">
                   <ChipRow label="Format" options={FORMATS} value={format} onChange={(v) => setFormat(v as typeof format)} />
@@ -154,7 +154,7 @@ function Dashboard() {
                     <Wand2 className="h-4 w-4" />
                     Generate
                   </Button>
-                  <Button variant="outline" onClick={() => document.getElementById("dash-trends")?.scrollIntoView({ behavior: "smooth" })} className="bg-white gap-2">
+                  <Button variant="outline" onClick={() => document.getElementById("dash-trends")?.scrollIntoView({ behavior: "smooth" })} className="bg-card gap-2">
                     <TrendingUp className="h-4 w-4" /> Use a trend
                   </Button>
                 </div>
@@ -162,7 +162,7 @@ function Dashboard() {
             </div>
 
             {/* Trends */}
-            <div id="dash-trends" className="rounded-3xl border border-border bg-white p-6">
+            <div id="dash-trends" className="rounded-3xl border border-border bg-card p-6">
               <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <div>
                   <div className="flex items-center gap-2 font-bold text-lg">
@@ -175,7 +175,7 @@ function Dashboard() {
               </div>
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {TREND_CARDS.map((tr) => (
-                  <button key={tr.t} onClick={() => handleTrend(tr.t)} className="text-left rounded-xl border border-border bg-white p-3 hover:border-foreground/30 hover:shadow-sm active:scale-[0.98] transition-all">
+                  <button key={tr.t} onClick={() => handleTrend(tr.t)} className="text-left rounded-xl border border-border bg-card p-3 hover:border-foreground/30 hover:shadow-sm active:scale-[0.98] transition-all">
                     <div className="flex items-start justify-between">
                       <div className={`h-9 w-9 rounded-lg bg-gradient-to-br ${tr.grad} text-white flex items-center justify-center`}>
                         <tr.icon className="h-4 w-4" />
@@ -193,13 +193,13 @@ function Dashboard() {
             {/* Start from own idea */}
             <button onClick={() => inputRef.current?.focus()} className="w-full text-left rounded-3xl bg-gradient-to-r from-[var(--vidzo-magenta)] via-pink-400 to-violet-500 text-white p-6 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="h-11 w-11 rounded-xl bg-white/20 flex items-center justify-center"><Sparkles className="h-5 w-5" /></div>
+                <div className="h-11 w-11 rounded-xl bg-card/20 flex items-center justify-center"><Sparkles className="h-5 w-5" /></div>
                 <div>
                   <div className="font-bold text-lg">Start from your own idea</div>
                   <div className="text-sm text-white/90">Don't see what you want? Type your own topic and Vidzo will build a content pack for you.</div>
                 </div>
               </div>
-              <div className="rounded-md bg-white text-foreground px-4 py-2 text-sm font-semibold flex items-center gap-1">
+              <div className="rounded-md bg-card text-foreground px-4 py-2 text-sm font-semibold flex items-center gap-1">
                 Create custom pack <ArrowRight className="h-4 w-4" />
               </div>
             </button>
@@ -207,7 +207,7 @@ function Dashboard() {
 
           {/* Right column: recent packs with their own (real) quality */}
           <div className="space-y-5">
-            <div className="rounded-3xl border border-border bg-white p-5">
+            <div className="rounded-3xl border border-border bg-card p-5">
               <div className="font-bold flex items-center gap-2 text-sm mb-3">
                 <Package className="h-4 w-4 text-primary" /> Your recent packs
               </div>
@@ -233,7 +233,7 @@ function Dashboard() {
                               background: `conic-gradient(${q.report.overall >= 85 ? "#10b981" : q.report.overall >= 70 ? "#f59e0b" : "#ef4444"} ${q.report.overall}%, hsl(var(--secondary)) 0)`,
                             }}
                           >
-                            <div className="h-[78%] w-[78%] rounded-full bg-white flex items-center justify-center">
+                            <div className="h-[78%] w-[78%] rounded-full bg-card flex items-center justify-center">
                               <span className={`text-[11px] font-bold ${c}`}>{q.report.overall}</span>
                             </div>
                           </div>
@@ -255,7 +255,7 @@ function Dashboard() {
               )}
             </div>
 
-            <div className="rounded-3xl border border-border bg-white overflow-hidden">
+            <div className="rounded-3xl border border-border bg-card overflow-hidden">
               <div className="px-5 py-3 border-b border-border flex items-center justify-between">
                 <div className="font-bold flex items-center gap-2 text-sm"><FileText className="h-4 w-4 text-primary" /> Recent</div>
                 <Link to="/chat/library" className="text-xs text-primary hover:underline">All</Link>
@@ -292,7 +292,7 @@ function ChipRow<T extends readonly string[]>({
               key={opt}
               type="button"
               onClick={() => onChange(opt)}
-              className={`px-2.5 py-1 rounded-md border text-xs transition-colors ${active ? "border-[var(--vidzo-magenta)] text-[var(--vidzo-magenta)] bg-white" : "border-border bg-white hover:border-foreground/30"}`}
+              className={`px-2.5 py-1 rounded-md border text-xs transition-colors ${active ? "border-[var(--vidzo-magenta)] text-[var(--vidzo-magenta)] bg-card" : "border-border bg-card hover:border-foreground/30"}`}
             >
               {opt}
             </button>
