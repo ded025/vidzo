@@ -339,8 +339,7 @@ export function TrendsPage() {
         error?: string;
       };
       if (json.ok) {
-        const errNote = json.errors?.length ? ` (${json.errors.length} partial errors)` : "";
-        setSyncMsg(`✅ Synced! ${json.added ?? 0} new trends added.${errNote}`);
+        setSyncMsg(`✅ Synced! ${json.added ?? 0} new trends added.`);
         await qc.invalidateQueries({ queryKey: ["global_trends"] });
         await qc.invalidateQueries({ queryKey: ["last_sync_run"] });
       } else {
