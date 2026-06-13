@@ -102,6 +102,16 @@ body {
   min-height: 100dvh;
 }
 
+/* ─── AUTH DIALOG — white bg in light mode only ──────────────────────────── */
+/* In light mode the dialog uses pure white so it feels crisp and clean.      */
+/* In dark mode (.dark ancestor) we leave bg-card untouched (dark surface).   */
+.auth-dialog-content {
+  background-color: #ffffff;
+}
+.dark .auth-dialog-content {
+  background-color: hsl(var(--card));
+}
+
 /* ─── GLASS HEADER (Apple-style) ─────────────────────────────────────────── */
 /* No -webkit-backdrop-filter: Lightning CSS drops the standard property,
    breaking the effect on Chrome in the built site. */
