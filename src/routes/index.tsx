@@ -11,7 +11,7 @@ import { VidzoLogo } from "@/components/vidzo-logo";
 import { AuthDialog } from "@/components/auth-dialog";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/")(({
   ssr: false,
   beforeLoad: async () => {
     try {
@@ -30,7 +30,54 @@ export const Route = createFileRoute("/")({
     ],
   }),
   component: Landing,
-});
+}));
+
+/* ─── Hero output cards data ─────────────────────────────────────────────── */
+const HERO_CARDS = [
+  {
+    icon: FileText,
+    label: "Script",
+    grad: "from-pink-500 to-rose-500",
+    body: '"Bhai ye chhoti si D2C brand ne 90 din mein 4 crore kaise kamaye? Sun…"',
+    // Span 2 columns on md+ so the first card gets visual prominence
+    wide: true,
+  },
+  {
+    icon: Mic,
+    label: "Voiceover dialogue",
+    grad: "from-violet-500 to-indigo-600",
+    body: "Tone: warm founder energy. Pace: medium. Pause after hook for 0.4 s.",
+    wide: false,
+  },
+  {
+    icon: ImageIcon,
+    label: "Visual plan",
+    grad: "from-blue-500 to-cyan-500",
+    body: "Beat 1: founder POV, warm office, golden hour, handheld 24 mm.",
+    wide: false,
+  },
+  {
+    icon: Sparkles,
+    label: "Thumbnail",
+    grad: "from-amber-400 to-orange-500",
+    body: 'Big bold text: "₹4 CR IN 90 DAYS" + shocked founder face left.',
+    wide: false,
+  },
+  {
+    icon: Hash,
+    label: "Caption + hashtags",
+    grad: "from-emerald-400 to-teal-500",
+    body: "Yeh brand chhoti thi, soch badi thi. #d2cindia #founderstory #reelitfeelit",
+    wide: false,
+  },
+  {
+    icon: BookOpen,
+    label: "Sources",
+    grad: "from-fuchsia-500 to-purple-600",
+    body: "5 cited links: YourStory · Inc42 · Moneycontrol · The Ken · ET",
+    wide: false,
+  },
+] as const;
 
 function Landing() {
   const _navigate = useNavigate();
@@ -48,7 +95,7 @@ function Landing() {
         gsap.from(".hero-word", { y: 60, opacity: 0, duration: 1.1, ease: "power4.out", stagger: 0.06 });
         gsap.from(".hero-sub", { y: 20, opacity: 0, duration: 0.8, ease: "power3.out", delay: 0.5 });
         gsap.from(".hero-cta", { y: 16, opacity: 0, duration: 0.7, ease: "power3.out", delay: 0.7, stagger: 0.08 });
-        gsap.from(".hero-card", { y: 40, opacity: 0, scale: 0.85, duration: 0.9, ease: "back.out(1.5)", stagger: 0.1, delay: 0.3 });
+        gsap.from(".hero-card", { y: 40, opacity: 0, scale: 0.92, duration: 0.9, ease: "back.out(1.5)", stagger: 0.08, delay: 0.3 });
         gsap.from(".feature-tile", {
           y: 40, opacity: 0, duration: 0.7, ease: "power3.out", stagger: 0.08,
           scrollTrigger: { trigger: ".features-grid", start: "top 80%" },
@@ -105,7 +152,8 @@ function Landing() {
       {/* HERO */}
       <section className="relative px-4 sm:px-8 pt-28 sm:pt-36 pb-16 sm:pb-24">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(700px,90vw)] h-[min(700px,90vw)] rounded-full"
+          <div
+            className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(700px,90vw)] h-[min(700px,90vw)] rounded-full"
             style={{
               background: "radial-gradient(circle, color-mix(in oklab, var(--vidzo-magenta) 18%, transparent) 0%, color-mix(in oklab, var(--vidzo-blue) 12%, transparent) 50%, transparent 75%)",
               filter: "blur(60px)",
@@ -120,14 +168,6 @@ function Landing() {
           </div>
 
           <h1 className="font-display font-black tracking-[-0.03em] leading-[1.05]">
-            {/* 
-              Light mode: foreground = near-black  → text is black ✓
-              Dark mode:  foreground = near-white  → text would be white, but we want BLACK in dark.
-              Original request: swap them — black in light, white in dark.
-              So in dark mode we need the gradient to go toward white (background in dark = near-black,
-              but we actually want the TEXT white in dark mode).
-              Solution: use `dark:from-white dark:to-white/80` to force white in dark mode.
-            */}
             <span
               className="hero-word block text-foreground"
               style={{ fontSize: "clamp(2.6rem, 7vw, 5.5rem)" }}
@@ -166,46 +206,122 @@ function Landing() {
 
           <p className="mt-5 text-xs text-muted-foreground flex items-center justify-center gap-1.5">
             <CheckCircle2 className="h-3.5 w-3.5 text-accent" />
-            No credit card required &middot; Free to start
+            No credit card required · Free to start
           </p>
         </div>
 
+        {/* ── OUTPUT CARDS BENTO GRID ── */}
         <div className="relative mt-12 max-w-5xl mx-auto">
           <div className="absolute inset-0 hero-glow rounded-3xl" />
-          {(() => {
-            const cards = [
-              { icon: FileText, label: "Script", grad: "from-pink-500 to-rose-500",
-                body: '"Bhai ye chhoti si D2C brand ne 90 din mein 4 crore kaise kamaye? Sun…"' },
-              { icon: Mic, label: "Voiceover dialogue", grad: "from-violet-500 to-indigo-600",
-                body: "Tone: warm founder energy. Pace: medium. Pause after hook for 0.4s." },
-              { icon: ImageIcon, label: "Visual plan", grad: "from-blue-500 to-cyan-500",
-                body: "Beat 1: founder POV, warm office, golden hour, handheld 24mm." },
-              { icon: Sparkles, label: "Thumbnail", grad: "from-amber-400 to-orange-500",
-                body: 'Big bold text: "₹4 CR IN 90 DAYS" + shocked founder face left.' },
-              { icon: Hash, label: "Caption + hashtags", grad: "from-emerald-400 to-teal-500",
-                body: "Yeh brand chhoti thi, soch badi thi. #d2cindia #founderstory #reelitfeelit" },
-              { icon: BookOpen, label: "Sources", grad: "from-fuchsia-500 to-purple-600",
-                body: "5 cited links: YourStory · Inc42 · Moneycontrol · The Ken · ET" },
-            ];
-            return (
-              <div className="relative grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {cards.map((c) => (
-                  <div
-                    key={c.label}
-                    className={`hero-card rounded-2xl bg-gradient-to-br ${c.grad} text-white p-4 min-h-[110px]`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 rounded-lg bg-white/25 flex items-center justify-center shrink-0">
-                        <c.icon className="h-4 w-4" />
-                      </div>
-                      <span className="font-bold text-sm tracking-tight truncate">{c.label}</span>
-                    </div>
-                    <p className="mt-2.5 text-[12px] leading-snug text-white/95 line-clamp-3">{c.body}</p>
-                  </div>
-                ))}
+          {/*
+            Mobile  (< sm):  single column, all cards equal height
+            Tablet  (sm–md): 2 columns, all cards equal height
+            Desktop (md+):   bento — first card spans 2 cols, remaining 5 fill a 3-col grid
+                             Row 1: [Script ×2] [Voiceover]
+                             Row 2: [Visual]    [Thumbnail] [Caption]
+                             Row 3: [Sources ×3 — full-width accent strip]
+          */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 auto-rows-fr">
+
+            {/* Script — wide on md+ */}
+            <div
+              className="hero-card col-span-1 sm:col-span-2 md:col-span-2 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-500 text-white p-5"
+              style={{ minHeight: "clamp(110px, 14vw, 148px)" }}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-8 w-8 rounded-lg bg-white/25 flex items-center justify-center shrink-0">
+                  <FileText className="h-4 w-4" />
+                </div>
+                <span className="font-bold text-sm tracking-tight">Script</span>
               </div>
-            );
-          })()}
+              <p className="text-[13px] leading-snug text-white/95 line-clamp-3">
+                "Bhai ye chhoti si D2C brand ne 90 din mein 4 crore kaise kamaye? Sun…"
+              </p>
+            </div>
+
+            {/* Voiceover dialogue */}
+            <div
+              className="hero-card col-span-1 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white p-5"
+              style={{ minHeight: "clamp(110px, 14vw, 148px)" }}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-8 w-8 rounded-lg bg-white/25 flex items-center justify-center shrink-0">
+                  <Mic className="h-4 w-4" />
+                </div>
+                <span className="font-bold text-sm tracking-tight">Voiceover</span>
+              </div>
+              <p className="text-[13px] leading-snug text-white/95 line-clamp-3">
+                Tone: warm founder energy. Pace: medium. Pause after hook for 0.4 s.
+              </p>
+            </div>
+
+            {/* Visual plan */}
+            <div
+              className="hero-card col-span-1 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white p-5"
+              style={{ minHeight: "clamp(110px, 14vw, 148px)" }}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-8 w-8 rounded-lg bg-white/25 flex items-center justify-center shrink-0">
+                  <ImageIcon className="h-4 w-4" />
+                </div>
+                <span className="font-bold text-sm tracking-tight">Visual plan</span>
+              </div>
+              <p className="text-[13px] leading-snug text-white/95 line-clamp-3">
+                Beat 1: founder POV, warm office, golden hour, handheld 24 mm.
+              </p>
+            </div>
+
+            {/* Thumbnail */}
+            <div
+              className="hero-card col-span-1 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white p-5"
+              style={{ minHeight: "clamp(110px, 14vw, 148px)" }}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-8 w-8 rounded-lg bg-white/25 flex items-center justify-center shrink-0">
+                  <Sparkles className="h-4 w-4" />
+                </div>
+                <span className="font-bold text-sm tracking-tight">Thumbnail</span>
+              </div>
+              <p className="text-[13px] leading-snug text-white/95 line-clamp-3">
+                Big bold text: "₹4 CR IN 90 DAYS" + shocked founder face left.
+              </p>
+            </div>
+
+            {/* Caption + hashtags */}
+            <div
+              className="hero-card col-span-1 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white p-5"
+              style={{ minHeight: "clamp(110px, 14vw, 148px)" }}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-8 w-8 rounded-lg bg-white/25 flex items-center justify-center shrink-0">
+                  <Hash className="h-4 w-4" />
+                </div>
+                <span className="font-bold text-sm tracking-tight">Caption + hashtags</span>
+              </div>
+              <p className="text-[13px] leading-snug text-white/95 line-clamp-3">
+                Yeh brand chhoti thi, soch badi thi. #d2cindia #founderstory #reelitfeelit
+              </p>
+            </div>
+
+            {/* Sources — full-width accent strip on md+ */}
+            <div
+              className="hero-card col-span-1 sm:col-span-2 md:col-span-3 rounded-2xl bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white p-5"
+              style={{ minHeight: "clamp(80px, 8vw, 100px)" }}
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="h-8 w-8 rounded-lg bg-white/25 flex items-center justify-center shrink-0">
+                    <BookOpen className="h-4 w-4" />
+                  </div>
+                  <span className="font-bold text-sm tracking-tight">Sources</span>
+                </div>
+                <p className="text-[13px] leading-snug text-white/95 sm:border-l sm:border-white/30 sm:pl-3">
+                  5 cited links: YourStory · Inc42 · Moneycontrol · The Ken · ET
+                </p>
+              </div>
+            </div>
+
+          </div>
         </div>
       </section>
 
