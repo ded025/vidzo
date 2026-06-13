@@ -214,7 +214,7 @@ function KeywordInput({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-1.5 flex-wrap border border-border rounded-xl bg-white px-3 py-2 min-h-[44px] cursor-text" onClick={() => inputRef.current?.focus()}>
+      <div className="flex items-center gap-1.5 flex-wrap border border-border rounded-xl bg-card px-3 py-2 min-h-[44px] cursor-text" onClick={() => inputRef.current?.focus()}>
         <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
         {keywords.map((kw) => (
           <span
@@ -479,7 +479,7 @@ export function TrendsPage() {
             placeholder="Search any topic — Vidzo finds live sources and builds a content pack…"
             value={custom}
             onChange={(e) => setCustom(e.target.value)}
-            className="bg-white"
+            className="bg-card"
           />
           <Button type="submit" disabled={!custom.trim() || startContent.isPending} className="shrink-0">
             <Sparkles className="h-4 w-4 mr-1.5" /> Generate
@@ -499,7 +499,7 @@ export function TrendsPage() {
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-150 ${
                   active
                     ? `bg-gradient-to-r ${meta.grad} text-white border-transparent shadow-sm`
-                    : "bg-white border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+                    : "bg-card border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground"
                 }`}
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -512,7 +512,7 @@ export function TrendsPage() {
             <button
               onClick={() => handleSyncCategory(activeCategory as TrendCategory)}
               disabled={syncing}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-dashed border-primary text-primary bg-white hover:bg-primary/5 transition-all disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-dashed border-primary text-primary bg-card hover:bg-primary/5 transition-all disabled:opacity-50"
             >
               {syncing ? (
                 <RefreshCw className="h-3 w-3 animate-spin" />
