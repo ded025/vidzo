@@ -83,6 +83,33 @@ const ContentPackSchema = z.object({
 
 type ContentPack = z.infer<typeof ContentPackSchema>;
 
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Strip assistant messages that contain ONLY tool-call parts and no text/other
+ * parts. These are "dangling" tool-call messages that were persisted to the DB
+ * from a previous session where the stream was interrupted before the tool
+ * result was written back. Replaying them into toUIMessageStreamResponse causes
+ * the SDK to throw "Tool result is missing for tool call …".
+ */
+function sanitiseMessagesForStream(messages: UIMessage[]): UIMessage[] {
+  return messages.filter((msg) => {
+    if (msg.role !== "assistant") return true;
+    const parts = msg.parts ?? [];
+    // Keep the message if it has at least one non-tool-call part
+    const hasNonToolCallPart = parts.some(
+      (p) => (p as { type: string }).type !== "tool-invocation",
+    );
+    return hasNonToolCallPart;
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Route
+// ---------------------------------------------------------------------------
+
 export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
@@ -90,9 +117,11 @@ export const Route = createFileRoute("/api/chat")({
         const body = (await request.json()) as ChatRequestBody;
         const messages = body.messages;
         const threadId = body.threadId;
+
         if (!Array.isArray(messages)) {
           return new Response("Messages required", { status: 400 });
         }
+
         const key = process.env.LOVABLE_API_KEY;
         if (!key) return new Response("Missing LOVABLE_API_KEY", { status: 500 });
 
@@ -100,19 +129,19 @@ export const Route = createFileRoute("/api/chat")({
         const supaUrl = process.env.SUPABASE_URL!;
         const supaKey = process.env.SUPABASE_PUBLISHABLE_KEY!;
         const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+
         const supabase = createClient(supaUrl, supaKey, {
           global: { headers: { Authorization: `Bearer ${token}` } },
           auth: { persistSession: false, autoRefreshToken: false },
         });
+
         const { data: userRes } = await supabase.auth.getUser(token);
         const userId = userRes?.user?.id;
         if (!userId) return new Response("Unauthorized", { status: 401 });
 
-        // ── Credit check: is this a tweak or a fresh script request? ──────────
-        // A "tweak" is any message after the first user message in the thread.
-        // We determine this by looking at how many user messages exist already.
+        // ── Credit check ──────────────────────────────────────────────────────
         const existingUserMessages = (messages as UIMessage[]).filter((m) => m.role === "user");
-        const isTweak = existingUserMessages.length > 1; // first message = script, subsequent = tweak
+        const isTweak = existingUserMessages.length > 1;
 
         const creditResult = await checkAndConsume(
           supabase,
@@ -141,7 +170,7 @@ export const Route = createFileRoute("/api/chat")({
         }
         // ─────────────────────────────────────────────────────────────────────
 
-        // Load thread context_brief + active preset
+        // ── Thread context & preset ───────────────────────────────────────────
         let contextBrief: string | null = null;
         if (threadId) {
           const { data: t } = await supabase
@@ -151,6 +180,7 @@ export const Route = createFileRoute("/api/chat")({
             .maybeSingle();
           contextBrief = (t?.context_brief as string | null) ?? null;
         }
+
         const { data: activePreset } = await supabase
           .from("presets")
           .select("name, niche, audience, tone, language, default_voice_id, default_voice_name")
@@ -172,6 +202,7 @@ export const Route = createFileRoute("/api/chat")({
             system += `\n- Default ElevenLabs voice: ${activePreset.default_voice_name}${activePreset.default_voice_id ? ` (${activePreset.default_voice_id})` : ""}`;
           }
         }
+        // ─────────────────────────────────────────────────────────────────────
 
         const gateway = createLovableAiGatewayProvider(key);
         const model = gateway("google/gemini-3-flash-preview");
@@ -219,74 +250,115 @@ export const Route = createFileRoute("/api/chat")({
               }
             },
           }),
+
           generate_content_pack: tool({
             description:
               "Generate a structured, AI-ready content pack: ElevenLabs voiceover, beat-by-beat 9:16 portrait image AND video prompts (each 80+ words), 3 detailed 9:16 thumbnail prompts (each 100+ words), caption, hashtags, and verified sources.",
             inputSchema: ContentPackSchema,
+            // ----------------------------------------------------------------
+            // CRITICAL: This function MUST always return a value — never throw.
+            // Any unhandled throw here causes the AI SDK to emit
+            // "Tool result is missing for tool call …" because the stream
+            // closes before the tool_result part is written back.
+            // ----------------------------------------------------------------
             execute: async (rawInput) => {
-              const input = rawInput as ContentPack;
-              let sanitized: ContentPack = input;
               try {
-                const validatorSchema = ContentPackSchema;
-                const sourcePool = collectedSources
-                  .map((s, i) => `[${i + 1}] ${s.title} — ${s.url}\n${s.snippet}`)
-                  .join("\n\n");
-                const { text: validatedJson } = await generateText({
-                  model,
-                  system: `You are a strict fact validator for a content pack. Given a draft content pack and a pool of source URLs+snippets, you must:\n1. For every factual claim (numbers, dates, names of real companies/founders, funding amounts, rankings, quotes), check if the source pool supports it.\n2. If a claim is NOT supported, rewrite the sentence to be generic / opinion / hypothetical, OR remove it. Never invent a source.\n3. Only keep entries in "sources" that exactly match a URL from the pool.\n4. Preserve voice, tone, length. Never add new factual claims.\n5. IMPORTANT: Do NOT shorten or modify imagePrompt, videoPrompt, or thumbnailPrompts fields — preserve them exactly as-is.\n6. Output ONLY valid JSON matching the same schema as the input. No markdown, no commentary.`,
-                  prompt: `SOURCE POOL:\n${sourcePool || "(no sources collected)"}\n\nDRAFT PACK:\n${JSON.stringify(input)}\n\nReturn the sanitized pack as JSON.`,
-                });
-                const jsonStr = validatedJson
-                  .trim()
-                  .replace(/^```json\s*/i, "")
-                  .replace(/^```\s*/i, "")
-                  .replace(/```$/i, "")
-                  .trim();
-                const parsed = validatorSchema.safeParse(JSON.parse(jsonStr));
-                if (parsed.success) {
-                  sanitized = parsed.data as ContentPack;
-                  const allowedUrls = new Set(collectedSources.map((s) => s.url));
-                  if (allowedUrls.size > 0) {
-                    sanitized.sources = sanitized.sources.filter((s) => allowedUrls.has(s.url));
-                  }
-                }
-              } catch (e) {
-                console.error("validator failed, using raw draft", e);
-              }
+                const input = rawInput as ContentPack;
+                let sanitized: ContentPack = input;
 
-              const { error } = await supabase.from("scripts").insert({
-                user_id: userId,
-                thread_id: threadId ?? null,
-                topic: sanitized.topic,
-                data: sanitized,
-              });
-              if (error) console.error("pack save failed", error);
-              return { saved: !error, ...sanitized };
+                // ── Fact-validation pass (best-effort, never blocks) ──────────
+                try {
+                  const sourcePool = collectedSources
+                    .map((s, i) => `[${i + 1}] ${s.title} — ${s.url}\n${s.snippet}`)
+                    .join("\n\n");
+
+                  const { text: validatedJson } = await generateText({
+                    model,
+                    system: `You are a strict fact validator for a content pack. Given a draft content pack and a pool of source URLs+snippets, you must:\n1. For every factual claim (numbers, dates, names of real companies/founders, funding amounts, rankings, quotes), check if the source pool supports it.\n2. If a claim is NOT supported, rewrite the sentence to be generic / opinion / hypothetical, OR remove it. Never invent a source.\n3. Only keep entries in "sources" that exactly match a URL from the pool.\n4. Preserve voice, tone, length. Never add new factual claims.\n5. IMPORTANT: Do NOT shorten or modify imagePrompt, videoPrompt, or thumbnailPrompts fields — preserve them exactly as-is.\n6. Output ONLY valid JSON matching the same schema as the input. No markdown, no commentary.`,
+                    prompt: `SOURCE POOL:\n${sourcePool || "(no sources collected)"}\n\nDRAFT PACK:\n${JSON.stringify(input)}\n\nReturn the sanitized pack as JSON.`,
+                  });
+
+                  const jsonStr = validatedJson
+                    .trim()
+                    .replace(/^```json\s*/i, "")
+                    .replace(/^```\s*/i, "")
+                    .replace(/```$/i, "")
+                    .trim();
+
+                  const parsed = ContentPackSchema.safeParse(JSON.parse(jsonStr));
+                  if (parsed.success) {
+                    sanitized = parsed.data as ContentPack;
+                    const allowedUrls = new Set(collectedSources.map((s) => s.url));
+                    if (allowedUrls.size > 0) {
+                      sanitized.sources = sanitized.sources.filter((s) => allowedUrls.has(s.url));
+                    }
+                  }
+                } catch (validationErr) {
+                  // Validator failed — continue with the raw draft. Never rethrow.
+                  console.error("validator failed, using raw draft:", validationErr);
+                }
+                // ─────────────────────────────────────────────────────────────
+
+                // ── Persist to DB (best-effort) ───────────────────────────────
+                try {
+                  const { error: dbError } = await supabase.from("scripts").insert({
+                    user_id: userId,
+                    thread_id: threadId ?? null,
+                    topic: sanitized.topic,
+                    data: sanitized,
+                  });
+                  if (dbError) console.error("pack save failed:", dbError);
+                } catch (dbErr) {
+                  console.error("pack DB insert threw:", dbErr);
+                }
+                // ─────────────────────────────────────────────────────────────
+
+                return { saved: true, ...sanitized };
+              } catch (fatalErr) {
+                // Absolute last-resort catch — guarantees a tool result is
+                // always returned so the SDK never sees a missing result.
+                console.error("generate_content_pack fatal error:", fatalErr);
+                return {
+                  saved: false,
+                  error: fatalErr instanceof Error ? fatalErr.message : "Content pack generation failed",
+                };
+              }
             },
           }),
         };
 
+        // Strip dangling tool-call-only assistant messages before streaming.
+        // These cause "Tool result is missing" when a thread is reloaded after
+        // an interrupted session where the tool result was never persisted.
+        const safeMessages = sanitiseMessagesForStream(messages as UIMessage[]);
+
         const result = streamText({
           model,
           system,
-          messages: await convertToModelMessages(messages as UIMessage[]),
+          messages: await convertToModelMessages(safeMessages),
           tools,
+          // maxSteps ensures the SDK always runs tool execute() and feeds the
+          // result back as a tool_result step before closing the stream.
+          // Without this, a tool call on the final step has no result flushed.
+          maxSteps: 10,
           stopWhen: stepCountIs(50),
         });
 
         return result.toUIMessageStreamResponse({
-          originalMessages: messages as UIMessage[],
+          originalMessages: safeMessages,
           onFinish: async ({ messages: finalMessages }) => {
             if (!threadId) return;
             try {
               const lastUser = [...finalMessages].reverse().find((m) => m.role === "user");
               const lastAssistant = finalMessages[finalMessages.length - 1];
+
               const toInsert: Array<{
                 thread_id: string;
                 user_id: string;
                 role: string;
                 parts: unknown;
               }> = [];
+
               if (lastUser) {
                 toInsert.push({
                   thread_id: threadId,
@@ -303,6 +375,7 @@ export const Route = createFileRoute("/api/chat")({
                   parts: lastAssistant.parts,
                 });
               }
+
               if (toInsert.length) {
                 await supabase.from("messages").insert(toInsert);
                 await supabase
@@ -311,7 +384,7 @@ export const Route = createFileRoute("/api/chat")({
                   .eq("id", threadId);
               }
             } catch (e) {
-              console.error("persist failed", e);
+              console.error("persist failed:", e);
             }
           },
         });
