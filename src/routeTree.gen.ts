@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AboutRouteImport } from './routes/about'
@@ -25,6 +26,7 @@ import { Route as AuthenticatedChatPresetsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedChatNewRouteImport } from './routes/_authenticated/chat.new'
 import { Route as AuthenticatedChatLibraryRouteImport } from './routes/_authenticated/chat.library'
 import { Route as AuthenticatedChatDashboardRouteImport } from './routes/_authenticated/chat.dashboard'
+import { Route as AuthenticatedChatCreditsRouteImport } from './routes/_authenticated/chat.credits'
 import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
 
 const TermsRoute = TermsRouteImport.update({
@@ -35,6 +37,11 @@ const TermsRoute = TermsRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -109,6 +116,12 @@ const AuthenticatedChatDashboardRoute =
     path: '/dashboard',
     getParentRoute: () => AuthenticatedChatRoute,
   } as any)
+const AuthenticatedChatCreditsRoute =
+  AuthenticatedChatCreditsRouteImport.update({
+    id: '/credits',
+    path: '/credits',
+    getParentRoute: () => AuthenticatedChatRoute,
+  } as any)
 const AuthenticatedChatThreadIdRoute =
   AuthenticatedChatThreadIdRouteImport.update({
     id: '/$threadId',
@@ -123,12 +136,14 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/chat': typeof AuthenticatedChatRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/api/trends-sync': typeof ApiTrendsSyncRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/chat/credits': typeof AuthenticatedChatCreditsRoute
   '/chat/dashboard': typeof AuthenticatedChatDashboardRoute
   '/chat/library': typeof AuthenticatedChatLibraryRoute
   '/chat/new': typeof AuthenticatedChatNewRoute
@@ -141,11 +156,13 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/trends-sync': typeof ApiTrendsSyncRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/chat/credits': typeof AuthenticatedChatCreditsRoute
   '/chat/dashboard': typeof AuthenticatedChatDashboardRoute
   '/chat/library': typeof AuthenticatedChatLibraryRoute
   '/chat/new': typeof AuthenticatedChatNewRoute
@@ -160,12 +177,14 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/_authenticated/chat': typeof AuthenticatedChatRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/api/trends-sync': typeof ApiTrendsSyncRoute
   '/_authenticated/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
+  '/_authenticated/chat/credits': typeof AuthenticatedChatCreditsRoute
   '/_authenticated/chat/dashboard': typeof AuthenticatedChatDashboardRoute
   '/_authenticated/chat/library': typeof AuthenticatedChatLibraryRoute
   '/_authenticated/chat/new': typeof AuthenticatedChatNewRoute
@@ -180,12 +199,14 @@ export interface FileRouteTypes {
     | '/about'
     | '/auth'
     | '/contact'
+    | '/pricing'
     | '/privacy'
     | '/terms'
     | '/chat'
     | '/api/chat'
     | '/api/trends-sync'
     | '/chat/$threadId'
+    | '/chat/credits'
     | '/chat/dashboard'
     | '/chat/library'
     | '/chat/new'
@@ -198,11 +219,13 @@ export interface FileRouteTypes {
     | '/about'
     | '/auth'
     | '/contact'
+    | '/pricing'
     | '/privacy'
     | '/terms'
     | '/api/chat'
     | '/api/trends-sync'
     | '/chat/$threadId'
+    | '/chat/credits'
     | '/chat/dashboard'
     | '/chat/library'
     | '/chat/new'
@@ -216,12 +239,14 @@ export interface FileRouteTypes {
     | '/about'
     | '/auth'
     | '/contact'
+    | '/pricing'
     | '/privacy'
     | '/terms'
     | '/_authenticated/chat'
     | '/api/chat'
     | '/api/trends-sync'
     | '/_authenticated/chat/$threadId'
+    | '/_authenticated/chat/credits'
     | '/_authenticated/chat/dashboard'
     | '/_authenticated/chat/library'
     | '/_authenticated/chat/new'
@@ -236,6 +261,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
   ContactRoute: typeof ContactRoute
+  PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
@@ -256,6 +282,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -356,6 +389,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChatDashboardRouteImport
       parentRoute: typeof AuthenticatedChatRoute
     }
+    '/_authenticated/chat/credits': {
+      id: '/_authenticated/chat/credits'
+      path: '/credits'
+      fullPath: '/chat/credits'
+      preLoaderRoute: typeof AuthenticatedChatCreditsRouteImport
+      parentRoute: typeof AuthenticatedChatRoute
+    }
     '/_authenticated/chat/$threadId': {
       id: '/_authenticated/chat/$threadId'
       path: '/$threadId'
@@ -368,6 +408,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedChatRouteChildren {
   AuthenticatedChatThreadIdRoute: typeof AuthenticatedChatThreadIdRoute
+  AuthenticatedChatCreditsRoute: typeof AuthenticatedChatCreditsRoute
   AuthenticatedChatDashboardRoute: typeof AuthenticatedChatDashboardRoute
   AuthenticatedChatLibraryRoute: typeof AuthenticatedChatLibraryRoute
   AuthenticatedChatNewRoute: typeof AuthenticatedChatNewRoute
@@ -378,6 +419,7 @@ interface AuthenticatedChatRouteChildren {
 
 const AuthenticatedChatRouteChildren: AuthenticatedChatRouteChildren = {
   AuthenticatedChatThreadIdRoute: AuthenticatedChatThreadIdRoute,
+  AuthenticatedChatCreditsRoute: AuthenticatedChatCreditsRoute,
   AuthenticatedChatDashboardRoute: AuthenticatedChatDashboardRoute,
   AuthenticatedChatLibraryRoute: AuthenticatedChatLibraryRoute,
   AuthenticatedChatNewRoute: AuthenticatedChatNewRoute,
@@ -406,6 +448,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
   ContactRoute: ContactRoute,
+  PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,
@@ -414,3 +457,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
