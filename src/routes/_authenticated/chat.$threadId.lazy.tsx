@@ -165,23 +165,10 @@ function ChatWindow({
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  // Fetch credit info
+  // Free mode — no credit / tweak limits
   useEffect(() => {
-    if (!bearerReady) return;
-    supabase
-      .from("user_credits")
-      .select("balance")
-      .then(({ data }) => {
-        if (data?.[0]) setBalance(data[0].balance);
-      });
-    supabase
-      .from("threads")
-      .select("tweak_count")
-      .eq("id", threadId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) setTweakCount(data.tweak_count ?? 0);
-      });
+    setBalance(null);
+    setTweakCount(0);
   }, [bearerReady, threadId]);
 
   const transport = useMemo(
@@ -191,15 +178,10 @@ function ChatWindow({
         headers: (): Record<string, string> =>
           bearerRef.current ? { Authorization: `Bearer ${bearerRef.current}` } : {},
         body: { threadId },
-        async onResponse(response) {
-          if (response.status === 402) {
-            const json = (await response.clone().json()) as CreditError;
-            setCreditError(json);
-          }
-        },
       }),
     [threadId],
   );
+
 
   const { messages, sendMessage, status, error } = useChat({
     id: threadId,
