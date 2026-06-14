@@ -36,12 +36,11 @@ function ChatLayout() {
     setSidebarOpen(false);
   }, [pathname]);
 
-  // Load credit balance for sidebar display
+  // Free mode — credits removed
   useEffect(() => {
-    supabase.from("user_credits").select("balance").maybeSingle().then(({ data }) => {
-      if (data) setBalance(data.balance);
-    });
-  }, [pathname]); // re-fetch on nav so it stays fresh
+    setBalance(null);
+  }, [pathname]);
+
 
   const threadsQ = useQuery({
     queryKey: ["threads"],

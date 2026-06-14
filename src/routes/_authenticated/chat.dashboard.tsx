@@ -94,7 +94,7 @@ function Dashboard() {
   const hasScripts = qualityReports.length > 0;
 
   return (
-    <div className="h-full overflow-y-auto bg-[#fafaf7]">
+    <div className="h-full overflow-y-auto bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 space-y-6">
         {/* Top: greeting + stats */}
         <div className="flex flex-wrap items-start justify-between gap-4">

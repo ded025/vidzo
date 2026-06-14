@@ -371,7 +371,7 @@ export function TrendsPage() {
   const allCategories: (TrendCategory | "All")[] = ["All", ...TREND_CATEGORIES];
 
   return (
-    <div className="h-full overflow-y-auto bg-[#fafaf7]">
+    <div className="h-full overflow-y-auto bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-5">
 
         {/* ── Header ── */}

@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import {
-  ArrowRight, CheckCircle2, Coins, Sparkles, Star, Zap,
-  FileText, Mic, ImageIcon, Hash, BookOpen, Shield,
+  ArrowRight, CheckCircle2, Coins, Sparkles, Star,
+  FileText, Mic, ImageIcon, Hash, BookOpen,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { VidzoLogo } from "@/components/vidzo-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -26,65 +27,30 @@ const YELLOW = "#f5a623";
 const PLANS = [
   {
     id: "free",
-    name: "Free",
-    credits: 5,
+    name: "Free — Early Access",
+    credits: "∞",
     price: "₹0",
-    sub: "forever",
-    popular: false,
-    iconColor: "#6b7280",
-    accentFrom: "#9ca3af",
-    accentTo: "#6b7280",
-    features: [
-      "5 free script credits on signup",
-      "3 free tweaks per chat",
-      "Full content packs",
-      "Script, visuals, captions, hashtags",
-    ],
-    cta: "Start free",
-  },
-  {
-    id: "starter",
-    name: "Starter",
-    credits: 10,
-    price: "₹199",
-    sub: "one-time",
-    popular: false,
-    iconColor: "#ec4899",
-    accentFrom: "#ec4899",
-    accentTo: "#f43f5e",
-    features: [
-      "10 script credits",
-      "3 free tweaks per chat",
-      "Full content packs",
-      "No expiry",
-    ],
-    cta: "Buy Starter",
-  },
-  {
-    id: "creator",
-    name: "Creator",
-    credits: 30,
-    price: "₹499",
-    sub: "one-time",
+    sub: "while in beta",
     popular: true,
     iconColor: MAGENTA,
     accentFrom: MAGENTA,
     accentTo: BLUE,
     features: [
-      "30 script credits",
-      "3 free tweaks per chat",
-      "Priority generation",
-      "No expiry",
+      "Unlimited content packs",
+      "Unlimited tweaks per chat",
+      "Live trend syncing across the web",
+      "Brand & keyword research",
+      "Full library + export",
+      "Script, voiceover, visuals, captions, hashtags, sources",
     ],
-    cta: "Buy Creator",
+    cta: "Start free",
   },
 ];
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-  free: Shield,
-  starter: Zap,
-  creator: Sparkles,
+  free: Sparkles,
 };
+
 
 function PricingPage() {
   const [authOpen, setAuthOpen] = useState(false);
@@ -149,62 +115,44 @@ function PricingPage() {
       </section>
 
       {/* PRICING GRID */}
-      <section className="max-w-4xl mx-auto px-4 pb-20">
-        <div className="grid sm:grid-cols-3 gap-5">
+      <section className="max-w-xl mx-auto px-4 pb-20">
+        <div className="grid gap-5">
           {PLANS.map((plan) => {
             const Icon = ICON_MAP[plan.id];
             return (
               <div
                 key={plan.id}
-                className="relative rounded-2xl bg-card flex flex-col p-6"
+                className="relative rounded-2xl bg-card flex flex-col p-8"
                 style={{
-                  border: plan.popular
-                    ? `2px solid ${MAGENTA}99`
-                    : "1px solid hsl(var(--border))",
-                  boxShadow: plan.popular ? `0 0 0 4px ${MAGENTA}12` : undefined,
+                  border: `2px solid ${MAGENTA}99`,
+                  boxShadow: `0 0 0 4px ${MAGENTA}12`,
                 }}
               >
-                {plan.popular && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                    <div
-                      className="flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold text-white whitespace-nowrap"
-                      style={{ background: `linear-gradient(90deg, ${MAGENTA}, ${BLUE})` }}
-                    >
-                      <Star className="h-3 w-3" />
-                      Most popular
-                    </div>
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                  <div
+                    className="flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold text-white whitespace-nowrap"
+                    style={{ background: `linear-gradient(90deg, ${MAGENTA}, ${BLUE})` }}
+                  >
+                    <Star className="h-3 w-3" />
+                    100% free while in beta
                   </div>
-                )}
+                </div>
 
-                {/* Icon */}
                 <div
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-white mb-4"
+                  className="inline-flex h-12 w-12 items-center justify-center rounded-xl text-white mb-4"
                   style={{ background: `linear-gradient(135deg, ${plan.accentFrom}, ${plan.accentTo})` }}
                 >
-                  <Icon className="h-5 w-5" />
+                  <Icon className="h-6 w-6" />
                 </div>
 
-                {/* Name + price */}
                 <div className="mb-4">
-                  <div className="text-lg font-black text-foreground">{plan.name}</div>
+                  <div className="text-xl font-black text-foreground">{plan.name}</div>
                   <div className="flex items-baseline gap-1.5 mt-1">
-                    <span className="text-3xl font-black text-foreground">{plan.price}</span>
+                    <span className="text-4xl font-black text-foreground">{plan.price}</span>
+                    <span className="text-sm text-muted-foreground">/ {plan.sub}</span>
                   </div>
-                  <div className="text-xs text-muted-foreground mt-0.5">{plan.sub}</div>
                 </div>
 
-                {/* Credits */}
-                <div className="mb-4">
-                  <div
-                    className="text-4xl font-black"
-                    style={{ color: plan.popular ? MAGENTA : "hsl(var(--foreground))" }}
-                  >
-                    {plan.credits}
-                  </div>
-                  <div className="text-xs text-muted-foreground">script credits</div>
-                </div>
-
-                {/* Features */}
                 <ul className="space-y-2.5 mb-6 flex-1">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2 text-sm text-foreground">
@@ -214,30 +162,19 @@ function PricingPage() {
                   ))}
                 </ul>
 
-                {/* CTA */}
-                {plan.id === "free" ? (
-                  <Button
-                    variant="outline"
-                    className="w-full font-bold h-11"
-                    onClick={() => setAuthOpen(true)}
-                  >
-                    Start free
-                    <ArrowRight className="h-4 w-4 ml-1" />
-                  </Button>
-                ) : (
-                  <Button
-                    className="w-full font-bold h-11 text-white border-0 hover:opacity-90"
-                    style={{ background: `linear-gradient(90deg, ${plan.accentFrom}, ${plan.accentTo})` }}
-                    onClick={() => alert(`Payment integration coming soon! Plan: ${plan.name}`)}
-                  >
-                    {plan.cta}
-                    <ArrowRight className="h-4 w-4 ml-1" />
-                  </Button>
-                )}
+                <Button
+                  className="w-full font-bold h-11 text-white border-0 hover:opacity-90"
+                  style={{ background: `linear-gradient(90deg, ${plan.accentFrom}, ${plan.accentTo})` }}
+                  onClick={() => setAuthOpen(true)}
+                >
+                  {plan.cta}
+                  <ArrowRight className="h-4 w-4 ml-1" />
+                </Button>
               </div>
             );
           })}
         </div>
+
 
         {/* What's in a pack */}
         <div
