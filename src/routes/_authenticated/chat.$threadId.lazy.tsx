@@ -167,9 +167,9 @@ function ChatWindow({
 
   // Free mode — no credit / tweak limits
   useEffect(() => {
-    setBalance(null);
     setTweakCount(0);
   }, [bearerReady, threadId]);
+
 
   const transport = useMemo(
     () =>
