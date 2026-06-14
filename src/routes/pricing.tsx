@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import {
-  ArrowRight, CheckCircle2, Coins, Sparkles, Star, Zap,
-  FileText, Mic, ImageIcon, Hash, BookOpen, Shield,
+  ArrowRight, CheckCircle2, Coins, Sparkles, Star,
+  FileText, Mic, ImageIcon, Hash, BookOpen,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { VidzoLogo } from "@/components/vidzo-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
