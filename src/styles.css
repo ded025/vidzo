@@ -29,24 +29,24 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: 40 14% 97%;
-  --foreground: 222 20% 8%;
-  --card: 40 14% 95%;
-  --card-foreground: 222 20% 8%;
-  --popover: 40 14% 97%;
-  --popover-foreground: 222 20% 8%;
+  --radius: 0.5rem;
+  --background: 0 0% 99%;
+  --foreground: 222 25% 8%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 25% 8%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 25% 8%;
   --primary: 256 58% 55%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 220 9% 94%;
-  --secondary-foreground: 222 20% 8%;
-  --muted: 220 9% 91%;
-  --muted-foreground: 220 9% 44%;
+  --secondary: 220 14% 96%;
+  --secondary-foreground: 222 25% 8%;
+  --muted: 220 14% 95%;
+  --muted-foreground: 220 9% 40%;
   --accent: 256 58% 55%;
   --accent-foreground: 0 0% 100%;
   --destructive: 0 72% 51%;
-  --border: 220 9% 88%;
-  --input: 220 9% 88%;
+  --border: 220 13% 90%;
+  --input: 220 13% 90%;
   --ring: 256 58% 55%;
 
   /* Vidzo brand colours */
@@ -55,32 +55,33 @@
   --vidzo-yellow: #f5a623;
 
   /* RGB triples for the bottom-nav glass */
-  --background-rgb: 250 249 246;
+  --background-rgb: 252 252 252;
 }
 
 .dark {
-  --background: 222 20% 5%;
-  --foreground: 40 14% 91%;
-  --card: 222 20% 7%;
-  --card-foreground: 40 14% 91%;
-  --popover: 222 20% 5%;
-  --popover-foreground: 40 14% 91%;
-  --primary: 256 58% 65%;
+  --background: 222 30% 4%;
+  --foreground: 220 14% 96%;
+  --card: 222 25% 7%;
+  --card-foreground: 220 14% 96%;
+  --popover: 222 25% 7%;
+  --popover-foreground: 220 14% 96%;
+  --primary: 256 70% 70%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 222 20% 12%;
-  --secondary-foreground: 40 14% 91%;
-  --muted: 222 20% 14%;
-  --muted-foreground: 220 9% 56%;
-  --accent: 256 58% 65%;
+  --secondary: 222 20% 11%;
+  --secondary-foreground: 220 14% 96%;
+  --muted: 222 20% 13%;
+  --muted-foreground: 220 10% 60%;
+  --accent: 256 70% 70%;
   --accent-foreground: 0 0% 100%;
   --destructive: 0 72% 60%;
   --border: 222 20% 16%;
   --input: 222 20% 16%;
-  --ring: 256 58% 65%;
+  --ring: 256 70% 70%;
 
   /* RGB triples for the bottom-nav glass in dark mode */
-  --background-rgb: 10 10 16;
+  --background-rgb: 8 9 14;
 }
+
 
 * {
   box-sizing: border-box;
@@ -116,24 +117,25 @@ body {
 /* No -webkit-backdrop-filter: Lightning CSS drops the standard property,
    breaking the effect on Chrome in the built site. */
 .glass-header {
-  background: rgba(250, 249, 246, 0.55);
+  background: rgba(252, 252, 252, 0.55);
   backdrop-filter: blur(32px) saturate(220%) brightness(1.08);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.7) inset,
-    0 10px 40px rgba(0, 0, 0, 0.08),
-    0 2px 8px rgba(0, 0, 0, 0.04);
+    0 10px 40px rgba(0, 0, 0, 0.06),
+    0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
 .dark .glass-header {
-  background: rgba(12, 12, 20, 0.55);
+  background: rgba(10, 11, 16, 0.6);
   backdrop-filter: blur(32px) saturate(200%) brightness(0.92);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.06) inset,
-    0 10px 40px rgba(0, 0, 0, 0.4),
-    0 2px 8px rgba(0, 0, 0, 0.25);
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 10px 40px rgba(0, 0, 0, 0.5),
+    0 2px 8px rgba(0, 0, 0, 0.3);
 }
+
 
 /* ─── HERO GLOW ──────────────────────────────────────────────────────────── */
 .hero-glow {
