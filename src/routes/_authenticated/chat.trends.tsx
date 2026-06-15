@@ -537,9 +537,9 @@ export function TrendsPage() {
           )}
         </div>
 
-        {/* ── Sort + stats bar ── */}
+        {/* ── Sort + brand filter + stats bar ── */}
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-wrap">
             {SORT_OPTIONS.map((o) => (
               <button
                 key={o.value}
@@ -553,9 +553,31 @@ export function TrendsPage() {
                 {o.label}
               </button>
             ))}
+            {brandOptions.length > 0 && (
+              <select
+                value={brandFilter}
+                onChange={(e) => setBrandFilter(e.target.value)}
+                className="ml-2 px-3 py-1 rounded-lg text-xs font-medium bg-card border border-border text-foreground hover:border-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
+              >
+                <option value="">All brands / tags</option>
+                {brandOptions.map((b) => (
+                  <option key={b} value={b}>
+                    {b}
+                  </option>
+                ))}
+              </select>
+            )}
+            {brandFilter && (
+              <button
+                onClick={() => setBrandFilter("")}
+                className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 px-2"
+              >
+                <X className="h-3 w-3" /> Clear
+              </button>
+            )}
           </div>
           <span className="text-xs text-muted-foreground">
-            {trendsQuery.isLoading ? "Loading…" : `${trends.length} trends`}
+            {trendsQuery.isLoading ? "Loading…" : `${trends.length} trends${brandFilter ? ` · ${brandFilter}` : ""}`}
           </span>
         </div>
 
