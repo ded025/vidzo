@@ -337,7 +337,6 @@ export const Route = createFileRoute("/api/chat")({
           system,
           messages: await convertToModelMessages(safeMessages),
           tools,
-          maxSteps: 10,
           stopWhen: stepCountIs(50),
         });
 
