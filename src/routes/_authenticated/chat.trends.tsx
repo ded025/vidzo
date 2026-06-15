@@ -367,8 +367,22 @@ export function TrendsPage() {
     doSync({ keywords: customKeywords });
 
   const lastRun = lastRunQuery.data;
-  const trends = (trendsQuery.data ?? []) as GlobalTrend[];
+  const allTrends = (trendsQuery.data ?? []) as GlobalTrend[];
   const allCategories: (TrendCategory | "All")[] = ["All", ...TREND_CATEGORIES];
+
+  // Brand filter — derived from sub_tags of loaded trends
+  const [brandFilter, setBrandFilter] = useState<string>("");
+  const brandOptions = Array.from(
+    new Set(
+      allTrends
+        .flatMap((t) => t.sub_tags ?? [])
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0 && s.length < 40),
+    ),
+  ).sort();
+  const trends = brandFilter
+    ? allTrends.filter((t) => (t.sub_tags ?? []).some((s) => s.toLowerCase() === brandFilter.toLowerCase()))
+    : allTrends;
 
   return (
     <div className="h-full overflow-y-auto bg-background">
