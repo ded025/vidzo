@@ -162,12 +162,16 @@ export const Route = createFileRoute("/api/trends-sync")(
           const requestedCats = (body.categories ?? []) as TrendCategory[];
           const customKeywords = (body.keywords ?? []) as string[];
 
-          type SyncTask = { category: TrendCategory | "Custom"; query: string };
+          type SyncTask = { category: TrendCategory | "Custom"; query: string; brandTag?: string };
           const tasks: SyncTask[] = [];
 
-          // Custom keyword tasks
+          // Custom keyword tasks — enrich the query so we pull the LATEST
+          // features / launches / news for that brand or topic, and tag the
+          // resulting rows with the original keyword so the UI brand filter
+          // can group them.
           for (const kw of customKeywords) {
-            tasks.push({ category: "Custom" as TrendCategory, query: kw });
+            const q = `${kw} latest features news launch update 2026`;
+            tasks.push({ category: "Custom" as TrendCategory, query: q, brandTag: kw });
           }
 
           // Category tasks — limit to 1 query per category to avoid timeouts
@@ -188,7 +192,7 @@ export const Route = createFileRoute("/api/trends-sync")(
           let totalAdded = 0;
           const errors: string[] = [];
 
-          for (const { category, query } of tasks) {
+          for (const { category, query, brandTag } of tasks) {
             try {
               const items = await firecrawlSearch(query, firecrawlKey);
 
@@ -198,7 +202,7 @@ export const Route = createFileRoute("/api/trends-sync")(
                   title: it.title.slice(0, 200),
                   summary: it.summary,
                   category,
-                  sub_tags: [] as string[],
+                  sub_tags: brandTag ? [brandTag] : ([] as string[]),
                   platform_signals: ["web", "news"] as string[],
                   source_url: it.url,
                   source_name: (() => {

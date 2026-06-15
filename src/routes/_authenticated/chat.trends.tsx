@@ -63,13 +63,13 @@ function timeAgo(iso: string): string {
 function FreshnessChip({ score }: { score: number }) {
   if (score >= 85)
     return (
-      <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 rounded-full px-2 py-0.5">
+      <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 rounded-full px-2 py-0.5">
         ⚡ Live
       </span>
     );
   if (score >= 65)
     return (
-      <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">
+      <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-full px-2 py-0.5">
         🔥 Hot
       </span>
     );
@@ -219,10 +219,10 @@ function KeywordInput({
         {keywords.map((kw) => (
           <span
             key={kw}
-            className="inline-flex items-center gap-1 bg-violet-100 text-violet-700 text-xs font-medium rounded-full px-2.5 py-0.5"
+            className="inline-flex items-center gap-1 bg-violet-500/15 text-violet-700 dark:text-violet-300 text-xs font-medium rounded-full px-2.5 py-0.5"
           >
             {kw}
-            <button onClick={() => remove(kw)} className="hover:text-violet-900">
+            <button onClick={() => remove(kw)} className="hover:opacity-70">
               <X className="h-3 w-3" />
             </button>
           </span>
@@ -367,8 +367,22 @@ export function TrendsPage() {
     doSync({ keywords: customKeywords });
 
   const lastRun = lastRunQuery.data;
-  const trends = (trendsQuery.data ?? []) as GlobalTrend[];
+  const allTrends = (trendsQuery.data ?? []) as GlobalTrend[];
   const allCategories: (TrendCategory | "All")[] = ["All", ...TREND_CATEGORIES];
+
+  // Brand filter — derived from sub_tags of loaded trends
+  const [brandFilter, setBrandFilter] = useState<string>("");
+  const brandOptions = Array.from(
+    new Set(
+      allTrends
+        .flatMap((t) => t.sub_tags ?? [])
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0 && s.length < 40),
+    ),
+  ).sort();
+  const trends = brandFilter
+    ? allTrends.filter((t) => (t.sub_tags ?? []).some((s) => s.toLowerCase() === brandFilter.toLowerCase()))
+    : allTrends;
 
   return (
     <div className="h-full overflow-y-auto bg-background">
@@ -414,7 +428,7 @@ export function TrendsPage() {
               <Tag className="h-3.5 w-3.5" />
               {showKeywordInput ? "Hide Keywords" : "Brand Keywords"}
               {customKeywords.length > 0 && (
-                <span className="ml-1 bg-violet-100 text-violet-700 rounded-full px-1.5 py-0.5 text-[10px] font-semibold">
+                <span className="ml-1 bg-violet-500/15 text-violet-700 dark:text-violet-300 rounded-full px-1.5 py-0.5 text-[10px] font-semibold">
                   {customKeywords.length}
                 </span>
               )}
@@ -432,11 +446,11 @@ export function TrendsPage() {
 
         {/* ── Brand / Keyword input panel ── */}
         {showKeywordInput && (
-          <div className="rounded-2xl border border-violet-200 bg-violet-50/60 p-4 space-y-3">
+          <div className="rounded-2xl border border-violet-500/30 bg-violet-500/5 p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold text-violet-900">Brand & Keyword Sync</p>
-                <p className="text-xs text-violet-600 mt-0.5">
+                <p className="text-sm font-semibold text-foreground">Brand & Keyword Sync</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
                   Add brand names, product names, or any topic — Vidzo will search live news for them.
                 </p>
               </div>
@@ -523,9 +537,9 @@ export function TrendsPage() {
           )}
         </div>
 
-        {/* ── Sort + stats bar ── */}
+        {/* ── Sort + brand filter + stats bar ── */}
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-wrap">
             {SORT_OPTIONS.map((o) => (
               <button
                 key={o.value}
@@ -539,9 +553,31 @@ export function TrendsPage() {
                 {o.label}
               </button>
             ))}
+            {brandOptions.length > 0 && (
+              <select
+                value={brandFilter}
+                onChange={(e) => setBrandFilter(e.target.value)}
+                className="ml-2 px-3 py-1 rounded-lg text-xs font-medium bg-card border border-border text-foreground hover:border-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
+              >
+                <option value="">All brands / tags</option>
+                {brandOptions.map((b) => (
+                  <option key={b} value={b}>
+                    {b}
+                  </option>
+                ))}
+              </select>
+            )}
+            {brandFilter && (
+              <button
+                onClick={() => setBrandFilter("")}
+                className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 px-2"
+              >
+                <X className="h-3 w-3" /> Clear
+              </button>
+            )}
           </div>
           <span className="text-xs text-muted-foreground">
-            {trendsQuery.isLoading ? "Loading…" : `${trends.length} trends`}
+            {trendsQuery.isLoading ? "Loading…" : `${trends.length} trends${brandFilter ? ` · ${brandFilter}` : ""}`}
           </span>
         </div>
 
