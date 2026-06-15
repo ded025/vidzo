@@ -219,10 +219,10 @@ function KeywordInput({
         {keywords.map((kw) => (
           <span
             key={kw}
-            className="inline-flex items-center gap-1 bg-violet-100 text-violet-700 text-xs font-medium rounded-full px-2.5 py-0.5"
+            className="inline-flex items-center gap-1 bg-violet-500/15 text-violet-700 dark:text-violet-300 text-xs font-medium rounded-full px-2.5 py-0.5"
           >
             {kw}
-            <button onClick={() => remove(kw)} className="hover:text-violet-900">
+            <button onClick={() => remove(kw)} className="hover:opacity-70">
               <X className="h-3 w-3" />
             </button>
           </span>
