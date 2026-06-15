@@ -63,13 +63,13 @@ function timeAgo(iso: string): string {
 function FreshnessChip({ score }: { score: number }) {
   if (score >= 85)
     return (
-      <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 rounded-full px-2 py-0.5">
+      <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 rounded-full px-2 py-0.5">
         ⚡ Live
       </span>
     );
   if (score >= 65)
     return (
-      <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">
+      <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-full px-2 py-0.5">
         🔥 Hot
       </span>
     );
