@@ -205,7 +205,9 @@ export const Route = createFileRoute("/api/chat")({
         // ─────────────────────────────────────────────────────────────────────
 
         const gateway = createLovableAiGatewayProvider(key);
-        const model = gateway("google/gemini-3-flash-preview");
+        // FIX: gemini-3-flash-preview does not exist on the Lovable AI gateway.
+        // Using google/gemini-2.0-flash which is stable and supported.
+        const model = gateway("google/gemini-2.0-flash");
 
         const firecrawlKey = process.env.FIRECRAWL_API_KEY;
         const collectedSources: Array<{ title: string; url: string; snippet: string }> = [];
@@ -328,8 +330,6 @@ export const Route = createFileRoute("/api/chat")({
         };
 
         // Strip dangling tool-call-only assistant messages before streaming.
-        // These cause "Tool result is missing" when a thread is reloaded after
-        // an interrupted session where the tool result was never persisted.
         const safeMessages = sanitiseMessagesForStream(messages as UIMessage[]);
 
         const result = streamText({
@@ -337,9 +337,6 @@ export const Route = createFileRoute("/api/chat")({
           system,
           messages: await convertToModelMessages(safeMessages),
           tools,
-          // maxSteps ensures the SDK always runs tool execute() and feeds the
-          // result back as a tool_result step before closing the stream.
-          // Without this, a tool call on the final step has no result flushed.
           maxSteps: 10,
           stopWhen: stepCountIs(50),
         });

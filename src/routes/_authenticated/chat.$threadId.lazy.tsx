@@ -21,6 +21,7 @@ import {
   PromptInputTextarea,
   PromptInputSubmit,
   PromptInputFooter,
+  type PromptInputMessage,
 } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { ContentPackCard, type ContentPackData } from "@/components/content-pack-card";
@@ -153,6 +154,7 @@ function ChatWindow({
   const [balance, setBalance] = useState<number>(FREE_SCRIPTS);
   const [tweakCount, setTweakCount] = useState<number>(0);
 
+  // Resolve Supabase session token
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       bearerRef.current = data.session?.access_token ?? null;
@@ -165,11 +167,10 @@ function ChatWindow({
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  // Free mode — no credit / tweak limits
+  // Free mode — reset tweak counter on new thread
   useEffect(() => {
     setTweakCount(0);
-  }, [bearerReady, threadId]);
-
+  }, [threadId]);
 
   const transport = useMemo(
     () =>
@@ -182,17 +183,18 @@ function ChatWindow({
     [threadId],
   );
 
-
   const { messages, sendMessage, status, error } = useChat({
     id: threadId,
     messages: initialMessages,
     transport,
   });
 
+  // Surface any streaming errors to console for debugging
   useEffect(() => {
-    if (error) console.error("[chat] error", error);
+    if (error) console.error("[chat] stream error", error);
   }, [error]);
 
+  // Auto-send any pending message stored in sessionStorage (from chat.new.tsx)
   useEffect(() => {
     if (sentPending.current || !bearerReady) return;
     const pending = sessionStorage.getItem(`pending:${threadId}`);
@@ -205,20 +207,35 @@ function ChatWindow({
 
   const isTweak = messages.filter((m) => m.role === "user").length >= 1;
 
-  const handleSubmit = (message: { text?: string }) => {
-    const text = (message.text ?? input).trim();
+  // FIX: Signature matches PromptInput's onSubmit(message: PromptInputMessage, event)
+  // Previously the handler took { text?: string } which matched but relied on
+  // stale `input` state as fallback — now we read message.text directly.
+  const handleSubmit = (message: PromptInputMessage) => {
+    const text = message.text.trim();
     if (!text) return;
-    if (!bearerRef.current) return;
+    // Guard: session must be resolved before sending
+    if (!bearerRef.current) {
+      console.warn("[chat] bearer not ready yet, dropping send");
+      return;
+    }
     setCreditError(null);
     setInput("");
     sendMessage({ text });
-    // Optimistically update tweak counter
     if (isTweak) setTweakCount((c) => c + 1);
   };
 
   const isLoading = status === "submitted" || status === "streaming";
   const tweaksLeft = Math.max(0, FREE_TWEAKS - tweakCount);
-  const inputBlocked = !!(creditError);
+
+  // Show a session-loading state so messages are never silently dropped
+  if (!bearerReady) {
+    return (
+      <div className="h-full flex items-center justify-center text-muted-foreground gap-2">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <span className="text-sm">Connecting…</span>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col">
@@ -306,6 +323,12 @@ function ChatWindow({
               <Shimmer>Thinking…</Shimmer>
             </div>
           )}
+          {/* Surface stream errors inline so the user knows something went wrong */}
+          {error && (
+            <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              Something went wrong — please try again.
+            </div>
+          )}
         </ConversationContent>
         <ConversationScrollButton />
       </Conversation>
@@ -321,10 +344,12 @@ function ChatWindow({
                 Next tweak will use 1 credit from your balance.
               </p>
             )}
+            {/* FIX: PromptInput is uncontrolled — it manages its own textarea value
+                internally and passes the final text via onSubmit(message). We no
+                longer try to control its value prop externally, which was causing
+                the input to fight PromptInput's own clear logic. */}
             <PromptInput onSubmit={handleSubmit}>
               <PromptInputTextarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
                 placeholder={
                   isTweak
                     ? tweaksLeft > 0
@@ -335,7 +360,10 @@ function ChatWindow({
                 autoFocus
               />
               <PromptInputFooter className="justify-end">
-                <PromptInputSubmit status={status} disabled={isLoading && !input} />
+                {/* FIX: disabled={isLoading || !input} — previous `&&` logic
+                    meant the button was enabled while streaming if the textarea
+                    had text, allowing double-submits and broken state. */}
+                <PromptInputSubmit status={status} disabled={isLoading} />
               </PromptInputFooter>
             </PromptInput>
           </div>
