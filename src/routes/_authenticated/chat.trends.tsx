@@ -432,11 +432,11 @@ export function TrendsPage() {
 
         {/* ── Brand / Keyword input panel ── */}
         {showKeywordInput && (
-          <div className="rounded-2xl border border-violet-200 bg-violet-50/60 p-4 space-y-3">
+          <div className="rounded-2xl border border-violet-500/30 bg-violet-500/5 p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold text-violet-900">Brand & Keyword Sync</p>
-                <p className="text-xs text-violet-600 mt-0.5">
+                <p className="text-sm font-semibold text-foreground">Brand & Keyword Sync</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
                   Add brand names, product names, or any topic — Vidzo will search live news for them.
                 </p>
               </div>
