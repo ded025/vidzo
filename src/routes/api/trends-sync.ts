@@ -192,7 +192,7 @@ export const Route = createFileRoute("/api/trends-sync")(
           let totalAdded = 0;
           const errors: string[] = [];
 
-          for (const { category, query } of tasks) {
+          for (const { category, query, brandTag } of tasks) {
             try {
               const items = await firecrawlSearch(query, firecrawlKey);
 
@@ -202,7 +202,7 @@ export const Route = createFileRoute("/api/trends-sync")(
                   title: it.title.slice(0, 200),
                   summary: it.summary,
                   category,
-                  sub_tags: [] as string[],
+                  sub_tags: brandTag ? [brandTag] : ([] as string[]),
                   platform_signals: ["web", "news"] as string[],
                   source_url: it.url,
                   source_name: (() => {
