@@ -414,7 +414,7 @@ export function TrendsPage() {
               <Tag className="h-3.5 w-3.5" />
               {showKeywordInput ? "Hide Keywords" : "Brand Keywords"}
               {customKeywords.length > 0 && (
-                <span className="ml-1 bg-violet-100 text-violet-700 rounded-full px-1.5 py-0.5 text-[10px] font-semibold">
+                <span className="ml-1 bg-violet-500/15 text-violet-700 dark:text-violet-300 rounded-full px-1.5 py-0.5 text-[10px] font-semibold">
                   {customKeywords.length}
                 </span>
               )}
