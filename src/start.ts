@@ -18,7 +18,35 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
   }
 });
 
+const sameOriginServerFnMiddleware = createMiddleware().server(
+  async ({ request, next, ...context }) => {
+    if (context.handlerType !== "serverFn") {
+      return next();
+    }
+
+    const requestOrigin = new URL(request.url).origin;
+    const origin = request.headers.get("origin");
+    const fetchSite = request.headers.get("sec-fetch-site");
+    const referer = request.headers.get("referer");
+
+    const hasValidOrigin = origin === null || origin === requestOrigin;
+    const hasValidFetchSite = fetchSite === null || fetchSite === "same-origin";
+    const hasValidReferer =
+      referer === null ||
+      referer === requestOrigin ||
+      referer.startsWith(`${requestOrigin}/`) ||
+      referer.startsWith(`${requestOrigin}?`) ||
+      referer.startsWith(`${requestOrigin}#`);
+
+    if (!hasValidOrigin || !hasValidFetchSite || !hasValidReferer) {
+      return new Response("Forbidden", { status: 403 });
+    }
+
+    return next();
+  },
+);
+
 export const startInstance = createStart(() => ({
   functionMiddleware: [attachSupabaseAuth],
-  requestMiddleware: [errorMiddleware],
+  requestMiddleware: [sameOriginServerFnMiddleware, errorMiddleware],
 }));

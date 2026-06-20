@@ -1,148 +1,191 @@
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
-import { MASTER_SYSTEM_PROMPT } from "@/lib/prompts";
-import { checkAndConsume } from "@/lib/credits.server";
+import { createOpenAI } from "@ai-sdk/openai";
+import { createClient } from "@supabase/supabase-js";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   convertToModelMessages,
   generateText,
-  streamText,
+  Output,
   stepCountIs,
+  streamText,
   tool,
   type UIMessage,
 } from "ai";
 import { z } from "zod";
-import { createClient } from "@supabase/supabase-js";
+import { checkAndConsume } from "@/lib/credits.server";
+import { checkOpenAIConnection, searchWebWithOpenAI } from "@/lib/openai.server";
+import { MASTER_SYSTEM_PROMPT } from "@/lib/prompts";
 
 type ChatRequestBody = { messages?: unknown; threadId?: string };
 
+const jsonHeaders = { "Content-Type": "application/json" };
+
+function jsonError(message: string, status: number, code: string, detail?: string) {
+  return Response.json({ error: message, code, detail }, { status, headers: jsonHeaders });
+}
+
+function chatStreamErrorMessage(error: unknown) {
+  console.error("[chat] stream failed:", error);
+  const message = error instanceof Error ? error.message : String(error ?? "Unknown chat error");
+  if (/api key|authentication|unauthorized|401|invalid_api_key/i.test(message)) {
+    return "OpenAI rejected the request. Check the server-side OpenAI key.";
+  }
+  if (/model|not found|does not exist|404/i.test(message)) {
+    return "The selected OpenAI model is unavailable. Check OPENAI_MODEL.";
+  }
+  if (/rate|quota|billing|429|insufficient/i.test(message)) {
+    return "OpenAI is rate-limited or out of quota. Check billing and retry.";
+  }
+  return "Chat failed while generating the reply. Please retry in a moment.";
+}
+
 const ContentPackSchema = z.object({
   topic: z.string(),
-  niche: z.string().optional(),
-  format: z.string().optional().describe("e.g. Reel/Short, Long-form YouTube, Tweet pack, Podcast"),
+  niche: z.string().nullable(),
+  format: z.string().nullable(),
   whyViral: z.string(),
   script: z.object({
     dialogue: z
       .string()
-      .describe(
-        "Clean, copy-pasteable voiceover text. Paste-into-ElevenLabs ready. NO timestamps, NO stage directions inline.",
-      ),
-    voiceDirection: z.string().describe("Tone, pace, emotion, pauses — separately from the dialogue."),
+      .describe("Clean voiceover text with no inline timestamps or stage directions."),
+    voiceDirection: z.string().describe("Tone, pace, emotion, and pauses."),
     suggestedElevenLabsVoice: z
       .object({
-        name: z.string().optional(),
-        voiceId: z.string().optional(),
+        name: z.string().nullable(),
+        voiceId: z.string().nullable(),
       })
-      .optional(),
+      .nullable(),
   }),
   visuals: z
     .array(
       z.object({
-        beat: z.string().describe('e.g. "0-3s hook"'),
-        onScreenText: z.string().optional(),
-        imagePrompt: z
-          .string()
-          .min(300)
-          .describe(
-            "DETAILED 9:16 PORTRAIT image-gen prompt, MINIMUM 80 words. MUST start with: '9:16 vertical portrait format, 1080x1920px, shot for Instagram Reels / YouTube Shorts'. Then include ALL of: (1) SUBJECT with exact age/ethnicity/clothing/expression/body language/frame position, (2) SCENE with specific location/environment/time-of-day, (3) CAMERA with lens choice/angle/shot type/depth-of-field, (4) LIGHTING with direction/quality/color temperature/practical sources, (5) STYLE with cinematic reference/color grade, (6) MOOD in 1-2 words, (7) any TEXT OVERLAY with exact wording/font/placement/color, (8) end with '--ar 9:16 --style raw --v 6.1'. Absolute minimum 80 words. No one-liners.",
-          ),
-        videoPrompt: z
-          .string()
-          .min(200)
-          .describe(
-            "DETAILED 9:16 PORTRAIT video-gen prompt, MINIMUM 60 words. MUST start with: '9:16 vertical portrait video, 1080x1920, for short-form'. Then include ALL of: (1) DURATION in seconds, (2) OPENING FRAME exact description, (3) MOTION/ACTION specifying camera movement (dolly/pan/push/handheld) AND subject motion AND environment motion, (4) ENDING FRAME description, (5) CAMERA STYLE (handheld/cinematic/drone), (6) STYLE REFERENCE, (7) LIGHTING & COLOR GRADE. Minimum 60 words. No one-liners.",
-          ),
+        beat: z.string(),
+        onScreenText: z.string().nullable(),
+        imagePrompt: z.string().min(300),
+        videoPrompt: z.string().min(200),
       }),
     )
     .min(3)
     .max(8),
-  thumbnailPrompts: z
-    .array(
-      z
-        .string()
-        .min(500)
-        .describe(
-          "FULL DETAILED thumbnail prompt, MINIMUM 100 words. MUST start with: '9:16 vertical portrait thumbnail, 1080x1920px, high-impact, for YouTube Shorts / Instagram Reels'. Then include ALL of: (1) LAYOUT CONCEPT naming the composition (split/full-bleed/three-part-stack), (2) SUBJECT with extreme close-up face, exact expression, eye detail, clothing, (3) BACKGROUND color/gradient/pattern, (4) TEXT OVERLAYS: MAIN HEADLINE with exact 2-5 word text + font style + color + size + stroke/shadow, SUBTEXT placement, any emojis, (5) COLOR PALETTE 3 specific hex colors, (6) LIGHTING on subject with rim light/dramatic shadows/catchlights, (7) STYLE reference, (8) end with '--ar 9:16 --style raw --v 6.1 --q 2'. Minimum 100 words. Be brutally specific — this determines click-through rate.",
-        ),
-    )
-    .length(3)
-    .describe(
-      "EXACTLY 3 thumbnail prompts. Each is a FULL 100-180 word detailed image-gen prompt for a 9:16 portrait YouTube Shorts / Reels thumbnail. Each must have radically different composition and layout from the others. Thumbnails are the most important CTR asset — treat each one as a complete creative brief.",
-    ),
+  thumbnailPrompts: z.array(z.string().min(500)).length(3),
   caption: z.string(),
   hashtags: z.array(z.string()).min(8).max(15),
-  sources: z
-    .array(
-      z.object({
-        claim: z.string(),
-        url: z.string(),
-        publisher: z.string().optional(),
-      }),
-    )
-    .describe("Every factual claim must be backed by a real URL returned from search. Empty array is OK for pure how-to/hypothetical content."),
+  sources: z.array(
+    z.object({
+      claim: z.string(),
+      url: z.string(),
+      publisher: z.string().nullable(),
+    }),
+  ),
 });
 
 type ContentPack = z.infer<typeof ContentPackSchema>;
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+function sanitiseMessages(raw: unknown[]): UIMessage[] {
+  const validRoles = new Set(["user", "assistant", "system", "tool"]);
 
-/**
- * Strip assistant messages that contain ONLY tool-call parts and no text/other
- * parts. These are "dangling" tool-call messages that were persisted to the DB
- * from a previous session where the stream was interrupted before the tool
- * result was written back. Replaying them into toUIMessageStreamResponse causes
- * the SDK to throw "Tool result is missing for tool call …".
- */
-function sanitiseMessagesForStream(messages: UIMessage[]): UIMessage[] {
-  return messages.filter((msg) => {
-    if (msg.role !== "assistant") return true;
-    const parts = msg.parts ?? [];
-    // Keep the message if it has at least one non-tool-call part
-    const hasNonToolCallPart = parts.some(
-      (p) => (p as { type: string }).type !== "tool-invocation",
-    );
-    return hasNonToolCallPart;
-  });
+  return raw
+    .filter((message): message is Record<string, unknown> => {
+      return Boolean(message) && typeof message === "object" && !Array.isArray(message);
+    })
+    .filter((message) => validRoles.has(message.role as string))
+    .map(
+      (message) =>
+        ({
+          ...message,
+          role: message.role as UIMessage["role"],
+          parts: Array.isArray(message.parts) ? message.parts : [],
+        }) as UIMessage,
+    )
+    .filter((message) => {
+      if (message.role !== "assistant") return true;
+      const parts = message.parts as Array<{ type: string }>;
+      if (parts.length === 0) return false;
+      return parts.some((part) => part.type !== "tool-invocation");
+    });
 }
-
-// ---------------------------------------------------------------------------
-// Route
-// ---------------------------------------------------------------------------
 
 export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
-        const body = (await request.json()) as ChatRequestBody;
-        const messages = body.messages;
-        const threadId = body.threadId;
-
-        if (!Array.isArray(messages)) {
-          return new Response("Messages required", { status: 400 });
+      GET: async () => {
+        const apiKey = process.env.OPENAI_API_KEY?.trim();
+        if (!apiKey) {
+          return jsonError(
+            "OpenAI is not configured on this server.",
+            503,
+            "OPENAI_NOT_CONFIGURED",
+          );
         }
 
-        const key = process.env.LOVABLE_API_KEY;
-        if (!key) return new Response("Missing LOVABLE_API_KEY", { status: 500 });
+        try {
+          const connection = await checkOpenAIConnection();
+          return Response.json(
+            { status: "ok", provider: "openai", model: connection.model },
+            { headers: jsonHeaders },
+          );
+        } catch (error) {
+          console.error("[chat-health] OpenAI probe failed:", error);
+          return jsonError(
+            "OpenAI health check failed. Verify the hosted secret and model access.",
+            502,
+            "OPENAI_HEALTH_FAILED",
+          );
+        }
+      },
 
-        const auth = request.headers.get("authorization") ?? "";
-        const supaUrl = process.env.SUPABASE_URL!;
-        const supaKey = process.env.SUPABASE_PUBLISHABLE_KEY!;
-        const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+      POST: async ({ request }) => {
+        let body: ChatRequestBody;
+        try {
+          body = (await request.json()) as ChatRequestBody;
+        } catch {
+          return jsonError("Invalid JSON body.", 400, "BAD_REQUEST");
+        }
 
-        const supabase = createClient(supaUrl, supaKey, {
+        const rawMessages = body.messages;
+        const threadId = body.threadId;
+        if (!Array.isArray(rawMessages)) {
+          return jsonError("messages must be an array.", 400, "BAD_REQUEST");
+        }
+
+        const messages = sanitiseMessages(rawMessages);
+        if (messages.length === 0 && rawMessages.length > 0) {
+          return jsonError("No valid messages were provided.", 400, "BAD_REQUEST");
+        }
+
+        const openaiKey = process.env.OPENAI_API_KEY?.trim();
+        if (!openaiKey) {
+          return jsonError(
+            "Chat is not connected to OpenAI. Add OPENAI_API_KEY to server secrets.",
+            503,
+            "OPENAI_NOT_CONFIGURED",
+          );
+        }
+
+        const supabaseUrl = process.env.SUPABASE_URL;
+        const supabaseKey = process.env.SUPABASE_PUBLISHABLE_KEY;
+        if (!supabaseUrl || !supabaseKey) {
+          return jsonError(
+            "Supabase is not configured on this server.",
+            503,
+            "SUPABASE_NOT_CONFIGURED",
+          );
+        }
+
+        const authorization = request.headers.get("authorization") ?? "";
+        const token = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
+        const supabase = createClient(supabaseUrl, supabaseKey, {
           global: { headers: { Authorization: `Bearer ${token}` } },
           auth: { persistSession: false, autoRefreshToken: false },
         });
 
-        const { data: userRes } = await supabase.auth.getUser(token);
-        const userId = userRes?.user?.id;
-        if (!userId) return new Response("Unauthorized", { status: 401 });
+        const { data: userResult } = await supabase.auth.getUser(token);
+        const userId = userResult?.user?.id;
+        if (!userId) {
+          return jsonError("Your session expired. Sign in again.", 401, "UNAUTHORIZED");
+        }
 
-        // ── Credit check ──────────────────────────────────────────────────────
-        const existingUserMessages = (messages as UIMessage[]).filter((m) => m.role === "user");
+        const existingUserMessages = messages.filter((message) => message.role === "user");
         const isTweak = existingUserMessages.length > 1;
-
         const creditResult = await checkAndConsume(
           supabase,
           userId,
@@ -152,33 +195,28 @@ export const Route = createFileRoute("/api/chat")({
         );
 
         if (!creditResult.allowed) {
-          const reason = creditResult.reason;
-          const msg =
-            reason === "no_scripts"
-              ? JSON.stringify({
-                  creditError: true,
-                  type: "no_scripts",
-                  message: "You've used all 5 free scripts. Top up credits to keep creating.",
-                })
-              : JSON.stringify({
-                  creditError: true,
-                  type: "no_tweaks",
-                  message: `You've used all 3 free tweaks for this script. Start a new chat or top up credits.`,
-                  tweakCount: creditResult.tweakCount,
-                });
-          return new Response(msg, { status: 402, headers: { "Content-Type": "application/json" } });
+          const noScripts = creditResult.reason === "no_scripts";
+          return Response.json(
+            {
+              creditError: true,
+              type: noScripts ? "no_scripts" : "no_tweaks",
+              message: noScripts
+                ? "You've used all 5 free scripts. Top up credits to keep creating."
+                : "You've used all 3 free tweaks for this script. Start a new chat or top up credits.",
+              tweakCount: creditResult.tweakCount,
+            },
+            { status: 402, headers: jsonHeaders },
+          );
         }
-        // ─────────────────────────────────────────────────────────────────────
 
-        // ── Thread context & preset ───────────────────────────────────────────
         let contextBrief: string | null = null;
         if (threadId) {
-          const { data: t } = await supabase
+          const { data: thread } = await supabase
             .from("threads")
             .select("context_brief")
             .eq("id", threadId)
             .maybeSingle();
-          contextBrief = (t?.context_brief as string | null) ?? null;
+          contextBrief = (thread?.context_brief as string | null) ?? null;
         }
 
         const { data: activePreset } = await supabase
@@ -190,7 +228,7 @@ export const Route = createFileRoute("/api/chat")({
 
         let system = MASTER_SYSTEM_PROMPT;
         if (contextBrief) {
-          system += `\n\nLOCKED BRIEF for this chat (every output must serve this): "${contextBrief}". Do not drift.`;
+          system += `\n\nLOCKED BRIEF: "${contextBrief}". Every output must serve this brief.`;
         }
         if (activePreset) {
           system += `\n\nACTIVE PRESET "${activePreset.name}":`;
@@ -199,156 +237,111 @@ export const Route = createFileRoute("/api/chat")({
           if (activePreset.tone) system += `\n- Tone: ${activePreset.tone}`;
           if (activePreset.language) system += `\n- Language: ${activePreset.language}`;
           if (activePreset.default_voice_name) {
-            system += `\n- Default ElevenLabs voice: ${activePreset.default_voice_name}${activePreset.default_voice_id ? ` (${activePreset.default_voice_id})` : ""}`;
+            system += `\n- Voice: ${activePreset.default_voice_name}${
+              activePreset.default_voice_id ? ` (${activePreset.default_voice_id})` : ""
+            }`;
           }
         }
-        // ─────────────────────────────────────────────────────────────────────
 
-        const gateway = createLovableAiGatewayProvider(key);
-        // FIX: gemini-3-flash-preview does not exist on the Lovable AI gateway.
-        // Using google/gemini-2.0-flash which is stable and supported.
-        const model = gateway("google/gemini-2.0-flash");
-
-        const firecrawlKey = process.env.FIRECRAWL_API_KEY;
+        const openai = createOpenAI({ apiKey: openaiKey });
+        const model = openai.responses(process.env.OPENAI_MODEL?.trim() || "gpt-5.5");
         const collectedSources: Array<{ title: string; url: string; snippet: string }> = [];
 
         const tools = {
           search_trending_topics: tool({
             description:
-              "Search the web for fresh, sourceable facts and trending stories. ALWAYS call before generating a content pack with any real-world claims. Returns 5-10 results with titles, URLs, snippets.",
-            inputSchema: z.object({
-              query: z.string().describe("Focused search query"),
-            }),
+              "Search current web sources before making real-world factual claims. Returns cited titles, URLs, and snippets.",
+            inputSchema: z.object({ query: z.string().describe("A focused web search query.") }),
             execute: async ({ query }) => {
-              if (!firecrawlKey) {
-                return { error: "Firecrawl not connected. Ask user to connect Firecrawl." };
-              }
               try {
-                const res = await fetch("https://api.firecrawl.dev/v2/search", {
-                  method: "POST",
-                  headers: {
-                    Authorization: `Bearer ${firecrawlKey}`,
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({ query, limit: 8, tbs: "qdr:m" }),
-                });
-                if (!res.ok) {
-                  const t = await res.text();
-                  return { error: `Search failed: ${res.status} ${t.slice(0, 200)}` };
-                }
-                const data = (await res.json()) as {
-                  data?: { web?: Array<{ url: string; title: string; description?: string }> };
-                };
-                const items = data?.data?.web ?? [];
-                const results = items.slice(0, 10).map((r) => ({
-                  title: r.title,
-                  url: r.url,
-                  snippet: r.description ?? "",
-                }));
-                results.forEach((r) => collectedSources.push(r));
+                const results = await searchWebWithOpenAI(query);
+                results.forEach((result) => collectedSources.push(result));
                 return { results };
-              } catch (e) {
-                return { error: e instanceof Error ? e.message : "Search failed" };
+              } catch (error) {
+                return { error: error instanceof Error ? error.message : "Search failed" };
               }
             },
           }),
 
           generate_content_pack: tool({
             description:
-              "Generate a structured, AI-ready content pack: ElevenLabs voiceover, beat-by-beat 9:16 portrait image AND video prompts (each 80+ words), 3 detailed 9:16 thumbnail prompts (each 100+ words), caption, hashtags, and verified sources.",
+              "Return the complete structured Vidzo content pack after any required research.",
             inputSchema: ContentPackSchema,
-            // ----------------------------------------------------------------
-            // CRITICAL: This function MUST always return a value — never throw.
-            // Any unhandled throw here causes the AI SDK to emit
-            // "Tool result is missing for tool call …" because the stream
-            // closes before the tool_result part is written back.
-            // ----------------------------------------------------------------
             execute: async (rawInput) => {
               try {
                 const input = rawInput as ContentPack;
-                let sanitized: ContentPack = input;
+                let sanitized = input;
 
-                // ── Fact-validation pass (best-effort, never blocks) ──────────
                 try {
                   const sourcePool = collectedSources
-                    .map((s, i) => `[${i + 1}] ${s.title} — ${s.url}\n${s.snippet}`)
+                    .map(
+                      (source, index) =>
+                        `[${index + 1}] ${source.title} — ${source.url}\n${source.snippet}`,
+                    )
                     .join("\n\n");
-
-                  const { text: validatedJson } = await generateText({
+                  const { output } = await generateText({
                     model,
-                    system: `You are a strict fact validator for a content pack. Given a draft content pack and a pool of source URLs+snippets, you must:\n1. For every factual claim (numbers, dates, names of real companies/founders, funding amounts, rankings, quotes), check if the source pool supports it.\n2. If a claim is NOT supported, rewrite the sentence to be generic / opinion / hypothetical, OR remove it. Never invent a source.\n3. Only keep entries in "sources" that exactly match a URL from the pool.\n4. Preserve voice, tone, length. Never add new factual claims.\n5. IMPORTANT: Do NOT shorten or modify imagePrompt, videoPrompt, or thumbnailPrompts fields — preserve them exactly as-is.\n6. Output ONLY valid JSON matching the same schema as the input. No markdown, no commentary.`,
-                    prompt: `SOURCE POOL:\n${sourcePool || "(no sources collected)"}\n\nDRAFT PACK:\n${JSON.stringify(input)}\n\nReturn the sanitized pack as JSON.`,
+                    output: Output.object({ schema: ContentPackSchema }),
+                    system:
+                      "Validate the draft against the source pool. Remove or generalize unsupported factual claims. Preserve language, tone, and production prompts.",
+                    prompt: `SOURCE POOL:\n${sourcePool || "(no sources collected)"}\n\nDRAFT PACK:\n${JSON.stringify(input)}`,
                   });
 
-                  const jsonStr = validatedJson
-                    .trim()
-                    .replace(/^```json\s*/i, "")
-                    .replace(/^```\s*/i, "")
-                    .replace(/```$/i, "")
-                    .trim();
-
-                  const parsed = ContentPackSchema.safeParse(JSON.parse(jsonStr));
-                  if (parsed.success) {
-                    sanitized = parsed.data as ContentPack;
-                    const allowedUrls = new Set(collectedSources.map((s) => s.url));
-                    if (allowedUrls.size > 0) {
-                      sanitized.sources = sanitized.sources.filter((s) => allowedUrls.has(s.url));
-                    }
+                  if (output) {
+                    sanitized = output as ContentPack;
+                    const allowedUrls = new Set(collectedSources.map((source) => source.url));
+                    sanitized.sources =
+                      allowedUrls.size > 0
+                        ? sanitized.sources.filter((source) => allowedUrls.has(source.url))
+                        : [];
                   }
-                } catch (validationErr) {
-                  // Validator failed — continue with the raw draft. Never rethrow.
-                  console.error("validator failed, using raw draft:", validationErr);
+                } catch (error) {
+                  console.error("[chat] validator failed; using the generated draft:", error);
                 }
-                // ─────────────────────────────────────────────────────────────
 
-                // ── Persist to DB (best-effort) ───────────────────────────────
-                try {
-                  const { error: dbError } = await supabase.from("scripts").insert({
-                    user_id: userId,
-                    thread_id: threadId ?? null,
-                    topic: sanitized.topic,
-                    data: sanitized,
-                  });
-                  if (dbError) console.error("pack save failed:", dbError);
-                } catch (dbErr) {
-                  console.error("pack DB insert threw:", dbErr);
-                }
-                // ─────────────────────────────────────────────────────────────
+                const { error: saveError } = await supabase.from("scripts").insert({
+                  user_id: userId,
+                  thread_id: threadId ?? null,
+                  topic: sanitized.topic,
+                  data: sanitized,
+                });
+                if (saveError) console.error("[chat] content pack save failed:", saveError);
 
-                return { saved: true, ...sanitized };
-              } catch (fatalErr) {
-                // Absolute last-resort catch — guarantees a tool result is
-                // always returned so the SDK never sees a missing result.
-                console.error("generate_content_pack fatal error:", fatalErr);
+                return { saved: !saveError, ...sanitized };
+              } catch (error) {
+                console.error("[chat] generate_content_pack failed:", error);
                 return {
                   saved: false,
-                  error: fatalErr instanceof Error ? fatalErr.message : "Content pack generation failed",
+                  error: error instanceof Error ? error.message : "Content pack generation failed",
                 };
               }
             },
           }),
         };
 
-        // Strip dangling tool-call-only assistant messages before streaming.
-        const safeMessages = sanitiseMessagesForStream(messages as UIMessage[]);
-
         const result = streamText({
           model,
           system,
-          messages: await convertToModelMessages(safeMessages),
+          messages: await convertToModelMessages(messages),
           tools,
-          stopWhen: stepCountIs(50),
+          stopWhen: stepCountIs(12),
+          abortSignal: request.signal,
+          onError: ({ error }) => {
+            console.error("[chat] OpenAI stream failed:", error);
+          },
         });
 
         return result.toUIMessageStreamResponse({
-          originalMessages: safeMessages,
+          originalMessages: messages,
+          onError: chatStreamErrorMessage,
           onFinish: async ({ messages: finalMessages }) => {
             if (!threadId) return;
             try {
-              const lastUser = [...finalMessages].reverse().find((m) => m.role === "user");
+              const lastUser = [...finalMessages]
+                .reverse()
+                .find((message) => message.role === "user");
               const lastAssistant = finalMessages[finalMessages.length - 1];
-
-              const toInsert: Array<{
+              const rows: Array<{
                 thread_id: string;
                 user_id: string;
                 role: string;
@@ -356,15 +349,15 @@ export const Route = createFileRoute("/api/chat")({
               }> = [];
 
               if (lastUser) {
-                toInsert.push({
+                rows.push({
                   thread_id: threadId,
                   user_id: userId,
                   role: "user",
                   parts: lastUser.parts,
                 });
               }
-              if (lastAssistant && lastAssistant.role === "assistant") {
-                toInsert.push({
+              if (lastAssistant?.role === "assistant") {
+                rows.push({
                   thread_id: threadId,
                   user_id: userId,
                   role: "assistant",
@@ -372,15 +365,15 @@ export const Route = createFileRoute("/api/chat")({
                 });
               }
 
-              if (toInsert.length) {
-                await supabase.from("messages").insert(toInsert);
+              if (rows.length > 0) {
+                await supabase.from("messages").insert(rows);
                 await supabase
                   .from("threads")
                   .update({ updated_at: new Date().toISOString() })
                   .eq("id", threadId);
               }
-            } catch (e) {
-              console.error("persist failed:", e);
+            } catch (error) {
+              console.error("[chat] persistence failed:", error);
             }
           },
         });

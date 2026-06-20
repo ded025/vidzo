@@ -1,5 +1,10 @@
-import logoAsset from "@/assets/vidzo-logo.png.asset.json";
-
 export function VidzoLogo({ className = "h-9 w-auto" }: { className?: string }) {
-  return <img src={logoAsset.url} alt="Vidzo" className={className} draggable={false} />;
+  return (
+    <img
+      src="/vidzo-logo.png"
+      alt="Vidzo"
+      className={`object-contain ${className}`}
+      draggable={false}
+    />
+  );
 }
