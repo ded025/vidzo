@@ -12,7 +12,7 @@ export function getOpenAIConfig() {
 
   return {
     apiKey,
-    model: process.env.OPENAI_MODEL?.trim() || "gpt-5.5",
+    model: process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini",
   };
 }
 

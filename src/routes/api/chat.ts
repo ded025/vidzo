@@ -244,7 +244,7 @@ export const Route = createFileRoute("/api/chat")({
         }
 
         const openai = createOpenAI({ apiKey: openaiKey });
-        const model = openai.responses(process.env.OPENAI_MODEL?.trim() || "gpt-5.5");
+        const model = openai.responses(process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini");
         const collectedSources: Array<{ title: string; url: string; snippet: string }> = [];
 
         const tools = {
