@@ -15,10 +15,8 @@ export const listThreads = createServerFn({ method: "GET" })
 
 export const createThread = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z
-      .object({ title: z.string().optional(), contextBrief: z.string().optional() })
-      .parse(input),
+  .validator((input: unknown) =>
+    z.object({ title: z.string().optional(), contextBrief: z.string().optional() }).parse(input),
   )
   .handler(async ({ data, context }) => {
     const { data: row, error } = await context.supabase
@@ -36,7 +34,7 @@ export const createThread = createServerFn({ method: "POST" })
 
 export const setThreadBrief = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z.object({ id: z.string(), contextBrief: z.string() }).parse(input),
   )
   .handler(async ({ data, context }) => {
@@ -50,9 +48,7 @@ export const setThreadBrief = createServerFn({ method: "POST" })
 
 export const renameThread = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z.object({ id: z.string(), title: z.string() }).parse(input),
-  )
+  .validator((input: unknown) => z.object({ id: z.string(), title: z.string() }).parse(input))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("threads")
@@ -64,7 +60,7 @@ export const renameThread = createServerFn({ method: "POST" })
 
 export const deleteThread = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ id: z.string() }).parse(input))
+  .validator((input: unknown) => z.object({ id: z.string() }).parse(input))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("threads").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -73,9 +69,7 @@ export const deleteThread = createServerFn({ method: "POST" })
 
 export const getThreadMessages = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z.object({ threadId: z.string() }).parse(input),
-  )
+  .validator((input: unknown) => z.object({ threadId: z.string() }).parse(input))
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase
       .from("messages")
@@ -106,17 +100,22 @@ export const getDashboardStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    const [{ count: scriptsTotal }, { count: scriptsWeek }, { count: threadsTotal }, { count: messagesTotal }, scriptsRows] =
-      await Promise.all([
-        context.supabase.from("scripts").select("id", { count: "exact", head: true }),
-        context.supabase
-          .from("scripts")
-          .select("id", { count: "exact", head: true })
-          .gte("created_at", sevenDaysAgo),
-        context.supabase.from("threads").select("id", { count: "exact", head: true }),
-        context.supabase.from("messages").select("id", { count: "exact", head: true }),
-        context.supabase.from("scripts").select("data").limit(500),
-      ]);
+    const [
+      { count: scriptsTotal },
+      { count: scriptsWeek },
+      { count: threadsTotal },
+      { count: messagesTotal },
+      scriptsRows,
+    ] = await Promise.all([
+      context.supabase.from("scripts").select("id", { count: "exact", head: true }),
+      context.supabase
+        .from("scripts")
+        .select("id", { count: "exact", head: true })
+        .gte("created_at", sevenDaysAgo),
+      context.supabase.from("threads").select("id", { count: "exact", head: true }),
+      context.supabase.from("messages").select("id", { count: "exact", head: true }),
+      context.supabase.from("scripts").select("data").limit(500),
+    ]);
     let sourcesUsed = 0;
     const rows = (scriptsRows.data ?? []) as Array<{ data: unknown }>;
     for (const r of rows) {
@@ -157,7 +156,7 @@ export const listPresets = createServerFn({ method: "GET" })
 
 export const createPreset = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => PresetInput.parse(input))
+  .validator((input: unknown) => PresetInput.parse(input))
   .handler(async ({ data, context }) => {
     const { data: row, error } = await context.supabase
       .from("presets")
@@ -170,7 +169,7 @@ export const createPreset = createServerFn({ method: "POST" })
 
 export const deletePreset = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ id: z.string() }).parse(input))
+  .validator((input: unknown) => z.object({ id: z.string() }).parse(input))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("presets").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -179,7 +178,7 @@ export const deletePreset = createServerFn({ method: "POST" })
 
 export const activatePreset = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ id: z.string() }).parse(input))
+  .validator((input: unknown) => z.object({ id: z.string() }).parse(input))
   .handler(async ({ data, context }) => {
     await context.supabase
       .from("presets")

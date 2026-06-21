@@ -36,12 +36,14 @@ function Terms() {
       </p>
       <h2>AI-generated output</h2>
       <p>
-        Vidzo uses AI models and live web sources to produce content packs. We do our best to
-        verify factual claims against the sources we cite, but you remain responsible for reviewing
-        the output before publishing.
+        Vidzo uses AI models and live web sources to produce content packs. We do our best to verify
+        factual claims against the sources we cite, but you remain responsible for reviewing the
+        output before publishing.
       </p>
       <h2>Service availability</h2>
-      <p>Vidzo is provided "as is" without warranties. We may update or change features at any time.</p>
+      <p>
+        Vidzo is provided "as is" without warranties. We may update or change features at any time.
+      </p>
       <h2>Contact</h2>
       <p>
         Questions? Email <a href="mailto:support@vidzo.in">support@vidzo.in</a>.

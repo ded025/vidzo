@@ -82,7 +82,6 @@
   --background-rgb: 8 9 14;
 }
 
-
 * {
   box-sizing: border-box;
   border-color: hsl(var(--border));
@@ -136,7 +135,6 @@ body {
     0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-
 /* ─── HERO GLOW ──────────────────────────────────────────────────────────── */
 .hero-glow {
   background: radial-gradient(
@@ -151,8 +149,12 @@ body {
 
 /* ─── MARQUEE ────────────────────────────────────────────────────────────── */
 @keyframes marquee-scroll {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 .vidzo-marquee-track {
@@ -162,15 +164,16 @@ body {
 
 /* ─── FONT UTILITIES ─────────────────────────────────────────────────────── */
 .font-display {
-  font-family: 'Playfair Display', 'Georgia', serif;
+  font-family: "Playfair Display", "Georgia", serif;
 }
 
 /* ─── TREND CARD INSTANT FEEDBACK ───────────────────────────────────────── */
 .trend-card-btn {
   cursor: pointer;
-  transition: transform 120ms cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 120ms cubic-bezier(0.16, 1, 0.3, 1),
-              opacity 120ms ease;
+  transition:
+    transform 120ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 120ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 120ms ease;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
 }

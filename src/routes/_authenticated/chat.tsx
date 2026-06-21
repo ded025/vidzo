@@ -1,17 +1,32 @@
-import { createFileRoute, Link, Outlet, useNavigate, useParams, useRouterState } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link,
+  Outlet,
+  useNavigate,
+  useParams,
+  useRouterState,
+} from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
-import {
-  listThreads,
-  createThread,
-  deleteThread,
-} from "@/lib/threads.functions";
+import { listThreads, createThread, deleteThread } from "@/lib/threads.functions";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Plus, Trash2, MessageSquare, FileText, LogOut, Menu, X,
-  LayoutDashboard, Sliders, TrendingUp, Library, Settings, Home, Coins,
+  Plus,
+  Trash2,
+  MessageSquare,
+  FileText,
+  LogOut,
+  Menu,
+  X,
+  LayoutDashboard,
+  Sliders,
+  TrendingUp,
+  Library,
+  Settings,
+  Home,
+  Coins,
 } from "lucide-react";
 import { toast } from "sonner";
 import { VidzoLogo } from "@/components/vidzo-logo";
@@ -40,7 +55,6 @@ function ChatLayout() {
   useEffect(() => {
     setBalance(null);
   }, [pathname]);
-
 
   const threadsQ = useQuery({
     queryKey: ["threads"],
@@ -72,8 +86,14 @@ function ChatLayout() {
   };
 
   const NavItem = ({
-    to, icon: Icon, label,
-  }: { to: string; icon: React.ComponentType<{className?: string}>; label: string }) => {
+    to,
+    icon: Icon,
+    label,
+  }: {
+    to: string;
+    icon: React.ComponentType<{ className?: string }>;
+    label: string;
+  }) => {
     const active = pathname === to || (to !== "/chat" && pathname.startsWith(to));
     return (
       <Link
@@ -168,9 +188,7 @@ function ChatLayout() {
           <Coins className="h-3.5 w-3.5 text-[var(--vidzo-magenta)]" />
           <span className="font-semibold text-foreground">{balance}</span>
           <span className="text-muted-foreground">credits</span>
-          {balance <= 2 && (
-            <span className="ml-auto text-amber-500 font-medium">Low →</span>
-          )}
+          {balance <= 2 && <span className="ml-auto text-amber-500 font-medium">Low →</span>}
         </Link>
       )}
       <div className="border-t border-border p-2 flex items-center gap-2">
@@ -202,7 +220,10 @@ function ChatLayout() {
         </aside>
         {sidebarOpen && (
           <div className="md:hidden fixed inset-0 z-50 flex">
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
+            <div
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              onClick={() => setSidebarOpen(false)}
+            />
             <aside className="relative w-72 max-w-[85vw] bg-background border-r border-border flex flex-col animate-in slide-in-from-left duration-200">
               {sidebar}
             </aside>
@@ -249,7 +270,12 @@ function ChatLayout() {
         }}
       >
         {bottomNav.map(({ to, icon: Icon, label, isCreate }) => {
-          const active = pathname === to || (to !== "/chat" && to !== "/chat/new" && to !== "/chat/credits" && pathname.startsWith(to));
+          const active =
+            pathname === to ||
+            (to !== "/chat" &&
+              to !== "/chat/new" &&
+              to !== "/chat/credits" &&
+              pathname.startsWith(to));
           if (isCreate) {
             return (
               <button

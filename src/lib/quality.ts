@@ -46,7 +46,10 @@ function scoreVisuals(visuals: QualityInput["visuals"]): number {
   const avgLen =
     n === 0
       ? 0
-      : visuals.reduce((a, v) => a + (v.imagePrompt?.length ?? 0) + (v.videoPrompt?.length ?? 0), 0) /
+      : visuals.reduce(
+          (a, v) => a + (v.imagePrompt?.length ?? 0) + (v.videoPrompt?.length ?? 0),
+          0,
+        ) /
         (n * 2);
   const beatScore = n < 3 ? 50 : n <= 8 ? 90 : 75;
   const detailScore = avgLen < 60 ? 55 : avgLen < 140 ? 80 : 95;
@@ -75,7 +78,9 @@ export function computeQuality(pack: QualityInput): QualityReport {
     pacing: clamp(scorePacing(pack.script.dialogue)),
     sources: clamp(scoreSources(pack.sources ?? [])),
     visuals: clamp(scoreVisuals(pack.visuals ?? [])),
-    platform: clamp(scorePlatformFit(pack.caption, pack.hashtags ?? [], pack.thumbnailPrompts ?? [])),
+    platform: clamp(
+      scorePlatformFit(pack.caption, pack.hashtags ?? [], pack.thumbnailPrompts ?? []),
+    ),
   };
   // Weighted overall — hook + sources matter most for virality
   const overall = Math.round(

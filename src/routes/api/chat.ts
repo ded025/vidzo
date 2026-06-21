@@ -1,19 +1,16 @@
-import { createOpenAI } from "@ai-sdk/openai";
+import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  convertToModelMessages,
-  generateText,
-  Output,
-  stepCountIs,
-  streamText,
-  tool,
-  type UIMessage,
-} from "ai";
-import { z } from "zod";
+import { createUIMessageStream, createUIMessageStreamResponse, type UIMessage } from "ai";
 import { checkAndConsume } from "@/lib/credits.server";
-import { checkOpenAIConnection, searchWebWithOpenAI } from "@/lib/openai.server";
-import { MASTER_SYSTEM_PROMPT } from "@/lib/prompts";
+import { finalizeContentPack, type ContentPackData } from "@/lib/content-pack";
+import { checkContentEngine, generateContentPack } from "@/lib/openai.server";
+import {
+  buildPromptEngineInput,
+  shouldUseWebResearch,
+  type PromptPreset,
+} from "@/lib/prompt-engine.server";
+import { resolveReferenceAssets } from "@/lib/reference-assets.server";
 
 type ChatRequestBody = { messages?: unknown; threadId?: string };
 
@@ -24,65 +21,22 @@ function jsonError(message: string, status: number, code: string, detail?: strin
 }
 
 function chatStreamErrorMessage(error: unknown) {
-  console.error("[chat] stream failed:", error);
+  console.error("[chat] generation failed:", error);
   const message = error instanceof Error ? error.message : String(error ?? "Unknown chat error");
   if (/api key|authentication|unauthorized|401|invalid_api_key/i.test(message)) {
-    return "OpenAI rejected the request. Check the server-side OpenAI key.";
+    return "OpenAI rejected the request. Check OPENAI_API_KEY in Supabase Edge Function secrets.";
   }
   if (/model|not found|does not exist|404/i.test(message)) {
-    return "The selected OpenAI model is unavailable. Check OPENAI_MODEL.";
+    return "The selected OpenAI model is unavailable. Check OPENAI_MODEL in Supabase secrets.";
   }
   if (/rate|quota|billing|429|insufficient/i.test(message)) {
     return "OpenAI is rate-limited or out of quota. Check billing and retry.";
   }
-  return "Chat failed while generating the reply. Please retry in a moment.";
+  return message || "Chat failed while generating the content pack. Please retry.";
 }
 
-const ContentPackSchema = z.object({
-  topic: z.string(),
-  niche: z.string().nullable(),
-  format: z.string().nullable(),
-  whyViral: z.string(),
-  script: z.object({
-    dialogue: z
-      .string()
-      .describe("Clean voiceover text with no inline timestamps or stage directions."),
-    voiceDirection: z.string().describe("Tone, pace, emotion, and pauses."),
-    suggestedElevenLabsVoice: z
-      .object({
-        name: z.string().nullable(),
-        voiceId: z.string().nullable(),
-      })
-      .nullable(),
-  }),
-  visuals: z
-    .array(
-      z.object({
-        beat: z.string(),
-        onScreenText: z.string().nullable(),
-        imagePrompt: z.string().min(300),
-        videoPrompt: z.string().min(200),
-      }),
-    )
-    .min(3)
-    .max(8),
-  thumbnailPrompts: z.array(z.string().min(500)).length(3),
-  caption: z.string(),
-  hashtags: z.array(z.string()).min(8).max(15),
-  sources: z.array(
-    z.object({
-      claim: z.string(),
-      url: z.string(),
-      publisher: z.string().nullable(),
-    }),
-  ),
-});
-
-type ContentPack = z.infer<typeof ContentPackSchema>;
-
 function sanitiseMessages(raw: unknown[]): UIMessage[] {
-  const validRoles = new Set(["user", "assistant", "system", "tool"]);
-
+  const validRoles = new Set(["user", "assistant", "system"]);
   return raw
     .filter((message): message is Record<string, unknown> => {
       return Boolean(message) && typeof message === "object" && !Array.isArray(message);
@@ -95,40 +49,36 @@ function sanitiseMessages(raw: unknown[]): UIMessage[] {
           role: message.role as UIMessage["role"],
           parts: Array.isArray(message.parts) ? message.parts : [],
         }) as UIMessage,
-    )
-    .filter((message) => {
-      if (message.role !== "assistant") return true;
-      const parts = message.parts as Array<{ type: string }>;
-      if (parts.length === 0) return false;
-      return parts.some((part) => part.type !== "tool-invocation");
-    });
+    );
+}
+
+function getMessageText(message: UIMessage | undefined) {
+  return (
+    message?.parts
+      .filter((part): part is Extract<(typeof message.parts)[number], { type: "text" }> => {
+        return part.type === "text";
+      })
+      .map((part) => part.text)
+      .join("\n")
+      .trim() ?? ""
+  );
 }
 
 export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
-      GET: async () => {
-        const apiKey = process.env.OPENAI_API_KEY?.trim();
-        if (!apiKey) {
-          return jsonError(
-            "OpenAI is not configured on this server.",
-            503,
-            "OPENAI_NOT_CONFIGURED",
-          );
-        }
-
+      GET: async ({ request }) => {
+        const authorization = request.headers.get("authorization") ?? "";
+        const token = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
+        if (!token) return jsonError("Sign in to check the content engine.", 401, "UNAUTHORIZED");
         try {
-          const connection = await checkOpenAIConnection();
-          return Response.json(
-            { status: "ok", provider: "openai", model: connection.model },
-            { headers: jsonHeaders },
-          );
+          const health = await checkContentEngine({ token, signal: request.signal });
+          return Response.json(health, { headers: jsonHeaders });
         } catch (error) {
-          console.error("[chat-health] OpenAI probe failed:", error);
           return jsonError(
-            "OpenAI health check failed. Verify the hosted secret and model access.",
-            502,
-            "OPENAI_HEALTH_FAILED",
+            error instanceof Error ? error.message : "Content engine health check failed.",
+            503,
+            "CONTENT_ENGINE_UNAVAILABLE",
           );
         }
       },
@@ -141,26 +91,15 @@ export const Route = createFileRoute("/api/chat")({
           return jsonError("Invalid JSON body.", 400, "BAD_REQUEST");
         }
 
-        const rawMessages = body.messages;
-        const threadId = body.threadId;
-        if (!Array.isArray(rawMessages)) {
+        if (!Array.isArray(body.messages)) {
           return jsonError("messages must be an array.", 400, "BAD_REQUEST");
         }
-
-        const messages = sanitiseMessages(rawMessages);
-        if (messages.length === 0 && rawMessages.length > 0) {
-          return jsonError("No valid messages were provided.", 400, "BAD_REQUEST");
+        const messages = sanitiseMessages(body.messages);
+        const lastUserMessage = [...messages].reverse().find((message) => message.role === "user");
+        const userRequest = getMessageText(lastUserMessage);
+        if (!userRequest) {
+          return jsonError("A prompt is required.", 400, "BAD_REQUEST");
         }
-
-        const openaiKey = process.env.OPENAI_API_KEY?.trim();
-        if (!openaiKey) {
-          return jsonError(
-            "Chat is not connected to OpenAI. Add OPENAI_API_KEY to server secrets.",
-            503,
-            "OPENAI_NOT_CONFIGURED",
-          );
-        }
-
         const supabaseUrl = process.env.SUPABASE_URL;
         const supabaseKey = process.env.SUPABASE_PUBLISHABLE_KEY;
         if (!supabaseUrl || !supabaseKey) {
@@ -177,15 +116,39 @@ export const Route = createFileRoute("/api/chat")({
           global: { headers: { Authorization: `Bearer ${token}` } },
           auth: { persistSession: false, autoRefreshToken: false },
         });
-
         const { data: userResult } = await supabase.auth.getUser(token);
         const userId = userResult?.user?.id;
         if (!userId) {
           return jsonError("Your session expired. Sign in again.", 401, "UNAUTHORIZED");
         }
 
-        const existingUserMessages = messages.filter((message) => message.role === "user");
-        const isTweak = existingUserMessages.length > 1;
+        const threadId = body.threadId;
+        const threadPromise = threadId
+          ? supabase.from("threads").select("context_brief").eq("id", threadId).maybeSingle()
+          : Promise.resolve({ data: null });
+        const presetPromise = supabase
+          .from("presets")
+          .select("name, niche, audience, tone, language, default_voice_id, default_voice_name")
+          .eq("user_id", userId)
+          .eq("is_active", true)
+          .maybeSingle();
+        const latestPackPromise = threadId
+          ? supabase
+              .from("scripts")
+              .select("data")
+              .eq("thread_id", threadId)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle()
+          : Promise.resolve({ data: null });
+        const [threadResult, presetResult, latestPackResult] = await Promise.all([
+          threadPromise,
+          presetPromise,
+          latestPackPromise,
+        ]);
+        const currentPack = (latestPackResult.data as { data?: unknown } | null)?.data ?? null;
+        const isTweak = Boolean(currentPack);
+
         const creditResult = await checkAndConsume(
           supabase,
           userId,
@@ -193,7 +156,6 @@ export const Route = createFileRoute("/api/chat")({
           threadId ?? null,
           isTweak ? "tweak" : "script",
         );
-
         if (!creditResult.allowed) {
           const noScripts = creditResult.reason === "no_scripts";
           return Response.json(
@@ -209,174 +171,137 @@ export const Route = createFileRoute("/api/chat")({
           );
         }
 
-        let contextBrief: string | null = null;
-        if (threadId) {
-          const { data: thread } = await supabase
-            .from("threads")
-            .select("context_brief")
-            .eq("id", threadId)
-            .maybeSingle();
-          contextBrief = (thread?.context_brief as string | null) ?? null;
-        }
-
-        const { data: activePreset } = await supabase
-          .from("presets")
-          .select("name, niche, audience, tone, language, default_voice_id, default_voice_name")
-          .eq("user_id", userId)
-          .eq("is_active", true)
-          .maybeSingle();
-
-        let system = MASTER_SYSTEM_PROMPT;
-        if (contextBrief) {
-          system += `\n\nLOCKED BRIEF: "${contextBrief}". Every output must serve this brief.`;
-        }
-        if (activePreset) {
-          system += `\n\nACTIVE PRESET "${activePreset.name}":`;
-          if (activePreset.niche) system += `\n- Niche: ${activePreset.niche}`;
-          if (activePreset.audience) system += `\n- Audience: ${activePreset.audience}`;
-          if (activePreset.tone) system += `\n- Tone: ${activePreset.tone}`;
-          if (activePreset.language) system += `\n- Language: ${activePreset.language}`;
-          if (activePreset.default_voice_name) {
-            system += `\n- Voice: ${activePreset.default_voice_name}${
-              activePreset.default_voice_id ? ` (${activePreset.default_voice_id})` : ""
-            }`;
-          }
-        }
-
-        const openai = createOpenAI({ apiKey: openaiKey });
-        const model = openai.responses(process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini");
-        const collectedSources: Array<{ title: string; url: string; snippet: string }> = [];
-
-        const tools = {
-          search_trending_topics: tool({
-            description:
-              "Search current web sources before making real-world factual claims. Returns cited titles, URLs, and snippets.",
-            inputSchema: z.object({ query: z.string().describe("A focused web search query.") }),
-            execute: async ({ query }) => {
-              try {
-                const results = await searchWebWithOpenAI(query);
-                results.forEach((result) => collectedSources.push(result));
-                return { results };
-              } catch (error) {
-                return { error: error instanceof Error ? error.message : "Search failed" };
-              }
-            },
-          }),
-
-          generate_content_pack: tool({
-            description:
-              "Return the complete structured Vidzo content pack after any required research.",
-            inputSchema: ContentPackSchema,
-            execute: async (rawInput) => {
-              try {
-                const input = rawInput as ContentPack;
-                let sanitized = input;
-
-                try {
-                  const sourcePool = collectedSources
-                    .map(
-                      (source, index) =>
-                        `[${index + 1}] ${source.title} — ${source.url}\n${source.snippet}`,
-                    )
-                    .join("\n\n");
-                  const { output } = await generateText({
-                    model,
-                    output: Output.object({ schema: ContentPackSchema }),
-                    system:
-                      "Validate the draft against the source pool. Remove or generalize unsupported factual claims. Preserve language, tone, and production prompts.",
-                    prompt: `SOURCE POOL:\n${sourcePool || "(no sources collected)"}\n\nDRAFT PACK:\n${JSON.stringify(input)}`,
-                  });
-
-                  if (output) {
-                    sanitized = output as ContentPack;
-                    const allowedUrls = new Set(collectedSources.map((source) => source.url));
-                    sanitized.sources =
-                      allowedUrls.size > 0
-                        ? sanitized.sources.filter((source) => allowedUrls.has(source.url))
-                        : [];
-                  }
-                } catch (error) {
-                  console.error("[chat] validator failed; using the generated draft:", error);
-                }
-
-                const { error: saveError } = await supabase.from("scripts").insert({
-                  user_id: userId,
-                  thread_id: threadId ?? null,
-                  topic: sanitized.topic,
-                  data: sanitized,
-                });
-                if (saveError) console.error("[chat] content pack save failed:", saveError);
-
-                return { saved: !saveError, ...sanitized };
-              } catch (error) {
-                console.error("[chat] generate_content_pack failed:", error);
-                return {
-                  saved: false,
-                  error: error instanceof Error ? error.message : "Content pack generation failed",
-                };
-              }
-            },
-          }),
-        };
-
-        const result = streamText({
-          model,
-          system,
-          messages: await convertToModelMessages(messages),
-          tools,
-          stopWhen: stepCountIs(12),
-          abortSignal: request.signal,
-          onError: ({ error }) => {
-            console.error("[chat] OpenAI stream failed:", error);
-          },
+        const lockedBrief =
+          (threadResult.data as { context_brief?: string | null } | null)?.context_brief ?? null;
+        const preset = (presetResult.data as PromptPreset | null) ?? null;
+        const research = shouldUseWebResearch(userRequest, lockedBrief);
+        const promptInput = buildPromptEngineInput({
+          userRequest,
+          lockedBrief,
+          preset,
+          currentPack,
+          research,
         });
+        const toolCallId = randomUUID();
 
-        return result.toUIMessageStreamResponse({
+        const stream = createUIMessageStream({
           originalMessages: messages,
           onError: chatStreamErrorMessage,
-          onFinish: async ({ messages: finalMessages }) => {
+          execute: async ({ writer }) => {
+            writer.write({ type: "start" });
+            writer.write({ type: "start-step" });
+            writer.write({
+              type: "tool-input-start",
+              toolCallId,
+              toolName: "generate_content_pack",
+              providerExecuted: true,
+              title: "Building a 9:16 content pack",
+            });
+            writer.write({
+              type: "tool-input-available",
+              toolCallId,
+              toolName: "generate_content_pack",
+              providerExecuted: true,
+              input: {
+                prompt: userRequest,
+                mode: currentPack ? "revision" : "new",
+                research: research ? "one web search allowed" : "no web search",
+                requests: 1,
+              },
+            });
+
+            try {
+              const generated = await generateContentPack({
+                input: promptInput,
+                research,
+                token,
+                signal: request.signal,
+              });
+              const preliminaryPack = finalizeContentPack(generated.pack, generated.generation, []);
+              writer.write({
+                type: "tool-output-available",
+                toolCallId,
+                output: preliminaryPack,
+                providerExecuted: true,
+                preliminary: true,
+              });
+
+              const referenceAssets = await resolveReferenceAssets({
+                supabase,
+                userId,
+                pack: generated.pack,
+                userRequest,
+              });
+              const finalPack: ContentPackData = finalizeContentPack(
+                generated.pack,
+                generated.generation,
+                referenceAssets,
+              );
+              const { error: saveError } = await supabase.from("scripts").insert({
+                user_id: userId,
+                thread_id: threadId ?? null,
+                topic: finalPack.topic,
+                data: finalPack,
+              });
+              if (saveError) console.error("[chat] content pack save failed:", saveError);
+
+              writer.write({
+                type: "tool-output-available",
+                toolCallId,
+                output: finalPack,
+                providerExecuted: true,
+              });
+              writer.write({ type: "finish-step" });
+              writer.write({
+                type: "finish",
+                finishReason: "stop",
+                messageMetadata: {
+                  requestCount: 1,
+                  latencyMs: finalPack.generation.latencyMs,
+                },
+              });
+            } catch (error) {
+              writer.write({
+                type: "tool-output-error",
+                toolCallId,
+                errorText: chatStreamErrorMessage(error),
+                providerExecuted: true,
+              });
+              writer.write({ type: "finish-step" });
+              writer.write({ type: "finish", finishReason: "error" });
+            }
+          },
+          onFinish: async ({ responseMessage }) => {
             if (!threadId) return;
             try {
-              const lastUser = [...finalMessages]
-                .reverse()
-                .find((message) => message.role === "user");
-              const lastAssistant = finalMessages[finalMessages.length - 1];
-              const rows: Array<{
-                thread_id: string;
-                user_id: string;
-                role: string;
-                parts: unknown;
-              }> = [];
-
-              if (lastUser) {
-                rows.push({
+              const rows = [
+                {
                   thread_id: threadId,
                   user_id: userId,
                   role: "user",
-                  parts: lastUser.parts,
-                });
-              }
-              if (lastAssistant?.role === "assistant") {
-                rows.push({
+                  parts: lastUserMessage?.parts ?? [{ type: "text", text: userRequest }],
+                },
+                {
                   thread_id: threadId,
                   user_id: userId,
                   role: "assistant",
-                  parts: lastAssistant.parts,
-                });
-              }
-
-              if (rows.length > 0) {
-                await supabase.from("messages").insert(rows);
-                await supabase
+                  parts: responseMessage.parts,
+                },
+              ];
+              await Promise.all([
+                supabase.from("messages").insert(rows),
+                supabase
                   .from("threads")
                   .update({ updated_at: new Date().toISOString() })
-                  .eq("id", threadId);
-              }
+                  .eq("id", threadId),
+              ]);
             } catch (error) {
               console.error("[chat] persistence failed:", error);
             }
           },
         });
+
+        return createUIMessageStreamResponse({ stream });
       },
     },
   },

@@ -64,21 +64,13 @@ export const CATEGORY_QUERIES: Record<TrendCategory, string[]> = {
     "influencer monetization latest",
     "YouTube creator latest trend",
   ],
-  Tech: [
-    "tech product launch latest",
-    "big tech news latest",
-    "gadget viral latest",
-  ],
+  Tech: ["tech product launch latest", "big tech news latest", "gadget viral latest"],
   Business: [
     "business strategy viral latest",
     "entrepreneur business latest news",
     "company growth story latest",
   ],
-  Ecommerce: [
-    "ecommerce trend latest",
-    "D2C brand viral latest",
-    "online shopping trend latest",
-  ],
+  Ecommerce: ["ecommerce trend latest", "D2C brand viral latest", "online shopping trend latest"],
   Fitness: [
     "fitness trend viral latest",
     "gym workout trend latest",
@@ -89,11 +81,7 @@ export const CATEGORY_QUERIES: Record<TrendCategory, string[]> = {
     "movies box office latest",
     "OTT show trending latest",
   ],
-  Crypto: [
-    "crypto market latest news",
-    "bitcoin ethereum latest",
-    "crypto startup latest",
-  ],
+  Crypto: ["crypto market latest news", "bitcoin ethereum latest", "crypto startup latest"],
 };
 
 export interface GlobalTrend {
@@ -105,6 +93,7 @@ export interface GlobalTrend {
   platform_signals: string[];
   source_url: string | null;
   source_name: string | null;
+  image_url: string | null;
   published_at: string | null;
   synced_at: string;
   popularity: number;
@@ -124,7 +113,7 @@ export interface SyncRun {
 // ─── List trends ──────────────────────────────────────────────────────
 export const listGlobalTrends = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z
       .object({
         category: z.string().optional(),
@@ -134,9 +123,7 @@ export const listGlobalTrends = createServerFn({ method: "GET" })
       .parse(input ?? {}),
   )
   .handler(async ({ data, context }) => {
-    let q = context.supabase
-      .from("global_trends")
-      .select("*");
+    let q = context.supabase.from("global_trends").select("*");
 
     if (data.category && data.category !== "All") {
       q = q.eq("category", data.category);

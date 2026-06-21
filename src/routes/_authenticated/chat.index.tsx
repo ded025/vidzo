@@ -12,11 +12,20 @@ export const Route = createFileRoute("/_authenticated/chat/")({
 });
 
 const PROMPTS = [
-  { icon: TrendingUp, text: "Find this week's biggest Indian startup funding stories and pick the most viral one." },
+  {
+    icon: TrendingUp,
+    text: "Find this week's biggest Indian startup funding stories and pick the most viral one.",
+  },
   { icon: Briefcase, text: "Topic: Zepto ka business model. Make a 30-sec Hinglish Reel pack." },
-  { icon: Dumbbell, text: "Niche: gym & fitness for desi audience. 30-sec Reel on the truth about creatine." },
+  {
+    icon: Dumbbell,
+    text: "Niche: gym & fitness for desi audience. 30-sec Reel on the truth about creatine.",
+  },
   { icon: Film, text: "Latest Shark Tank India pitch that went viral — full content pack please." },
-  { icon: Lightbulb, text: "Founder story angle: 21-year-old Indian who raised seed funding recently." },
+  {
+    icon: Lightbulb,
+    text: "Founder story angle: 21-year-old Indian who raised seed funding recently.",
+  },
 ];
 
 function ChatIndex() {

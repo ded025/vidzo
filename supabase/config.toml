@@ -1,1 +1,7 @@
-project_id = "uphxbagelesovunzxfsq"
+project_id = "gktxfrpdqcomrymyejpq"
+
+[functions.generate-content-pack]
+verify_jwt = true
+
+[functions.sync-trends]
+verify_jwt = true

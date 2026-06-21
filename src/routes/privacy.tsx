@@ -15,13 +15,11 @@ function Privacy() {
   return (
     <PageShell title="Privacy Policy">
       <p>Last updated: June 2026.</p>
-      <p>
-        We respect your privacy. This page explains what data Vidzo collects and how we use it.
-      </p>
+      <p>We respect your privacy. This page explains what data Vidzo collects and how we use it.</p>
       <h2>What we collect</h2>
       <p>
-        Account info you provide (email, name), the briefs and prompts you submit, the content
-        packs we generate for you, and basic usage telemetry (page views, error logs).
+        Account info you provide (email, name), the briefs and prompts you submit, the content packs
+        we generate for you, and basic usage telemetry (page views, error logs).
       </p>
       <h2>How we use it</h2>
       <p>

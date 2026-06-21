@@ -22,14 +22,16 @@ function LibraryPage() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
             <FileText className="h-5 w-5" />
           </div>
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Library</h1>
-            <p className="text-muted-foreground text-sm">Every pack you've generated, saved automatically.</p>
+            <p className="text-muted-foreground text-sm">
+              Every pack you've generated, saved automatically.
+            </p>
           </div>
         </div>
 

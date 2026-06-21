@@ -11,7 +11,7 @@ import {
   ConversationContent,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
-import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
+import { ChatMessage, ChatMessageContent, ChatMessageText } from "@/components/chat-message";
 import {
   PromptInput,
   PromptInputTextarea,
@@ -165,7 +165,6 @@ function ChatWindow({
   threadId: string;
   initialMessages: UIMessage[];
 }) {
-  const [input, setInput] = useState("");
   const bearerRef = useRef<string | null>(null);
   const [bearerReady, setBearerReady] = useState(false);
   const sentPending = useRef(false);
@@ -180,7 +179,10 @@ function ChatWindow({
   const checkHealth = useCallback(async () => {
     setHealth({ status: "checking", message: "Checking chat connection" });
     try {
-      const response = await fetch("/api/chat", { method: "GET" });
+      const response = await fetch("/api/chat", {
+        method: "GET",
+        headers: bearerRef.current ? { Authorization: `Bearer ${bearerRef.current}` } : undefined,
+      });
       const data = (await response.json().catch(() => null)) as {
         status?: string;
         message?: string;
@@ -188,14 +190,18 @@ function ChatWindow({
         error?: string;
       } | null;
       if (response.ok && data?.status === "ok") {
-        setHealth({ status: "ok", message: "OpenAI chat is connected", model: data.model });
+        setHealth({
+          status: "ok",
+          message: "Supabase AI is configured",
+          model: data.model,
+        });
       } else {
         setHealth({
           status: "degraded",
           message:
             data?.error ||
             data?.message ||
-            "Chat health check failed. Verify the hosted OpenAI secret.",
+            "Chat health check failed. Add OPENAI_API_KEY to Supabase Edge Function secrets.",
           model: data?.model,
         });
       }
@@ -226,8 +232,8 @@ function ChatWindow({
   }, [threadId]);
 
   useEffect(() => {
-    void checkHealth();
-  }, [checkHealth]);
+    if (bearerReady) void checkHealth();
+  }, [bearerReady, checkHealth]);
 
   const transport = useMemo(
     () =>
@@ -262,7 +268,15 @@ function ChatWindow({
     }
   }, [bearerReady, health.status, threadId, messages.length, sendMessage]);
 
-  const isTweak = messages.filter((m) => m.role === "user").length >= 1;
+  const isTweak = messages.some(
+    (message) =>
+      message.role === "assistant" &&
+      message.parts.some(
+        (part) =>
+          part.type === "tool-generate_content_pack" &&
+          (part as { state?: string }).state === "output-available",
+      ),
+  );
 
   // FIX: Signature matches PromptInput's onSubmit(message: PromptInputMessage, event)
   // Previously the handler took { text?: string } which matched but relied on
@@ -276,7 +290,6 @@ function ChatWindow({
       return;
     }
     setCreditError(null);
-    setInput("");
     sendMessage({ text });
     if (isTweak) setTweakCount((c) => c + 1);
   };
@@ -285,6 +298,14 @@ function ChatWindow({
   const tweaksLeft = Math.max(0, FREE_TWEAKS - tweakCount);
   const chatBlocked = health.status !== "ok";
   const errorMessage = getChatErrorMessage(error, health);
+  const activeAssistant = messages[messages.length - 1];
+  const currentPackVisible =
+    activeAssistant?.role === "assistant" &&
+    activeAssistant.parts.some(
+      (part) =>
+        part.type === "tool-generate_content_pack" &&
+        (part as { state?: string }).state === "output-available",
+    );
 
   // Show a session-loading state so messages are never silently dropped
   if (!bearerReady) {
@@ -302,7 +323,7 @@ function ChatWindow({
       <CreditBar balance={balance} tweakCount={tweakCount} isTweak={isTweak} />
 
       <Conversation className="flex-1">
-        <ConversationContent className="max-w-3xl mx-auto w-full px-4 py-6">
+        <ConversationContent className="mx-auto w-full max-w-5xl px-4 py-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card px-3 py-2 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-2">
               {health.status === "checking" ? (
@@ -327,12 +348,12 @@ function ChatWindow({
             </div>
           )}
           {messages.map((m) => (
-            <Message key={m.id} from={m.role}>
-              <MessageContent>
+            <ChatMessage key={m.id} from={m.role}>
+              <ChatMessageContent>
                 {m.parts.map((part, i) => {
                   if (part.type === "text") {
                     return m.role === "assistant" ? (
-                      <MessageResponse key={i}>{part.text}</MessageResponse>
+                      <ChatMessageText key={i}>{part.text}</ChatMessageText>
                     ) : (
                       <div key={i} className="whitespace-pre-wrap">
                         {part.text}
@@ -374,17 +395,33 @@ function ChatWindow({
                   if (part.type === "tool-generate_content_pack") {
                     const p = part as unknown as {
                       state: string;
+                      errorText?: string;
+                      input?: { research?: string };
                       output?: Record<string, unknown> & { error?: string };
                     };
+                    if (p.state === "output-error") {
+                      return (
+                        <div
+                          key={i}
+                          className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+                          role="alert"
+                        >
+                          {p.errorText || "Content pack generation failed. Please retry."}
+                        </div>
+                      );
+                    }
                     if (p.state !== "output-available" || !p.output) {
                       return (
                         <div
                           key={i}
-                          className="rounded-lg border border-border bg-secondary/40 p-3 text-xs text-muted-foreground flex items-center gap-2"
+                          className="flex items-center gap-2 rounded-lg border border-border bg-secondary/40 p-3 text-xs text-muted-foreground"
                         >
                           <ShieldCheck className="h-3 w-3" />
                           <Loader2 className="h-3 w-3 animate-spin" />
-                          Drafting + validating against sources…
+                          <span>
+                            Building one structured 9:16 pack
+                            {p.input?.research ? ` — ${p.input.research}` : ""}
+                          </span>
                         </div>
                       );
                     }
@@ -405,10 +442,10 @@ function ChatWindow({
                   }
                   return null;
                 })}
-              </MessageContent>
-            </Message>
+              </ChatMessageContent>
+            </ChatMessage>
           ))}
-          {isLoading && (
+          {isLoading && !currentPackVisible && (
             <div
               className="flex items-center gap-3 rounded-xl border bg-card px-4 py-3 text-sm text-muted-foreground shadow-sm"
               role="status"
@@ -441,7 +478,7 @@ function ChatWindow({
         <CreditWall err={creditError} threadId={threadId} />
       ) : (
         <div className="border-t border-border p-4">
-          <div className="max-w-3xl mx-auto">
+          <div className="mx-auto max-w-4xl">
             {isTweak && tweaksLeft === 0 && (
               <p className="text-xs text-amber-500 mb-2 flex items-center gap-1.5">
                 <Coins className="h-3 w-3" />

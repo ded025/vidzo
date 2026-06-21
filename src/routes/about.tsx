@@ -5,7 +5,11 @@ export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
       { title: "About · Vidzo" },
-      { name: "description", content: "Vidzo is the AI production room built for creators — turning ideas into ready-to-record content packs." },
+      {
+        name: "description",
+        content:
+          "Vidzo is the AI production room built for creators — turning ideas into ready-to-record content packs.",
+      },
     ],
   }),
   component: About,
@@ -28,8 +32,8 @@ function About() {
       <h2>Built for creators of every kind</h2>
       <p>
         Whether you make reels about business, fitness reels, founder stories, product explainers,
-        coaching videos, or personal brand content — Vidzo gives you the production structure
-        before you start recording.
+        coaching videos, or personal brand content — Vidzo gives you the production structure before
+        you start recording.
       </p>
       <h2>Get in touch</h2>
       <p>
@@ -42,13 +46,22 @@ function About() {
 
 export function PageShell({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-background text-foreground" style={{ fontFamily: '"Roboto Flex", sans-serif' }}>
+    <div
+      className="min-h-screen bg-background text-foreground"
+      style={{ fontFamily: '"Roboto Flex", sans-serif' }}
+    >
       <header className="sticky top-0 z-40 backdrop-blur-xl bg-background/70 border-b border-border">
         <div className="max-w-5xl mx-auto px-4 sm:px-8 h-16 flex items-center justify-between">
-          <Link to="/"><VidzoLogo className="h-8 w-auto" /></Link>
+          <Link to="/">
+            <VidzoLogo className="h-8 w-auto" />
+          </Link>
           <nav className="flex gap-4 text-sm font-medium text-muted-foreground">
-            <Link to="/about" className="hover:text-foreground">About</Link>
-            <Link to="/contact" className="hover:text-foreground">Contact</Link>
+            <Link to="/about" className="hover:text-foreground">
+              About
+            </Link>
+            <Link to="/contact" className="hover:text-foreground">
+              Contact
+            </Link>
           </nav>
         </div>
       </header>
@@ -62,10 +75,18 @@ export function PageShell({ title, children }: { title: string; children: React.
         <div className="max-w-5xl mx-auto px-4 sm:px-8 py-8 flex flex-wrap justify-between gap-3 text-sm text-muted-foreground">
           <span>© 2026 Vidzo</span>
           <div className="flex gap-4">
-            <Link to="/about" className="hover:text-foreground">About</Link>
-            <Link to="/terms" className="hover:text-foreground">Terms</Link>
-            <Link to="/privacy" className="hover:text-foreground">Privacy</Link>
-            <Link to="/contact" className="hover:text-foreground">Contact</Link>
+            <Link to="/about" className="hover:text-foreground">
+              About
+            </Link>
+            <Link to="/terms" className="hover:text-foreground">
+              Terms
+            </Link>
+            <Link to="/privacy" className="hover:text-foreground">
+              Privacy
+            </Link>
+            <Link to="/contact" className="hover:text-foreground">
+              Contact
+            </Link>
           </div>
         </div>
       </footer>

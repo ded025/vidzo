@@ -78,16 +78,36 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Vidzo · End-to-end content engine for creators" },
-      { name: "description", content: "Vidzo turns one brief into a full AI-ready content pack: ElevenLabs voiceover, image + video prompts, thumbnails, captions, hashtags — every fact source-verified." },
+      {
+        name: "description",
+        content:
+          "Vidzo turns one brief into a full AI-ready content pack: ElevenLabs voiceover, image + video prompts, thumbnails, captions, hashtags — every fact source-verified.",
+      },
       { name: "author", content: "Vidzo" },
       { property: "og:title", content: "Vidzo · End-to-end content engine for creators" },
-      { property: "og:description", content: "Vidzo turns one brief into a full AI-ready content pack: ElevenLabs voiceover, image + video prompts, thumbnails, captions, hashtags — every fact source-verified." },
+      {
+        property: "og:description",
+        content:
+          "Vidzo turns one brief into a full AI-ready content pack: ElevenLabs voiceover, image + video prompts, thumbnails, captions, hashtags — every fact source-verified.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Vidzo · End-to-end content engine for creators" },
-      { name: "twitter:description", content: "Vidzo turns one brief into a full AI-ready content pack: ElevenLabs voiceover, image + video prompts, thumbnails, captions, hashtags — every fact source-verified." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/eb0364e1-1574-4604-a0a7-64fee64f811e" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/eb0364e1-1574-4604-a0a7-64fee64f811e" },
+      {
+        name: "twitter:description",
+        content:
+          "Vidzo turns one brief into a full AI-ready content pack: ElevenLabs voiceover, image + video prompts, thumbnails, captions, hashtags — every fact source-verified.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/eb0364e1-1574-4604-a0a7-64fee64f811e",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/eb0364e1-1574-4604-a0a7-64fee64f811e",
+      },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

@@ -61,19 +61,28 @@ test.describe("public landing", () => {
       fullPage: true,
     });
   });
-});
 
-test("OpenAI health endpoint is available", async ({ request }) => {
-  const response = await request.get("/api/chat");
-  expect(response.ok()).toBeTruthy();
-  await expect(response.json()).resolves.toMatchObject({
-    status: "ok",
-    provider: "openai",
+  test("uses email-only Supabase authentication", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "Sign in", exact: true }).first().click();
+    await expect(page.getByText("Continue with Google")).toHaveCount(0);
+    await page.getByRole("button", { name: "Create an account" }).click();
+    await expect(page.locator("#dlg-name")).toBeVisible();
+    await expect(page.locator("#dlg-email")).toBeVisible();
+    await expect(page.locator("#dlg-pass")).toBeVisible();
   });
 });
 
+test("content engine health endpoint is protected", async ({ request }) => {
+  const response = await request.get("/api/chat");
+  expect(response.status()).toBe(401);
+});
+
 test("authenticated prompt shows thinking state and returns a content pack", async ({ page }) => {
-  test.skip(!process.env.E2E_EMAIL || !process.env.E2E_PASSWORD, "QA credentials are required");
+  test.skip(
+    !process.env.E2E_EMAIL || !process.env.E2E_PASSWORD || process.env.E2E_LIVE_AI !== "1",
+    "QA credentials and an OpenAI key with available quota are required",
+  );
 
   const pageErrors: string[] = [];
   const chatFailures: string[] = [];
@@ -95,9 +104,19 @@ test("authenticated prompt shows thinking state and returns a content pack", asy
     "Create a concise 20-second reel script about three practical opening hooks for small brands. Do not research current events.";
   await page.goto(`/chat/new?prompt=${encodeURIComponent(prompt)}`);
 
-  await expect(page.getByText("OpenAI chat is connected")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText("Supabase AI is configured")).toBeVisible({ timeout: 30_000 });
   await expect(page.getByText("Vidzo is thinking")).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByText("Voiceover-ready dialogue")).toBeVisible({ timeout: 220_000 });
+  await expect(page.getByText("Building one structured 9:16 pack")).toBeVisible({
+    timeout: 30_000,
+  });
+  await expect(page.getByText("Script & voice")).toBeVisible({ timeout: 90_000 });
+  await expect(page.getByText("1 AI request")).toBeVisible();
+  await expect(page.getByText("9:16", { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Scenes" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Thumbnail" })).toBeVisible();
+
+  await page.getByRole("tab", { name: "Thumbnail" }).click();
+  await expect(page.getByText("9:16 · 1080×1920")).toBeVisible();
 
   await page.screenshot({
     path: "test-results/chat-content-pack.png",
@@ -105,4 +124,33 @@ test("authenticated prompt shows thinking state and returns a content pack", asy
   });
   expect(pageErrors).toEqual([]);
   expect(chatFailures).toEqual([]);
+});
+
+test("persisted chat output is organized and vertical-first", async ({ page }) => {
+  test.skip(
+    !process.env.E2E_EMAIL || !process.env.E2E_PASSWORD || !process.env.E2E_SEEDED_THREAD_ID,
+    "Seeded QA content is required",
+  );
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Sign in", exact: true }).first().click();
+  await page.locator("#dlg-email").fill(process.env.E2E_EMAIL!);
+  await page.locator("#dlg-pass").fill(process.env.E2E_PASSWORD!);
+  await page.getByRole("button", { name: "Sign in", exact: true }).last().click();
+  await page.waitForURL(/\/chat\/dashboard/, { timeout: 30_000 });
+  await page.goto(`/chat/${process.env.E2E_SEEDED_THREAD_ID}`);
+
+  await expect(page.getByText("Supabase AI is configured")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole("tab", { name: "Script & voice" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Scenes" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Thumbnail" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Publish" })).toBeVisible();
+  await expect(page.getByText("1 AI request")).toBeVisible();
+
+  await page.getByRole("tab", { name: "Thumbnail" }).click();
+  await expect(page.getByText("9:16 · 1080×1920")).toBeVisible();
+  await page.screenshot({
+    path: "test-results/chat-content-pack.png",
+    fullPage: true,
+  });
 });

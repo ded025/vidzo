@@ -14,11 +14,19 @@ function CreditsPage() {
         <div className="mx-auto mb-6 h-20 w-20 rounded-2xl bg-gradient-to-br from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)] flex items-center justify-center">
           <Gift className="h-9 w-9 text-white" />
         </div>
-        <h1 className="font-black tracking-tight text-foreground" style={{ fontSize: "clamp(2rem, 5vw, 3rem)" }}>
-          Vidzo is currently <span className="bg-clip-text text-transparent bg-gradient-to-r from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)]">free</span>.
+        <h1
+          className="font-black tracking-tight text-foreground"
+          style={{ fontSize: "clamp(2rem, 5vw, 3rem)" }}
+        >
+          Vidzo is currently{" "}
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)]">
+            free
+          </span>
+          .
         </h1>
         <p className="mt-4 text-muted-foreground">
-          Unlimited content packs, tweaks, and trends while we're in early access. Paid plans will arrive later — for now, just create.
+          Unlimited content packs, tweaks, and trends while we're in early access. Paid plans will
+          arrive later — for now, just create.
         </p>
 
         <div className="mt-10 rounded-2xl border border-border bg-card p-6 text-left space-y-3">
@@ -36,7 +44,11 @@ function CreditsPage() {
           ))}
         </div>
 
-        <Button asChild className="mt-8 h-11 px-6 font-bold text-white border-0 hover:opacity-90" style={{ background: "linear-gradient(90deg, var(--vidzo-magenta), var(--vidzo-blue))" }}>
+        <Button
+          asChild
+          className="mt-8 h-11 px-6 font-bold text-white border-0 hover:opacity-90"
+          style={{ background: "linear-gradient(90deg, var(--vidzo-magenta), var(--vidzo-blue))" }}
+        >
           <Link to="/chat/dashboard">
             <Sparkles className="h-4 w-4 mr-1.5" />
             Start creating

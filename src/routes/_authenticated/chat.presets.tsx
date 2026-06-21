@@ -2,9 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import {
-  listPresets, createPreset, deletePreset, activatePreset,
-} from "@/lib/threads.functions";
+import { listPresets, createPreset, deletePreset, activatePreset } from "@/lib/threads.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,8 +32,13 @@ function PresetsPage() {
   const q = useQuery({ queryKey: ["presets"], queryFn: () => list() });
 
   const [form, setForm] = useState({
-    name: "", niche: "", audience: "", tone: "", language: "Hinglish",
-    default_voice_id: VOICES[0].id, default_voice_name: VOICES[0].name,
+    name: "",
+    niche: "",
+    audience: "",
+    tone: "",
+    language: "Hinglish",
+    default_voice_id: VOICES[0].id,
+    default_voice_name: VOICES[0].name,
   });
 
   const createMut = useMutation({
@@ -78,23 +81,42 @@ function PresetsPage() {
           <div className="grid sm:grid-cols-2 gap-3">
             <div>
               <Label>Name</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="My Gym Brand" />
+              <Input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="My Gym Brand"
+              />
             </div>
             <div>
               <Label>Niche</Label>
-              <Input value={form.niche} onChange={(e) => setForm({ ...form, niche: e.target.value })} placeholder="Fitness, gym, nutrition" />
+              <Input
+                value={form.niche}
+                onChange={(e) => setForm({ ...form, niche: e.target.value })}
+                placeholder="Fitness, gym, nutrition"
+              />
             </div>
             <div>
               <Label>Audience</Label>
-              <Input value={form.audience} onChange={(e) => setForm({ ...form, audience: e.target.value })} placeholder="Indian men 18–30, beginner lifters" />
+              <Input
+                value={form.audience}
+                onChange={(e) => setForm({ ...form, audience: e.target.value })}
+                placeholder="Indian men 18–30, beginner lifters"
+              />
             </div>
             <div>
               <Label>Tone</Label>
-              <Input value={form.tone} onChange={(e) => setForm({ ...form, tone: e.target.value })} placeholder="Blunt, science-backed, no-nonsense" />
+              <Input
+                value={form.tone}
+                onChange={(e) => setForm({ ...form, tone: e.target.value })}
+                placeholder="Blunt, science-backed, no-nonsense"
+              />
             </div>
             <div>
               <Label>Language</Label>
-              <Input value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value })} />
+              <Input
+                value={form.language}
+                onChange={(e) => setForm({ ...form, language: e.target.value })}
+              />
             </div>
             <div>
               <Label>Default ElevenLabs voice</Label>
@@ -107,13 +129,18 @@ function PresetsPage() {
                 className="w-full mt-1 h-9 rounded-md border border-input bg-background px-3 text-sm"
               >
                 {VOICES.map((v) => (
-                  <option key={v.id} value={v.id}>{v.name}</option>
+                  <option key={v.id} value={v.id}>
+                    {v.name}
+                  </option>
                 ))}
               </select>
             </div>
           </div>
           <div className="mt-4 flex justify-end">
-            <Button onClick={() => createMut.mutate()} disabled={!form.name.trim() || createMut.isPending}>
+            <Button
+              onClick={() => createMut.mutate()}
+              disabled={!form.name.trim() || createMut.isPending}
+            >
               <Plus className="h-4 w-4 mr-1" /> Save preset
             </Button>
           </div>

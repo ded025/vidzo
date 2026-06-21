@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createThread } from "@/lib/threads.functions";
 import {
   listGlobalTrends,
@@ -13,10 +13,29 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  TrendingUp, Sparkles, RefreshCw, Zap, Clock, Globe2, ChevronRight,
-  Bot, DollarSign, Rocket, Megaphone, Users, ShoppingCart,
-  Dumbbell, Film, Bitcoin, Laptop, BriefcaseBusiness, CircleDollarSign,
-  Search, Tag, X, Plus,
+  TrendingUp,
+  Sparkles,
+  RefreshCw,
+  Zap,
+  Clock,
+  Globe2,
+  ChevronRight,
+  Bot,
+  DollarSign,
+  Rocket,
+  Megaphone,
+  Users,
+  ShoppingCart,
+  Dumbbell,
+  Film,
+  Bitcoin,
+  Laptop,
+  BriefcaseBusiness,
+  CircleDollarSign,
+  Search,
+  Tag,
+  X,
+  Plus,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -92,8 +111,7 @@ function ScoreBar({ value, color }: { value: number; color: string }) {
 }
 
 function TrendCard({ trend, onUse }: { trend: GlobalTrend; onUse: (t: GlobalTrend) => void }) {
-  const meta =
-    CATEGORY_META[trend.category as TrendCategory] ?? CATEGORY_META["All"];
+  const meta = CATEGORY_META[trend.category as TrendCategory] ?? CATEGORY_META["All"];
   const Icon = meta.icon;
   return (
     <div className="group flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 hover:border-primary/40 hover:shadow-md transition-all duration-200">
@@ -115,6 +133,17 @@ function TrendCard({ trend, onUse }: { trend: GlobalTrend; onUse: (t: GlobalTren
           {timeAgo(trend.synced_at)}
         </span>
       </div>
+
+      {trend.image_url ? (
+        <div className="mx-auto aspect-[9/16] max-h-72 w-full max-w-40 overflow-hidden rounded-xl border border-border bg-secondary">
+          <img
+            src={trend.image_url}
+            alt={`Vertical reference for ${trend.title}`}
+            className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            loading="lazy"
+          />
+        </div>
+      ) : null}
 
       <p className="font-semibold text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors">
         {trend.title}
@@ -214,7 +243,10 @@ function KeywordInput({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-1.5 flex-wrap border border-border rounded-xl bg-card px-3 py-2 min-h-[44px] cursor-text" onClick={() => inputRef.current?.focus()}>
+      <div
+        className="flex items-center gap-1.5 flex-wrap border border-border rounded-xl bg-card px-3 py-2 min-h-[44px] cursor-text"
+        onClick={() => inputRef.current?.focus()}
+      >
         <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
         {keywords.map((kw) => (
           <span
@@ -253,14 +285,15 @@ function KeywordInput({
       </div>
       {keywords.length > 0 && (
         <p className="text-[11px] text-muted-foreground pl-1">
-          {keywords.length} keyword{keywords.length !== 1 ? "s" : ""} — will be synced alongside selected categories
+          {keywords.length} keyword{keywords.length !== 1 ? "s" : ""} — will be synced alongside
+          selected categories
         </p>
       )}
     </div>
   );
 }
 
-export function TrendsPage() {
+function TrendsPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const createThreadFn = useServerFn(createThread);
@@ -272,6 +305,7 @@ export function TrendsPage() {
   const [custom, setCustom] = useState("");
   // syncing is a ref so refetchInterval closure always sees the latest value
   const syncingRef = useRef(false);
+  const autoSyncStarted = useRef(false);
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -319,40 +353,63 @@ export function TrendsPage() {
     },
   });
 
-  const doSync = async (opts: { categories?: string[]; keywords?: string[] } = {}) => {
-    if (!token) { setSyncMsg("Not authenticated."); return; }
-    syncingRef.current = true;
-    setSyncing(true);
-    setSyncMsg(null);
-    // Kick off the refetch interval
-    qc.invalidateQueries({ queryKey: ["last_sync_run"] });
-    try {
-      const res = await fetch("/api/trends-sync", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify(opts),
-      });
-      const json = (await res.json()) as {
-        ok?: boolean;
-        added?: number;
-        errors?: string[];
-        error?: string;
-      };
-      if (json.ok) {
-        setSyncMsg(`✅ Synced! ${json.added ?? 0} new trends added.`);
-        await qc.invalidateQueries({ queryKey: ["global_trends"] });
-        await qc.invalidateQueries({ queryKey: ["last_sync_run"] });
-      } else {
-        setSyncMsg(`⚠️ ${json.error ?? "Sync failed"}`);
+  const doSync = useCallback(
+    async (
+      opts: {
+        categories?: string[];
+        keywords?: string[];
+        auto?: boolean;
+      } = {},
+    ) => {
+      if (!token) {
+        setSyncMsg("Not authenticated.");
+        return;
       }
-    } catch (e) {
-      setSyncMsg(`❌ ${e instanceof Error ? e.message : "Network error"}`);
-    } finally {
-      // FIX: clear ref THEN state so the interval stops on next tick
-      syncingRef.current = false;
-      setSyncing(false);
-    }
-  };
+      syncingRef.current = true;
+      setSyncing(true);
+      setSyncMsg(null);
+      // Kick off the refetch interval
+      qc.invalidateQueries({ queryKey: ["last_sync_run"] });
+      try {
+        const res = await fetch("/api/trends-sync", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify(opts),
+        });
+        const json = (await res.json()) as {
+          ok?: boolean;
+          added?: number;
+          skipped?: boolean;
+          errors?: string[];
+          error?: string;
+        };
+        if (json.ok) {
+          setSyncMsg(
+            json.skipped
+              ? "Trends are already up to date."
+              : `Synced ${json.added ?? 0} trends with one direct web request and no AI tokens.`,
+          );
+          await qc.invalidateQueries({ queryKey: ["global_trends"] });
+          await qc.invalidateQueries({ queryKey: ["last_sync_run"] });
+        } else {
+          setSyncMsg(`⚠️ ${json.error ?? "Sync failed"}`);
+        }
+      } catch (e) {
+        setSyncMsg(`❌ ${e instanceof Error ? e.message : "Network error"}`);
+      } finally {
+        // FIX: clear ref THEN state so the interval stops on next tick
+        syncingRef.current = false;
+        setSyncing(false);
+      }
+    },
+    [qc, token],
+  );
+
+  useEffect(() => {
+    if (!token || lastRunQuery.isLoading || autoSyncStarted.current) return;
+    autoSyncStarted.current = true;
+    void doSync({ auto: true });
+  }, [doSync, lastRunQuery.isLoading, token]);
 
   const handleSync = () =>
     doSync({ keywords: customKeywords.length > 0 ? customKeywords : undefined });
@@ -363,8 +420,7 @@ export function TrendsPage() {
       keywords: customKeywords.length > 0 ? customKeywords : undefined,
     });
 
-  const handleKeywordSync = () =>
-    doSync({ keywords: customKeywords });
+  const handleKeywordSync = () => doSync({ keywords: customKeywords });
 
   const lastRun = lastRunQuery.data;
   const allTrends = (trendsQuery.data ?? []) as GlobalTrend[];
@@ -381,13 +437,14 @@ export function TrendsPage() {
     ),
   ).sort();
   const trends = brandFilter
-    ? allTrends.filter((t) => (t.sub_tags ?? []).some((s) => s.toLowerCase() === brandFilter.toLowerCase()))
+    ? allTrends.filter((t) =>
+        (t.sub_tags ?? []).some((s) => s.toLowerCase() === brandFilter.toLowerCase()),
+      )
     : allTrends;
 
   return (
     <div className="h-full overflow-y-auto bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-5">
-
         {/* ── Header ── */}
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -413,8 +470,8 @@ export function TrendsPage() {
                     lastRun.status === "success"
                       ? "bg-emerald-500"
                       : lastRun.status === "error"
-                      ? "bg-red-500"
-                      : "bg-amber-400 animate-pulse"
+                        ? "bg-red-500"
+                        : "bg-amber-400 animate-pulse"
                   }`}
                 />
               </div>
@@ -438,7 +495,11 @@ export function TrendsPage() {
               disabled={syncing}
               className="gap-2 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:opacity-90 text-white"
             >
-              {syncing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+              {syncing ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Zap className="h-4 w-4" />
+              )}
               {syncing ? "Syncing…" : "Sync Trends"}
             </Button>
           </div>
@@ -451,7 +512,8 @@ export function TrendsPage() {
               <div>
                 <p className="text-sm font-semibold text-foreground">Brand & Keyword Sync</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Add brand names, product names, or any topic — Vidzo will search live news for them.
+                  Add brand names, product names, or any topic — Vidzo will search live news for
+                  them.
                 </p>
               </div>
               {customKeywords.length > 0 && (
@@ -461,7 +523,11 @@ export function TrendsPage() {
                   disabled={syncing}
                   className="gap-1.5 bg-violet-600 hover:bg-violet-700 text-white text-xs"
                 >
-                  {syncing ? <RefreshCw className="h-3 w-3 animate-spin" /> : <Search className="h-3 w-3" />}
+                  {syncing ? (
+                    <RefreshCw className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Search className="h-3 w-3" />
+                  )}
                   Sync Keywords
                 </Button>
               )}
@@ -474,7 +540,10 @@ export function TrendsPage() {
         {syncMsg && (
           <div className="rounded-xl border border-border bg-card px-4 py-2.5 text-sm flex items-center justify-between gap-2">
             <span>{syncMsg}</span>
-            <button onClick={() => setSyncMsg(null)} className="text-muted-foreground hover:text-foreground">
+            <button
+              onClick={() => setSyncMsg(null)}
+              className="text-muted-foreground hover:text-foreground"
+            >
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -494,7 +563,11 @@ export function TrendsPage() {
             onChange={(e) => setCustom(e.target.value)}
             className="bg-card"
           />
-          <Button type="submit" disabled={!custom.trim() || startContent.isPending} className="shrink-0">
+          <Button
+            type="submit"
+            disabled={!custom.trim() || startContent.isPending}
+            className="shrink-0"
+          >
             <Sparkles className="h-4 w-4 mr-1.5" /> Generate
           </Button>
         </form>
@@ -577,7 +650,9 @@ export function TrendsPage() {
             )}
           </div>
           <span className="text-xs text-muted-foreground">
-            {trendsQuery.isLoading ? "Loading…" : `${trends.length} trends${brandFilter ? ` · ${brandFilter}` : ""}`}
+            {trendsQuery.isLoading
+              ? "Loading…"
+              : `${trends.length} trends${brandFilter ? ` · ${brandFilter}` : ""}`}
           </span>
         </div>
 
@@ -609,7 +684,9 @@ export function TrendsPage() {
                   startContent.mutate(
                     `${t.category} trend: "${t.title}". ${
                       t.summary ? `Context: ${t.summary}` : ""
-                    } Search live sources and generate a full detailed content pack.`,
+                    }${t.source_url ? ` Source: ${t.source_url}.` : ""}${
+                      t.image_url ? ` Reference image: ${t.image_url}.` : ""
+                    } Generate a focused 9:16 content pack and use one web research pass only if needed.`,
                   )
                 }
               />
