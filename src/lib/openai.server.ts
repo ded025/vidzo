@@ -66,7 +66,7 @@ export async function checkContentEngine({
   if (!response.ok || !payload?.configured) {
     throw new Error(
       payload?.error ||
-        "The Supabase content engine is deployed but OPENAI_API_KEY is not configured.",
+        "The Supabase content engine is deployed but GEMINI_API_KEY is not configured.",
     );
   }
   return payload;
