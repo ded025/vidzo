@@ -23,14 +23,20 @@ function jsonError(message: string, status: number, code: string, detail?: strin
 function chatStreamErrorMessage(error: unknown) {
   console.error("[chat] generation failed:", error);
   const message = error instanceof Error ? error.message : String(error ?? "Unknown chat error");
-  if (/api key|authentication|unauthorized|401|invalid_api_key/i.test(message)) {
-    return "Gemini rejected the request. Check GEMINI_API_KEY in Supabase Edge Function secrets.";
+  if (/high demand|overload|unavailable|503/i.test(message)) {
+    return "The AI model is temporarily overloaded. Please retry in a moment.";
   }
-  if (/model|not found|does not exist|404/i.test(message)) {
-    return "The selected Gemini model is unavailable. Check GEMINI_MODEL in Supabase secrets.";
+  if (/api key|unauthorized|401|invalid_api_key/i.test(message)) {
+    return "AI gateway rejected the request. Check LOVABLE_API_KEY configuration.";
   }
-  if (/rate|quota|billing|429|insufficient/i.test(message)) {
-    return "Gemini is rate-limited or out of quota. Check billing and retry.";
+  if (/402|credits/i.test(message)) {
+    return "AI credits exhausted. Add credits in Settings → Workspace → Usage.";
+  }
+  if (/rate|quota|429/i.test(message)) {
+    return "AI requests are rate-limited. Please retry in a moment.";
+  }
+  if (/not found|does not exist|404/i.test(message)) {
+    return "The selected AI model is unavailable. Try again or contact support.";
   }
   return message || "Chat failed while generating the content pack. Please retry.";
 }
