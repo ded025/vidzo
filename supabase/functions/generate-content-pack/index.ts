@@ -3,21 +3,13 @@ import { corsHeaders } from "../_shared/cors.ts";
 import { CONTENT_PACK_JSON_SCHEMA, MASTER_SYSTEM_PROMPT } from "../_shared/content-pack.ts";
 
 const jsonHeaders = { ...corsHeaders, "Content-Type": "application/json" };
-const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL")?.trim() || "gemini-flash-latest";
-const GEMINI_ENDPOINT = (key: string) =>
-  `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const AI_MODEL = Deno.env.get("LOVABLE_AI_MODEL")?.trim() || "google/gemini-3-flash-preview";
+const AI_ENDPOINT = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
-type GeminiResponse = {
-  candidates?: Array<{
-    content?: { parts?: Array<{ text?: string }> };
-    finishReason?: string;
-  }>;
-  usageMetadata?: {
-    promptTokenCount?: number;
-    candidatesTokenCount?: number;
-    cachedContentTokenCount?: number;
-  };
-  error?: { message?: string };
+type GatewayResponse = {
+  choices?: Array<{ message?: { content?: string }; finish_reason?: string }>;
+  usage?: { prompt_tokens?: number; completion_tokens?: number };
+  error?: { message?: string } | string;
 };
 
 function jsonError(message: string, status: number, code: string) {
@@ -28,7 +20,7 @@ function extractJsonObject(text: string) {
   const trimmed = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "");
   const start = trimmed.indexOf("{");
   const end = trimmed.lastIndexOf("}");
-  if (start === -1 || end === -1) throw new Error("Gemini returned no JSON object.");
+  if (start === -1 || end === -1) throw new Error("AI returned no JSON object.");
   return JSON.parse(trimmed.slice(start, end + 1));
 }
 
@@ -52,15 +44,15 @@ Deno.serve(async (req) => {
   const user = await authenticate(req);
   if (!user) return jsonError("Unauthorized.", 401, "UNAUTHORIZED");
 
-  const apiKey = Deno.env.get("GEMINI_API_KEY")?.trim();
+  const apiKey = Deno.env.get("LOVABLE_API_KEY")?.trim();
   if (req.method === "GET") {
     return Response.json(
       {
         status: apiKey ? "ok" : "degraded",
-        provider: "gemini",
+        provider: "lovable-ai-gateway",
         runtime: "supabase-edge",
         configured: Boolean(apiKey),
-        model: GEMINI_MODEL,
+        model: AI_MODEL,
       },
       { status: apiKey ? 200 : 503, headers: jsonHeaders },
     );
@@ -68,15 +60,13 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return jsonError("Method not allowed.", 405, "METHOD_NOT_ALLOWED");
   if (!apiKey) {
     return jsonError(
-      "GEMINI_API_KEY is not configured in Supabase Edge Function secrets.",
+      "LOVABLE_API_KEY is not configured.",
       503,
-      "GEMINI_NOT_CONFIGURED",
+      "AI_NOT_CONFIGURED",
     );
   }
 
-  const body = (await req.json().catch(() => null)) as {
-    input?: unknown;
-  } | null;
+  const body = (await req.json().catch(() => null)) as { input?: unknown } | null;
   if (!body || typeof body.input !== "string" || !body.input.trim()) {
     return jsonError("A prompt engine input is required.", 400, "BAD_REQUEST");
   }
@@ -87,35 +77,39 @@ Deno.serve(async (req) => {
   )}\nDo not wrap in markdown. Do not include commentary. Output JSON only.`;
 
   const requestBody = {
-    systemInstruction: {
-      role: "system",
-      parts: [{ text: `${MASTER_SYSTEM_PROMPT}\n\n${schemaInstruction}` }],
-    },
-    contents: [{ role: "user", parts: [{ text: body.input }] }],
-    generationConfig: {
-      responseMimeType: "application/json",
-      temperature: 0.7,
-      maxOutputTokens: 8192,
-    },
+    model: AI_MODEL,
+    messages: [
+      { role: "system", content: `${MASTER_SYSTEM_PROMPT}\n\n${schemaInstruction}` },
+      { role: "user", content: body.input },
+    ],
+    response_format: { type: "json_object" },
+    temperature: 0.7,
   };
 
   try {
-    const response = await fetch(GEMINI_ENDPOINT(apiKey), {
+    const response = await fetch(AI_ENDPOINT, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "X-goog-api-key": apiKey },
+      headers: { "Content-Type": "application/json", "Lovable-API-Key": apiKey },
       body: JSON.stringify(requestBody),
       signal: req.signal,
     });
-    const result = (await response.json()) as GeminiResponse;
+    const raw = await response.text();
+    let result: GatewayResponse = {};
+    try { result = JSON.parse(raw) as GatewayResponse; } catch { /* keep raw */ }
+
     if (!response.ok) {
-      return jsonError(
-        result.error?.message || `Gemini returned HTTP ${response.status}.`,
-        response.status,
-        "GEMINI_ERROR",
-      );
+      const errMsg =
+        (typeof result.error === "string" ? result.error : result.error?.message) ||
+        raw.slice(0, 300) ||
+        `AI gateway returned HTTP ${response.status}.`;
+      const code =
+        response.status === 429 ? "RATE_LIMITED" :
+        response.status === 402 ? "CREDITS_EXHAUSTED" :
+        "AI_ERROR";
+      return jsonError(errMsg, response.status, code);
     }
-    const text = result.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
-    if (!text) throw new Error("Gemini returned no content.");
+    const text = result.choices?.[0]?.message?.content ?? "";
+    if (!text) throw new Error("AI returned no content.");
     const parsed = extractJsonObject(text);
     if (parsed && typeof parsed === "object" && !Array.isArray((parsed as { sources?: unknown }).sources)) {
       (parsed as { sources: unknown[] }).sources = [];
@@ -125,12 +119,12 @@ Deno.serve(async (req) => {
       {
         pack: parsed,
         generation: {
-          model: GEMINI_MODEL,
+          model: AI_MODEL,
           requestCount: 1,
           latencyMs: Date.now() - startedAt,
-          inputTokens: result.usageMetadata?.promptTokenCount ?? 0,
-          outputTokens: result.usageMetadata?.candidatesTokenCount ?? 0,
-          cachedInputTokens: result.usageMetadata?.cachedContentTokenCount ?? 0,
+          inputTokens: result.usage?.prompt_tokens ?? 0,
+          outputTokens: result.usage?.completion_tokens ?? 0,
+          cachedInputTokens: 0,
           webSearchUsed: false,
         },
       },
