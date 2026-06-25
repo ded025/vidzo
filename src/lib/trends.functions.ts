@@ -142,7 +142,7 @@ export const listGlobalTrends = createServerFn({ method: "GET" })
 
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
-    return (rows ?? []) as GlobalTrend[];
+    return (rows ?? []) as unknown as GlobalTrend[];
   });
 
 // ─── Last sync run ────────────────────────────────────────────────────

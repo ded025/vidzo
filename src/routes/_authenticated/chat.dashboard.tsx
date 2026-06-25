@@ -110,12 +110,7 @@ function Dashboard() {
         setUserName(null);
         return;
       }
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("display_name")
-        .eq("id", u.id)
-        .maybeSingle();
-      setUserName(profile?.display_name || fallbackName);
+      setUserName(fallbackName);
     });
   }, []);
 
