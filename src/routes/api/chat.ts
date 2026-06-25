@@ -24,13 +24,13 @@ function chatStreamErrorMessage(error: unknown) {
   console.error("[chat] generation failed:", error);
   const message = error instanceof Error ? error.message : String(error ?? "Unknown chat error");
   if (/api key|authentication|unauthorized|401|invalid_api_key/i.test(message)) {
-    return "OpenAI rejected the request. Check OPENAI_API_KEY in Supabase Edge Function secrets.";
+    return "Gemini rejected the request. Check GEMINI_API_KEY in Supabase Edge Function secrets.";
   }
   if (/model|not found|does not exist|404/i.test(message)) {
-    return "The selected OpenAI model is unavailable. Check OPENAI_MODEL in Supabase secrets.";
+    return "The selected Gemini model is unavailable. Check GEMINI_MODEL in Supabase secrets.";
   }
   if (/rate|quota|billing|429|insufficient/i.test(message)) {
-    return "OpenAI is rate-limited or out of quota. Check billing and retry.";
+    return "Gemini is rate-limited or out of quota. Check billing and retry.";
   }
   return message || "Chat failed while generating the content pack. Please retry.";
 }
