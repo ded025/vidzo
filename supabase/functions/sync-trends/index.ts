@@ -229,7 +229,7 @@ Deno.serve(async (req) => {
           (article.sourceUrl
             ? new URL(article.sourceUrl).hostname.replace(/^www\./, "")
             : "Google News"),
-        image_url: null,
+        
         published_at: article.publishedAt ? new Date(article.publishedAt).toISOString() : null,
         synced_at: new Date().toISOString(),
         popularity: Math.min(100, Math.round(freshness * 0.8 + 18)),
@@ -245,10 +245,6 @@ Deno.serve(async (req) => {
         .upsert(rows, { onConflict: "dedup_key", ignoreDuplicates: false });
       if (error) throw error;
     }
-    await admin
-      .from("global_trends")
-      .delete()
-      .lt("synced_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
     if (run?.id) {
       await admin
         .from("trend_sync_runs")
