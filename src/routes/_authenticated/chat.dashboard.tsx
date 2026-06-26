@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/chat/dashboard")({
   component: Dashboard,
 });
 
-const FORMATS = ["Reel", "YouTube Short", "LinkedIn Video", "Ad Script", "Explainer"] as const;
+const FORMATS = ["Reel", "YouTube Short", "LinkedIn Video", "Ad Script", "UGC Product Ad", "Explainer"] as const;
 const TONES = ["Founder-style", "Dramatic", "Educational", "Funny", "Premium"] as const;
 const LENGTHS = ["30 sec", "40 sec", "60 sec", "90 sec"] as const;
 const LANGUAGES = ["Hinglish", "English", "Hindi"] as const;
