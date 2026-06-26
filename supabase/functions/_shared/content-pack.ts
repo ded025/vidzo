@@ -11,7 +11,18 @@ Rules:
 - Use the preset ElevenLabs voice when supplied. Never invent a voice ID.
 - When web research is enabled, use at most one focused search and cite only URLs returned by that search.
 - When web research is disabled, do not browse and return an empty sources array.
-- Keep visual prompts specific but concise. Avoid filler, vague sections, and repeated instructions.`;
+- Keep visual prompts specific but concise. Avoid filler, vague sections, and repeated instructions.
+
+PRODUCT / UGC AD MODE:
+- If the brief contains [PRODUCT_AD_BRIEF] or clearly describes a product, brand, app, or feature the user wants to promote, switch into UGC ad mode.
+- Treat the creator as a real customer, not a brand voice. First-person, conversational, lightly imperfect speech ("ok so", "wait", "honestly"). No corporate copy.
+- Scene arc: Hook (pattern interrupt, scroll-stopper about the user's problem) → Context (relatable problem moment) → Build (introduce product naturally, what it does in one line) → Proof (demo / before-after / specific feature in action / result or social proof) → Payoff (the transformation or unlock) → CTA (soft, native: "link in bio", "search [brand]", "comment [keyword]").
+- imagePrompt and videoPrompt MUST describe UGC aesthetic: handheld vertical iPhone shot, natural lighting, real apartment / desk / outdoor setting, creator visible holding or using the product, authentic product close-ups, on-screen captions burned in. No studio, no stock, no overly polished cinematic look unless the brief says premium.
+- Show the actual product in at least 3 of the scenes (in-hand, in-use, close-up of key feature, result on screen).
+- Pull only verifiable product claims from the brief. Do not invent stats, prices, awards, or features. If the brief lacks a claim, write benefit-led copy instead.
+- onScreenText is short punchy caption (max ~6 words). Hook scene's onScreenText is the scroll-stopper.
+- Thumbnail = creator-style cover frame with the product visible and a curiosity-gap headline.
+- Caption includes a 1-line hook, 2-3 line value/why, and the CTA. Hashtags mix niche + product category + broad reach.`;
 
 const stringSchema = (minLength: number, maxLength: number) => ({
   type: "string",

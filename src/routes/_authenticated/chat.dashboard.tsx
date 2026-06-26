@@ -18,6 +18,7 @@ import {
   Coins,
   Laptop,
   User,
+  ShoppingCart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
@@ -29,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/chat/dashboard")({
   component: Dashboard,
 });
 
-const FORMATS = ["Reel", "YouTube Short", "LinkedIn Video", "Ad Script", "Explainer"] as const;
+const FORMATS = ["Reel", "YouTube Short", "LinkedIn Video", "Ad Script", "UGC Product Ad", "Explainer"] as const;
 const TONES = ["Founder-style", "Dramatic", "Educational", "Funny", "Premium"] as const;
 const LENGTHS = ["30 sec", "40 sec", "60 sec", "90 sec"] as const;
 const LANGUAGES = ["Hinglish", "English", "Hindi"] as const;
@@ -99,6 +100,15 @@ function Dashboard() {
   const [length, setLength] = useState<(typeof LENGTHS)[number]>("40 sec");
   const [language, setLanguage] = useState<(typeof LANGUAGES)[number]>("Hinglish");
 
+  // Product ad brief
+  const [product, setProduct] = useState({
+    name: "",
+    what: "",
+    benefits: "",
+    audience: "",
+    cta: "",
+  });
+
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
       const u = data.user;
@@ -138,6 +148,28 @@ function Dashboard() {
   const handleTrend = (title: string) => {
     const fullPrompt = `Trend topic: "${title}". Search live sources and build a ${length} ${format} in ${language} with a ${tone} tone for this topic.`;
     goToNewThread(fullPrompt);
+  };
+
+  const handleProductAd = () => {
+    const name = product.name.trim();
+    const what = product.what.trim();
+    if (!name || !what) {
+      document.getElementById("product-name-input")?.focus();
+      return;
+    }
+    const lines = [
+      `[PRODUCT_AD_BRIEF]`,
+      `Product / brand: ${name}`,
+      `What it does: ${what}`,
+      product.benefits.trim() && `Key features / benefits: ${product.benefits.trim()}`,
+      product.audience.trim() && `Target audience: ${product.audience.trim()}`,
+      product.cta.trim() && `Desired CTA: ${product.cta.trim()}`,
+      ``,
+      `Build a UGC-style ${length} ad in ${language} with a ${tone} tone. First-person creator POV, authentic handheld iPhone aesthetic, product visible in-hand and in-use across scenes, scene-by-scene visuals + voiceover + on-screen captions + thumbnail. Only use claims from this brief — do not invent stats, prices, or features.`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+    goToNewThread(lines);
   };
 
   // Compute REAL average quality from the user's actual generated packs.
@@ -297,6 +329,69 @@ function Dashboard() {
                   >
                     <TrendingUp className="h-4 w-4" /> Use a trend
                   </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Product / UGC Ad */}
+            <div className="rounded-3xl border border-border p-6 bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 dark:from-amber-950/30 dark:via-orange-950/20 dark:to-rose-950/20 relative overflow-hidden">
+              <div className="absolute -left-6 -bottom-6 h-40 w-40 rounded-full bg-gradient-to-br from-orange-400 to-rose-500 opacity-15 blur-2xl" />
+              <div className="relative">
+                <div className="flex items-center gap-2 font-bold text-lg">
+                  <span className="h-9 w-9 rounded-xl bg-gradient-to-br from-orange-500 to-rose-500 text-white flex items-center justify-center">
+                    <ShoppingCart className="h-4 w-4" />
+                  </span>
+                  Promote a Product (UGC Ad)
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Drop your product brief — Vidzo writes a creator-style ad script with scene-by-scene
+                  visuals, voiceover, on-screen captions, and a thumbnail.
+                </p>
+                <div className="mt-4 grid sm:grid-cols-2 gap-2">
+                  <input
+                    id="product-name-input"
+                    value={product.name}
+                    onChange={(e) => setProduct((p) => ({ ...p, name: e.target.value }))}
+                    placeholder="Product / brand name *"
+                    className="rounded-xl bg-card border border-border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  />
+                  <input
+                    value={product.audience}
+                    onChange={(e) => setProduct((p) => ({ ...p, audience: e.target.value }))}
+                    placeholder="Target audience (e.g. busy moms in tier-2 cities)"
+                    className="rounded-xl bg-card border border-border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  />
+                  <textarea
+                    value={product.what}
+                    onChange={(e) => setProduct((p) => ({ ...p, what: e.target.value }))}
+                    placeholder="What does it do? Problem it solves *"
+                    rows={2}
+                    className="sm:col-span-2 resize-none rounded-xl bg-card border border-border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  />
+                  <textarea
+                    value={product.benefits}
+                    onChange={(e) => setProduct((p) => ({ ...p, benefits: e.target.value }))}
+                    placeholder="Key features / benefits (comma separated)"
+                    rows={2}
+                    className="sm:col-span-2 resize-none rounded-xl bg-card border border-border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  />
+                  <input
+                    value={product.cta}
+                    onChange={(e) => setProduct((p) => ({ ...p, cta: e.target.value }))}
+                    placeholder='CTA (e.g. "link in bio", "use code VIDZO10")'
+                    className="sm:col-span-2 rounded-xl bg-card border border-border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  />
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button
+                    onClick={handleProductAd}
+                    className="bg-gradient-to-r from-orange-500 to-rose-500 hover:opacity-90 text-white gap-2"
+                  >
+                    <ShoppingCart className="h-4 w-4" /> Generate UGC Ad
+                  </Button>
+                  <span className="text-[11px] text-muted-foreground self-center">
+                    Uses your selected length, tone, and language above.
+                  </span>
                 </div>
               </div>
             </div>
