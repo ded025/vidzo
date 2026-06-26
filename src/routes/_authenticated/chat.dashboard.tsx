@@ -150,6 +150,28 @@ function Dashboard() {
     goToNewThread(fullPrompt);
   };
 
+  const handleProductAd = () => {
+    const name = product.name.trim();
+    const what = product.what.trim();
+    if (!name || !what) {
+      document.getElementById("product-name-input")?.focus();
+      return;
+    }
+    const lines = [
+      `[PRODUCT_AD_BRIEF]`,
+      `Product / brand: ${name}`,
+      `What it does: ${what}`,
+      product.benefits.trim() && `Key features / benefits: ${product.benefits.trim()}`,
+      product.audience.trim() && `Target audience: ${product.audience.trim()}`,
+      product.cta.trim() && `Desired CTA: ${product.cta.trim()}`,
+      ``,
+      `Build a UGC-style ${length} ad in ${language} with a ${tone} tone. First-person creator POV, authentic handheld iPhone aesthetic, product visible in-hand and in-use across scenes, scene-by-scene visuals + voiceover + on-screen captions + thumbnail. Only use claims from this brief — do not invent stats, prices, or features.`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+    goToNewThread(lines);
+  };
+
   // Compute REAL average quality from the user's actual generated packs.
   const scriptItems = (scripts.data ?? []) as Array<{ id: string; topic: string; data: unknown }>;
   const qualityReports = scriptItems
