@@ -100,6 +100,15 @@ function Dashboard() {
   const [length, setLength] = useState<(typeof LENGTHS)[number]>("40 sec");
   const [language, setLanguage] = useState<(typeof LANGUAGES)[number]>("Hinglish");
 
+  // Product ad brief
+  const [product, setProduct] = useState({
+    name: "",
+    what: "",
+    benefits: "",
+    audience: "",
+    cta: "",
+  });
+
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
       const u = data.user;
