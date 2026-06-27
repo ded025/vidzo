@@ -261,7 +261,13 @@ Deno.serve(async (req) => {
       { headers: jsonHeaders },
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    let message: string;
+    if (error instanceof Error) message = error.message;
+    else if (typeof error === "string") message = error;
+    else {
+      try { message = JSON.stringify(error); } catch { message = String(error); }
+    }
+    console.error("sync-trends failed:", message, error);
     if (run?.id) {
       await admin
         .from("trend_sync_runs")
