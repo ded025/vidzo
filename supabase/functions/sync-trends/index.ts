@@ -239,10 +239,18 @@ Deno.serve(async (req) => {
       };
     });
 
-    if (rows.length > 0) {
+    // Dedupe within this batch — upsert with onConflict cannot affect the same row twice.
+    const seen = new Set<string>();
+    const uniqueRows = rows.filter((row) => {
+      if (!row.dedup_key || seen.has(row.dedup_key)) return false;
+      seen.add(row.dedup_key);
+      return true;
+    });
+
+    if (uniqueRows.length > 0) {
       const { error } = await admin
         .from("global_trends")
-        .upsert(rows, { onConflict: "dedup_key", ignoreDuplicates: false });
+        .upsert(uniqueRows, { onConflict: "dedup_key", ignoreDuplicates: false });
       if (error) throw error;
     }
     if (run?.id) {
@@ -251,13 +259,13 @@ Deno.serve(async (req) => {
         .update({
           finished_at: new Date().toISOString(),
           status: "success",
-          trends_added: rows.length,
+          trends_added: uniqueRows.length,
           error_msg: null,
         })
         .eq("id", run.id);
     }
     return Response.json(
-      { ok: true, added: rows.length, sourceRequests: 1, aiRequests: 0 },
+      { ok: true, added: uniqueRows.length, sourceRequests: 1, aiRequests: 0 },
       { headers: jsonHeaders },
     );
   } catch (error) {

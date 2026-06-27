@@ -20,7 +20,7 @@ export function AuthDialog({
   defaultMode?: "signin" | "signup";
 }) {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">(defaultMode);
+  const [mode, setMode] = useState<"signin" | "signup" | "forgot">(defaultMode);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,6 +36,16 @@ export function AuthDialog({
     event.preventDefault();
     setLoading(true);
     try {
+      if (mode === "forgot") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) throw error;
+        toast.success("Password reset link sent. Check your email.");
+        setMode("signin");
+        return;
+      }
+
       if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({
           email,
