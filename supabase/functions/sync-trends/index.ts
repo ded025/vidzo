@@ -230,7 +230,7 @@ Deno.serve(async (req) => {
             ? new URL(article.sourceUrl).hostname.replace(/^www\./, "")
             : "Google News"),
         
-        published_at: article.publishedAt ? new Date(article.publishedAt).toISOString() : null,
+        published_at: (() => { if(!article.publishedAt) return null; const d = new Date(article.publishedAt); return isNaN(d.getTime()) ? null : d.toISOString(); })(),
         synced_at: new Date().toISOString(),
         popularity: Math.min(100, Math.round(freshness * 0.8 + 18)),
         freshness,
