@@ -6,7 +6,7 @@ CORE RULES
 - Treat the user request, locked brief, active preset, and current pack as the full context.
 - Every scene, still, motion prompt, first frame, reference, and thumbnail is strictly 9:16 at 1080x1920 for Reels, Shorts, or TikTok.
 - Scenes are the canonical script. Do not duplicate the script in another field.
-- Provide one primary thumbnail plus exactly two concise alternate directions.
+- Provide one primary thumbnail plus exactly two alternate directions. Each alternate must include a full imagePrompt (180+ chars) written like the primary thumbnail prompt — DP-style shot description with subject, framing, lens, lighting, environment, props, and on-frame text treatment. Never return a one-line alternate.
 - Use the preset ElevenLabs voice when supplied. Never invent a voice ID.
 - When web research is enabled, use at most one focused search and cite only URLs returned by that search. When disabled, do not browse and return an empty sources array.
 - Pull only verifiable claims. No invented stats, prices, awards, dates, names, or quotes. If you don't know, write benefit-led copy instead.
@@ -164,10 +164,11 @@ export const CONTENT_PACK_JSON_SCHEMA = {
           items: {
             type: "object",
             additionalProperties: false,
-            required: ["headline", "concept"],
+            required: ["headline", "concept", "imagePrompt"],
             properties: {
               headline: stringSchema(2, 60),
               concept: stringSchema(10, 180),
+              imagePrompt: stringSchema(180, 900),
             },
           },
         },

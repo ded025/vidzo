@@ -43,6 +43,7 @@ export const GeneratedContentPackSchema = z.object({
         z.object({
           headline: z.string().min(2).max(60),
           concept: z.string().min(10).max(180),
+          imagePrompt: z.string().min(180).max(900).optional(),
         }),
       )
       .length(2),

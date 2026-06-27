@@ -117,7 +117,7 @@ export function ContentPackCard({ data: rawData }: { data: unknown }) {
       })),
       thumbnailPrompts: [
         data.thumbnail.prompt,
-        ...data.thumbnail.alternates.map((alternate) => alternate.concept),
+        ...data.thumbnail.alternates.map((alternate) => alternate.imagePrompt ?? alternate.concept),
       ],
       caption: data.caption,
       hashtags: data.hashtags,
