@@ -1,5 +1,5 @@
 import {
-  GeneratedContentPackSchema,
+  parseGeneratedContentPack,
   type GeneratedContentPack,
   type GenerationMetrics,
 } from "@/lib/content-pack";
@@ -94,7 +94,7 @@ export async function generateContentPack({
     throw new Error(payload?.error || `Supabase content engine returned HTTP ${response.status}.`);
   }
 
-  const pack = GeneratedContentPackSchema.parse(payload?.pack);
+  const pack = parseGeneratedContentPack(payload?.pack);
   if (!payload?.generation) {
     throw new Error("Supabase content engine returned no generation metrics.");
   }

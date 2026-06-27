@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+const VIDEO_PROMPT_MIN_LENGTH = 120;
+const VIDEO_PROMPT_MAX_LENGTH = 650;
+
 export const GeneratedContentPackSchema = z.object({
   version: z.literal("2"),
   topic: z.string().min(3).max(140),
@@ -28,7 +31,7 @@ export const GeneratedContentPackSchema = z.object({
         onScreenText: z.string().max(100),
         shot: z.string().min(10).max(240),
         imagePrompt: z.string().min(140).max(700),
-        videoPrompt: z.string().min(120).max(650),
+        videoPrompt: z.string().min(VIDEO_PROMPT_MIN_LENGTH).max(VIDEO_PROMPT_MAX_LENGTH),
       }),
     )
     .min(3)
@@ -125,10 +128,63 @@ const fallbackMetrics: GenerationMetrics = {
   webSearchUsed: false,
 };
 
+function joinSentence(base: string, sentence: string) {
+  const trimmed = base.trim();
+  if (!trimmed) return sentence;
+  return `${trimmed}${/[.!?]$/.test(trimmed) ? " " : ". "}${sentence}`.trim();
+}
+
+function ensureVideoPromptLength(prompt: string, scene?: { purpose?: unknown; shot?: unknown }) {
+  const cleaned = prompt.trim();
+  if (cleaned.length >= VIDEO_PROMPT_MIN_LENGTH) return cleaned;
+
+  const shot = typeof scene?.shot === "string" ? scene.shot.trim() : "";
+  const purpose = typeof scene?.purpose === "string" ? scene.purpose.toLowerCase() : "scene";
+  const shotInstruction = shot ? ` Match the shot: ${shot}.` : "";
+  const expansion = `${shotInstruction} Use clear subject action, camera movement, lighting cue, real environment detail, and a clean ending frame for this ${purpose} beat.`;
+  const expanded = joinSentence(cleaned, expansion.trim());
+
+  if (expanded.length >= VIDEO_PROMPT_MIN_LENGTH) {
+    return expanded.slice(0, VIDEO_PROMPT_MAX_LENGTH).trim();
+  }
+
+  return joinSentence(
+    expanded,
+    "Keep it vertical, cinematic, and ready for a 1080x1920 short-form generator.",
+  )
+    .slice(0, VIDEO_PROMPT_MAX_LENGTH)
+    .trim();
+}
+
+function repairShortVideoPrompts(raw: unknown) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return raw;
+  const pack = raw as Record<string, unknown>;
+  if (!Array.isArray(pack.scenes)) return raw;
+
+  return {
+    ...pack,
+    scenes: pack.scenes.map((scene) => {
+      if (!scene || typeof scene !== "object" || Array.isArray(scene)) return scene;
+      const sceneRecord = scene as Record<string, unknown>;
+      if (typeof sceneRecord.videoPrompt !== "string") return sceneRecord;
+      return {
+        ...sceneRecord,
+        videoPrompt: ensureVideoPromptLength(sceneRecord.videoPrompt, sceneRecord),
+      };
+    }),
+  };
+}
+
+export function parseGeneratedContentPack(raw: unknown): GeneratedContentPack {
+  const parsed = GeneratedContentPackSchema.safeParse(raw);
+  if (parsed.success) return parsed.data;
+  return GeneratedContentPackSchema.parse(repairShortVideoPrompts(raw));
+}
+
 function verticalPrompt(prompt: string, kind: "image" | "video" | "thumbnail") {
   const cleaned = prompt.trim();
   if (/\b9:16\b/.test(cleaned) && /1080\s*x\s*1920|1080x1920/i.test(cleaned)) {
-    return cleaned;
+    return kind === "video" ? ensureVideoPromptLength(cleaned) : cleaned;
   }
   const prefix =
     kind === "video"
@@ -136,7 +192,8 @@ function verticalPrompt(prompt: string, kind: "image" | "video" | "thumbnail") {
       : kind === "thumbnail"
         ? "9:16 vertical thumbnail, 1080x1920 for Reels and Shorts."
         : "9:16 vertical image, 1080x1920 for Reels and Shorts.";
-  return `${prefix} ${cleaned}`.trim();
+  const formatted = `${prefix} ${cleaned}`.trim();
+  return kind === "video" ? ensureVideoPromptLength(formatted) : formatted;
 }
 
 export function finalizeContentPack(
