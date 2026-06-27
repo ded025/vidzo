@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { VidzoLogo } from "./vidzo-logo";
 
 export function AuthDialog({
@@ -99,11 +100,10 @@ export function AuthDialog({
           disabled={loading}
           onClick={async () => {
             try {
-              const { error } = await supabase.auth.signInWithOAuth({
-                provider: "google",
-                options: { redirectTo: `${window.location.origin}/auth/callback` },
+              const result = await lovable.auth.signInWithOAuth("google", {
+                redirect_uri: window.location.origin,
               });
-              if (error) throw error;
+              if (result?.error) throw result.error;
             } catch (e) {
               toast.error(e instanceof Error ? e.message : "Google sign-in failed");
             }
