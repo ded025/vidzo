@@ -36,6 +36,7 @@ import {
   Tag,
   X,
   Plus,
+  Newspaper,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -48,6 +49,7 @@ const CATEGORY_META: Record<
   { icon: React.ElementType; grad: string; emoji: string }
 > = {
   All: { icon: Globe2, grad: "from-slate-500 to-slate-700", emoji: "🌍" },
+  News: { icon: Newspaper, grad: "from-red-500 to-orange-600", emoji: "News" },
   AI: { icon: Bot, grad: "from-violet-500 to-purple-700", emoji: "🤖" },
   Finance: { icon: CircleDollarSign, grad: "from-emerald-500 to-teal-600", emoji: "💰" },
   Startups: { icon: Rocket, grad: "from-pink-500 to-rose-600", emoji: "🚀" },
@@ -379,6 +381,7 @@ function TrendsPage() {
         const json = (await res.json()) as {
           ok?: boolean;
           added?: number;
+          sourceRequests?: number;
           skipped?: boolean;
           errors?: string[];
           error?: string;
@@ -387,7 +390,9 @@ function TrendsPage() {
           setSyncMsg(
             json.skipped
               ? "Trends are already up to date."
-              : `Synced ${json.added ?? 0} trends with one direct web request and no AI tokens.`,
+              : `Synced ${json.added ?? 0} trends with ${
+                  json.sourceRequests ?? 1
+                } direct source request${(json.sourceRequests ?? 1) === 1 ? "" : "s"} and no AI tokens.`,
           );
           await qc.invalidateQueries({ queryKey: ["global_trends"] });
           await qc.invalidateQueries({ queryKey: ["last_sync_run"] });
@@ -454,7 +459,7 @@ function TrendsPage() {
             <div>
               <h1 className="text-2xl font-bold tracking-tight">Global Trends</h1>
               <p className="text-sm text-muted-foreground">
-                Real-time intelligence from across the web — AI, Finance, Startups & more.
+                Real-time intelligence from across the web — News, AI, Finance, Startups & more.
               </p>
             </div>
           </div>

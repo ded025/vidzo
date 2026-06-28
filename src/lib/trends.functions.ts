@@ -4,6 +4,7 @@ import { z } from "zod";
 
 // ─── Types ────────────────────────────────────────────────────────────
 export type TrendCategory =
+  | "News"
   | "AI"
   | "Finance"
   | "Startups"
@@ -18,6 +19,7 @@ export type TrendCategory =
   | "Crypto";
 
 export const TREND_CATEGORIES: TrendCategory[] = [
+  "News",
   "AI",
   "Finance",
   "Startups",
@@ -32,8 +34,13 @@ export const TREND_CATEGORIES: TrendCategory[] = [
   "Crypto",
 ];
 
-// Firecrawl search queries per category
+// Search queries per category
 export const CATEGORY_QUERIES: Record<TrendCategory, string[]> = {
+  News: [
+    "breaking news trending latest India world",
+    "top news live updates latest global India",
+    "viral news current affairs latest",
+  ],
   AI: [
     "AI tools viral latest 2026",
     "artificial intelligence breakthrough latest news",

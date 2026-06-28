@@ -2,6 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 
 type TrendCategory =
+  | "News"
   | "AI"
   | "Finance"
   | "Startups"
@@ -18,12 +19,14 @@ type TrendCategory =
 type NewsArticle = {
   url: string;
   title: string;
+  summary: string;
   publishedAt: string | null;
   sourceName: string | null;
   sourceUrl: string | null;
 };
 
 const CATEGORY_QUERIES: Record<TrendCategory, string> = {
+  News: '"breaking news" OR "top story" OR "live updates" OR "trending news" OR "viral news"',
   AI: '"artificial intelligence" OR OpenAI OR "AI tools"',
   Finance: 'finance OR "stock market" OR "personal finance"',
   Startups: "startup OR founder OR entrepreneurship",
@@ -37,6 +40,103 @@ const CATEGORY_QUERIES: Record<TrendCategory, string> = {
   Entertainment: "film OR movie OR OTT OR Bollywood",
   Crypto: "crypto OR bitcoin OR ethereum",
 };
+
+const TRUSTED_NEWS_DOMAINS = [
+  "ndtv.com",
+  "indianexpress.com",
+  "hindustantimes.com",
+  "thehindu.com",
+  "indiatoday.in",
+  "moneycontrol.com",
+  "economictimes.indiatimes.com",
+  "livemint.com",
+  "reuters.com",
+  "apnews.com",
+  "bbc.com",
+  "theguardian.com",
+  "cnn.com",
+  "aljazeera.com",
+  "bloomberg.com",
+  "cnbc.com",
+];
+
+const TRUSTED_NEWS_NAMES = [
+  "NDTV",
+  "The Indian Express",
+  "Hindustan Times",
+  "The Hindu",
+  "India Today",
+  "Moneycontrol",
+  "The Economic Times",
+  "Mint",
+  "Reuters",
+  "AP News",
+  "BBC",
+  "The Guardian",
+  "CNN",
+  "Al Jazeera",
+  "Bloomberg",
+  "CNBC",
+];
+
+const NEWS_SIGNAL_TERMS = [
+  "breaking",
+  "live",
+  "latest",
+  "top",
+  "viral",
+  "trending",
+  "major",
+  "election",
+  "market",
+  "court",
+  "policy",
+  "launch",
+  "deal",
+  "funding",
+  "crisis",
+  "war",
+  "ai",
+  "startup",
+];
+
+const NEWS_EXCLUDED_TERMS = [
+  "horoscope",
+  "astrology",
+  "wordle",
+  "crossword",
+  "weather forecast",
+  "lottery",
+  "coupon",
+  "shopping deal",
+  "latest news today",
+  "top headlines",
+  "trending news videos",
+  "news today from",
+];
+
+const NEWS_SOURCE_QUERIES = [
+  `(${CATEGORY_QUERIES.News}) (${[
+    "site:ndtv.com",
+    "site:indianexpress.com",
+    "site:hindustantimes.com",
+    "site:thehindu.com",
+    "site:indiatoday.in",
+    "site:moneycontrol.com",
+    "site:economictimes.indiatimes.com",
+    "site:livemint.com",
+  ].join(" OR ")})`,
+  `(${CATEGORY_QUERIES.News}) (${[
+    "site:reuters.com",
+    "site:apnews.com",
+    "site:bbc.com",
+    "site:theguardian.com",
+    "site:cnn.com",
+    "site:aljazeera.com",
+    "site:bloomberg.com",
+    "site:cnbc.com",
+  ].join(" OR ")})`,
+];
 
 const AUTO_SYNC_INTERVAL_MS = 30 * 60 * 1000;
 const RUN_LOCK_MS = 10 * 60 * 1000;
@@ -118,6 +218,51 @@ function tagValue(xml: string, tag: string) {
   return match ? decodeXml(match[1].trim()) : null;
 }
 
+function stripHtml(value: string | null) {
+  return (value ?? "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getHostname(value?: string | null) {
+  if (!value) return "";
+  try {
+    return new URL(value).hostname.replace(/^www\./, "").toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+function isTrustedNewsSource(article: NewsArticle) {
+  const sourceHost = getHostname(article.sourceUrl);
+  const sourceName = (article.sourceName ?? "").toLowerCase();
+  return (
+    TRUSTED_NEWS_DOMAINS.some(
+      (domain) => sourceHost === domain || sourceHost.endsWith(`.${domain}`),
+    ) || TRUSTED_NEWS_NAMES.some((name) => sourceName.includes(name.toLowerCase()))
+  );
+}
+
+function isRelevantNewsArticle(article: NewsArticle) {
+  const text = `${article.title} ${article.summary}`.toLowerCase();
+  if (NEWS_EXCLUDED_TERMS.some((term) => text.includes(term))) return false;
+  return (
+    NEWS_SIGNAL_TERMS.some((term) => text.includes(term)) ||
+    scoreFreshness(article.publishedAt) >= 82
+  );
+}
+
+function scoreNewsPopularity(article: NewsArticle, freshness: number) {
+  const text = `${article.title} ${article.summary}`.toLowerCase();
+  const signalCount = NEWS_SIGNAL_TERMS.reduce(
+    (total, term) => total + Number(text.includes(term)),
+    0,
+  );
+  const sourceBoost = isTrustedNewsSource(article) ? 12 : 0;
+  return Math.min(100, Math.round(freshness * 0.72 + sourceBoost + Math.min(signalCount, 4) * 4));
+}
+
 async function googleNewsSearch(query: string) {
   const url = new URL("https://news.google.com/rss/search");
   url.searchParams.set("q", `${query} when:2d`);
@@ -137,9 +282,11 @@ async function googleNewsSearch(query: string) {
       const title = tagValue(item, "title");
       const articleUrl = tagValue(item, "link");
       if (!title || !articleUrl) return null;
+      const summary = stripHtml(tagValue(item, "description"));
       const sourceMatch = item.match(/<source(?:\s+url="([^"]*)")?>([\s\S]*?)<\/source>/i);
       return {
         title,
+        summary,
         url: articleUrl,
         publishedAt: tagValue(item, "pubDate"),
         sourceUrl: sourceMatch?.[1] ? decodeXml(sourceMatch[1]) : null,
@@ -198,10 +345,36 @@ Deno.serve(async (req) => {
     .map((keyword) => keyword.trim())
     .filter(Boolean)
     .slice(0, 6);
-  const query =
+  const nonNewsCategories = categories.filter((category) => category !== "News");
+  const searchRequests =
     keywords.length > 0
-      ? keywords.map((keyword) => `"${keyword.replace(/"/g, "")}"`).join(" OR ")
-      : categories.map((category) => `(${CATEGORY_QUERIES[category]})`).join(" OR ");
+      ? [
+          {
+            query: keywords.map((keyword) => `"${keyword.replace(/"/g, "")}"`).join(" OR "),
+            categories,
+            newsOnly: false,
+          },
+        ]
+      : [
+          ...(nonNewsCategories.length > 0
+            ? [
+                {
+                  query: nonNewsCategories
+                    .map((category) => `(${CATEGORY_QUERIES[category]})`)
+                    .join(" OR "),
+                  categories: nonNewsCategories,
+                  newsOnly: false,
+                },
+              ]
+            : []),
+          ...(categories.includes("News")
+            ? NEWS_SOURCE_QUERIES.map((query) => ({
+                query,
+                categories: ["News"] as TrendCategory[],
+                newsOnly: true,
+              }))
+            : []),
+        ];
 
   const { data: run } = await admin
     .from("trend_sync_runs")
@@ -210,34 +383,54 @@ Deno.serve(async (req) => {
     .single();
 
   try {
-    const articles = await googleNewsSearch(query);
-    const rows = articles.map((article) => {
-      const category = keywords.length > 0 ? "Custom" : classifyCategory(article.title, categories);
-      const freshness = scoreFreshness(article.publishedAt);
-      const matchedKeywords = keywords.filter((keyword) =>
-        article.title.toLowerCase().includes(keyword.toLowerCase()),
-      );
-      return {
-        title: article.title.slice(0, 200),
-        summary: "",
-        category,
-        sub_tags: matchedKeywords.length > 0 ? matchedKeywords : keywords.slice(0, 1),
-        platform_signals: ["web", "news"],
-        source_url: article.url,
-        source_name:
-          article.sourceName ??
-          (article.sourceUrl
-            ? new URL(article.sourceUrl).hostname.replace(/^www\./, "")
-            : "Google News"),
-        
-        published_at: (() => { if(!article.publishedAt) return null; const d = new Date(article.publishedAt); return isNaN(d.getTime()) ? null : d.toISOString(); })(),
-        synced_at: new Date().toISOString(),
-        popularity: Math.min(100, Math.round(freshness * 0.8 + 18)),
-        freshness,
-        content_ready: true,
-        dedup_key: dedupeKey(article.title, category),
-      };
-    });
+    const searchResults = await Promise.all(
+      searchRequests.map(async (request) => ({
+        request,
+        articles: await googleNewsSearch(request.query),
+      })),
+    );
+    const rows = searchResults.flatMap(({ request, articles }) =>
+      articles
+        .filter(
+          (article) =>
+            !request.newsOnly || (isTrustedNewsSource(article) && isRelevantNewsArticle(article)),
+        )
+        .map((article) => {
+          const category =
+            keywords.length > 0
+              ? "Custom"
+              : request.newsOnly
+                ? "News"
+                : classifyCategory(article.title, request.categories);
+          const freshness = scoreFreshness(article.publishedAt);
+          const matchedKeywords = keywords.filter((keyword) =>
+            `${article.title} ${article.summary}`.toLowerCase().includes(keyword.toLowerCase()),
+          );
+          const publishedDate = article.publishedAt ? new Date(article.publishedAt) : null;
+          const sourceHost = getHostname(article.sourceUrl);
+          return {
+            title: article.title.slice(0, 200),
+            summary: article.summary.slice(0, 300),
+            category,
+            sub_tags: matchedKeywords.length > 0 ? matchedKeywords : keywords.slice(0, 1),
+            platform_signals: ["web", "news"],
+            source_url: article.url,
+            source_name: article.sourceName || sourceHost || "Google News",
+            published_at:
+              publishedDate && !Number.isNaN(publishedDate.getTime())
+                ? publishedDate.toISOString()
+                : null,
+            synced_at: new Date().toISOString(),
+            popularity:
+              category === "News"
+                ? scoreNewsPopularity(article, freshness)
+                : Math.min(100, Math.round(freshness * 0.8 + 18)),
+            freshness,
+            content_ready: true,
+            dedup_key: dedupeKey(article.title, category),
+          };
+        }),
+    );
 
     // Dedupe within this batch — upsert with onConflict cannot affect the same row twice.
     const seen = new Set<string>();
@@ -265,7 +458,7 @@ Deno.serve(async (req) => {
         .eq("id", run.id);
     }
     return Response.json(
-      { ok: true, added: uniqueRows.length, sourceRequests: 1, aiRequests: 0 },
+      { ok: true, added: uniqueRows.length, sourceRequests: searchRequests.length, aiRequests: 0 },
       { headers: jsonHeaders },
     );
   } catch (error) {
@@ -273,7 +466,11 @@ Deno.serve(async (req) => {
     if (error instanceof Error) message = error.message;
     else if (typeof error === "string") message = error;
     else {
-      try { message = JSON.stringify(error); } catch { message = String(error); }
+      try {
+        message = JSON.stringify(error);
+      } catch {
+        message = String(error);
+      }
     }
     console.error("sync-trends failed:", message, error);
     if (run?.id) {
