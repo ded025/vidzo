@@ -67,6 +67,107 @@ function CardHeading({
   );
 }
 
+function formatContentPackForAI(data: ContentPackData) {
+  const lines = [
+    "# Vidzo Content Pack Context",
+    "",
+    "Use this as the complete source context for the piece. Preserve the structure, factual claims, sources, scene timing, voice direction, and visual prompts unless explicitly asked to revise them.",
+    "",
+    "## Overview",
+    `Topic: ${data.topic}`,
+    `Version: ${data.version}`,
+    `Platform: ${data.strategy.platform}`,
+    `Aspect ratio: ${data.strategy.aspectRatio}`,
+    `Duration: ${data.strategy.durationSeconds}s`,
+    `Language: ${data.strategy.language}`,
+    "",
+    "## Strategy",
+    `Audience: ${data.strategy.audience}`,
+    `Goal: ${data.strategy.goal}`,
+    `Angle: ${data.strategy.angle}`,
+    `Why it works: ${data.strategy.whyItWorks}`,
+    "",
+    "## Voice",
+    `Provider: ${data.voice.provider}`,
+    `Voice name: ${data.voice.name}`,
+    `Voice ID: ${data.voice.voiceId ?? "Not specified"}`,
+    `Delivery: ${data.voice.delivery}`,
+    "",
+    "## Full Voiceover",
+    data.fullVoiceover || "Not provided",
+    "",
+    "## Scenes",
+    ...data.scenes.flatMap((scene, index) => [
+      "",
+      `### Scene ${index + 1}: ${scene.time} - ${scene.purpose}`,
+      `On-screen text: ${scene.onScreenText || "None"}`,
+      `Shot: ${scene.shot}`,
+      "",
+      "Voiceover:",
+      scene.voiceover,
+      "",
+      "Image prompt:",
+      scene.imagePrompt,
+      "",
+      "Video prompt:",
+      scene.videoPrompt,
+    ]),
+    "",
+    "## Thumbnail",
+    `Headline: ${data.thumbnail.headline}`,
+    `Subheadline: ${data.thumbnail.subheadline ?? "None"}`,
+    `Concept: ${data.thumbnail.concept}`,
+    "",
+    "Primary prompt:",
+    data.thumbnail.prompt,
+    "",
+    "Thumbnail alternates:",
+    ...data.thumbnail.alternates.flatMap((alternate, index) => [
+      `- Alternate ${index + 1}: ${alternate.headline}`,
+      `  Concept: ${alternate.concept}`,
+      `  Image prompt: ${alternate.imagePrompt ?? "Not provided"}`,
+    ]),
+    "",
+    "## Publish Copy",
+    "Caption:",
+    data.caption,
+    "",
+    `Hashtags: ${data.hashtags.join(" ")}`,
+    "",
+    "## Sources",
+    ...(data.sources.length > 0
+      ? data.sources.flatMap((source, index) => [
+          `${index + 1}. ${source.publisher || "Source"}`,
+          `   Claim: ${source.claim}`,
+          `   URL: ${source.url}`,
+        ])
+      : ["No external sources were used."]),
+    "",
+    "## Visual References",
+    ...(data.referenceAssets.length > 0
+      ? data.referenceAssets.flatMap((asset, index) => [
+          `${index + 1}. ${asset.label} (${asset.type})`,
+          `   Image: ${asset.imageUrl}`,
+          `   Source: ${asset.sourceUrl}`,
+        ])
+      : ["No saved visual references."]),
+    "",
+    "## Generation Metadata",
+    `Model: ${data.generation.model}`,
+    `AI requests: ${data.generation.requestCount}`,
+    `Latency: ${(data.generation.latencyMs / 1000).toFixed(1)}s`,
+    `Input tokens: ${data.generation.inputTokens}`,
+    `Output tokens: ${data.generation.outputTokens}`,
+    `Cached input tokens: ${data.generation.cachedInputTokens}`,
+    `Web search used: ${data.generation.webSearchUsed ? "Yes" : "No"}`,
+  ];
+
+  return lines
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 function ReferenceStrip({ data }: { data: ContentPackData }) {
   if (data.referenceAssets.length === 0) return null;
   return (
@@ -106,6 +207,7 @@ function ReferenceStrip({ data }: { data: ContentPackData }) {
 
 export function ContentPackCard({ data: rawData }: { data: unknown }) {
   const data = useMemo(() => normalizeContentPack(rawData), [rawData]);
+  const fullPackContext = useMemo(() => formatContentPackForAI(data), [data]);
   const qualityInput = useMemo(
     () => ({
       script: { dialogue: data.fullVoiceover },
@@ -464,13 +566,12 @@ export function ContentPackCard({ data: rawData }: { data: unknown }) {
           size="sm"
           variant="ghost"
           onClick={() => {
-            const all = `${data.topic}\n\n--- VOICEOVER ---\n${data.fullVoiceover}\n\n--- THUMBNAIL ---\n${data.thumbnail.prompt}\n\n--- CAPTION ---\n${data.caption}\n\n${data.hashtags.join(" ")}`;
-            void navigator.clipboard.writeText(all);
-            toast.success("Full pack copied");
+            void navigator.clipboard.writeText(fullPackContext);
+            toast.success("Full AI context copied");
           }}
         >
           <Copy className="size-3.5" />
-          Copy complete pack
+          Copy full AI context
         </Button>
       </footer>
     </article>

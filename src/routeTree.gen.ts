@@ -19,13 +19,23 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiTrendsSyncRouteImport } from './routes/api/trends-sync'
+import { Route as ApiScriptRouteImport } from './routes/api/script'
+import { Route as ApiRenderRouteImport } from './routes/api/render'
+import { Route as ApiPersonaRouteImport } from './routes/api/persona'
+import { Route as ApiMotionRouteImport } from './routes/api/motion'
+import { Route as ApiIntelligenceRouteImport } from './routes/api/intelligence'
+import { Route as ApiHooksRouteImport } from './routes/api/hooks'
+import { Route as ApiGenerateVariationsRouteImport } from './routes/api/generate-variations'
+import { Route as ApiCompilerRouteImport } from './routes/api/compiler'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as ApiCameraRouteImport } from './routes/api/camera'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
 import { Route as AuthenticatedChatTrendsRouteImport } from './routes/_authenticated/chat.trends'
 import { Route as AuthenticatedChatPresetsRouteImport } from './routes/_authenticated/chat.presets'
 import { Route as AuthenticatedChatNewRouteImport } from './routes/_authenticated/chat.new'
 import { Route as AuthenticatedChatLibraryRouteImport } from './routes/_authenticated/chat.library'
+import { Route as AuthenticatedChatHiggsfieldRouteImport } from './routes/_authenticated/chat.higgsfield'
 import { Route as AuthenticatedChatDashboardRouteImport } from './routes/_authenticated/chat.dashboard'
 import { Route as AuthenticatedChatCreditsRouteImport } from './routes/_authenticated/chat.credits'
 import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
@@ -79,9 +89,54 @@ const ApiTrendsSyncRoute = ApiTrendsSyncRouteImport.update({
   path: '/api/trends-sync',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiScriptRoute = ApiScriptRouteImport.update({
+  id: '/api/script',
+  path: '/api/script',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiRenderRoute = ApiRenderRouteImport.update({
+  id: '/api/render',
+  path: '/api/render',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPersonaRoute = ApiPersonaRouteImport.update({
+  id: '/api/persona',
+  path: '/api/persona',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMotionRoute = ApiMotionRouteImport.update({
+  id: '/api/motion',
+  path: '/api/motion',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiIntelligenceRoute = ApiIntelligenceRouteImport.update({
+  id: '/api/intelligence',
+  path: '/api/intelligence',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHooksRoute = ApiHooksRouteImport.update({
+  id: '/api/hooks',
+  path: '/api/hooks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGenerateVariationsRoute = ApiGenerateVariationsRouteImport.update({
+  id: '/api/generate-variations',
+  path: '/api/generate-variations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCompilerRoute = ApiCompilerRouteImport.update({
+  id: '/api/compiler',
+  path: '/api/compiler',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCameraRoute = ApiCameraRouteImport.update({
+  id: '/api/camera',
+  path: '/api/camera',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
@@ -116,6 +171,12 @@ const AuthenticatedChatLibraryRoute =
     path: '/library',
     getParentRoute: () => AuthenticatedChatRoute,
   } as any)
+const AuthenticatedChatHiggsfieldRoute =
+  AuthenticatedChatHiggsfieldRouteImport.update({
+    id: '/higgsfield',
+    path: '/higgsfield',
+    getParentRoute: () => AuthenticatedChatRoute,
+  } as any)
 const AuthenticatedChatDashboardRoute =
   AuthenticatedChatDashboardRouteImport.update({
     id: '/dashboard',
@@ -147,11 +208,21 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
   '/chat': typeof AuthenticatedChatRouteWithChildren
+  '/api/camera': typeof ApiCameraRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/compiler': typeof ApiCompilerRoute
+  '/api/generate-variations': typeof ApiGenerateVariationsRoute
+  '/api/hooks': typeof ApiHooksRoute
+  '/api/intelligence': typeof ApiIntelligenceRoute
+  '/api/motion': typeof ApiMotionRoute
+  '/api/persona': typeof ApiPersonaRoute
+  '/api/render': typeof ApiRenderRoute
+  '/api/script': typeof ApiScriptRoute
   '/api/trends-sync': typeof ApiTrendsSyncRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/chat/credits': typeof AuthenticatedChatCreditsRoute
   '/chat/dashboard': typeof AuthenticatedChatDashboardRoute
+  '/chat/higgsfield': typeof AuthenticatedChatHiggsfieldRoute
   '/chat/library': typeof AuthenticatedChatLibraryRoute
   '/chat/new': typeof AuthenticatedChatNewRoute
   '/chat/presets': typeof AuthenticatedChatPresetsRoute
@@ -167,11 +238,21 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
+  '/api/camera': typeof ApiCameraRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/compiler': typeof ApiCompilerRoute
+  '/api/generate-variations': typeof ApiGenerateVariationsRoute
+  '/api/hooks': typeof ApiHooksRoute
+  '/api/intelligence': typeof ApiIntelligenceRoute
+  '/api/motion': typeof ApiMotionRoute
+  '/api/persona': typeof ApiPersonaRoute
+  '/api/render': typeof ApiRenderRoute
+  '/api/script': typeof ApiScriptRoute
   '/api/trends-sync': typeof ApiTrendsSyncRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/chat/credits': typeof AuthenticatedChatCreditsRoute
   '/chat/dashboard': typeof AuthenticatedChatDashboardRoute
+  '/chat/higgsfield': typeof AuthenticatedChatHiggsfieldRoute
   '/chat/library': typeof AuthenticatedChatLibraryRoute
   '/chat/new': typeof AuthenticatedChatNewRoute
   '/chat/presets': typeof AuthenticatedChatPresetsRoute
@@ -190,11 +271,21 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
   '/_authenticated/chat': typeof AuthenticatedChatRouteWithChildren
+  '/api/camera': typeof ApiCameraRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/compiler': typeof ApiCompilerRoute
+  '/api/generate-variations': typeof ApiGenerateVariationsRoute
+  '/api/hooks': typeof ApiHooksRoute
+  '/api/intelligence': typeof ApiIntelligenceRoute
+  '/api/motion': typeof ApiMotionRoute
+  '/api/persona': typeof ApiPersonaRoute
+  '/api/render': typeof ApiRenderRoute
+  '/api/script': typeof ApiScriptRoute
   '/api/trends-sync': typeof ApiTrendsSyncRoute
   '/_authenticated/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/_authenticated/chat/credits': typeof AuthenticatedChatCreditsRoute
   '/_authenticated/chat/dashboard': typeof AuthenticatedChatDashboardRoute
+  '/_authenticated/chat/higgsfield': typeof AuthenticatedChatHiggsfieldRoute
   '/_authenticated/chat/library': typeof AuthenticatedChatLibraryRoute
   '/_authenticated/chat/new': typeof AuthenticatedChatNewRoute
   '/_authenticated/chat/presets': typeof AuthenticatedChatPresetsRoute
@@ -213,11 +304,21 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/terms'
     | '/chat'
+    | '/api/camera'
     | '/api/chat'
+    | '/api/compiler'
+    | '/api/generate-variations'
+    | '/api/hooks'
+    | '/api/intelligence'
+    | '/api/motion'
+    | '/api/persona'
+    | '/api/render'
+    | '/api/script'
     | '/api/trends-sync'
     | '/chat/$threadId'
     | '/chat/credits'
     | '/chat/dashboard'
+    | '/chat/higgsfield'
     | '/chat/library'
     | '/chat/new'
     | '/chat/presets'
@@ -233,11 +334,21 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/reset-password'
     | '/terms'
+    | '/api/camera'
     | '/api/chat'
+    | '/api/compiler'
+    | '/api/generate-variations'
+    | '/api/hooks'
+    | '/api/intelligence'
+    | '/api/motion'
+    | '/api/persona'
+    | '/api/render'
+    | '/api/script'
     | '/api/trends-sync'
     | '/chat/$threadId'
     | '/chat/credits'
     | '/chat/dashboard'
+    | '/chat/higgsfield'
     | '/chat/library'
     | '/chat/new'
     | '/chat/presets'
@@ -255,11 +366,21 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/terms'
     | '/_authenticated/chat'
+    | '/api/camera'
     | '/api/chat'
+    | '/api/compiler'
+    | '/api/generate-variations'
+    | '/api/hooks'
+    | '/api/intelligence'
+    | '/api/motion'
+    | '/api/persona'
+    | '/api/render'
+    | '/api/script'
     | '/api/trends-sync'
     | '/_authenticated/chat/$threadId'
     | '/_authenticated/chat/credits'
     | '/_authenticated/chat/dashboard'
+    | '/_authenticated/chat/higgsfield'
     | '/_authenticated/chat/library'
     | '/_authenticated/chat/new'
     | '/_authenticated/chat/presets'
@@ -277,7 +398,16 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermsRoute: typeof TermsRoute
+  ApiCameraRoute: typeof ApiCameraRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiCompilerRoute: typeof ApiCompilerRoute
+  ApiGenerateVariationsRoute: typeof ApiGenerateVariationsRoute
+  ApiHooksRoute: typeof ApiHooksRoute
+  ApiIntelligenceRoute: typeof ApiIntelligenceRoute
+  ApiMotionRoute: typeof ApiMotionRoute
+  ApiPersonaRoute: typeof ApiPersonaRoute
+  ApiRenderRoute: typeof ApiRenderRoute
+  ApiScriptRoute: typeof ApiScriptRoute
   ApiTrendsSyncRoute: typeof ApiTrendsSyncRoute
 }
 
@@ -353,11 +483,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTrendsSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/script': {
+      id: '/api/script'
+      path: '/api/script'
+      fullPath: '/api/script'
+      preLoaderRoute: typeof ApiScriptRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/render': {
+      id: '/api/render'
+      path: '/api/render'
+      fullPath: '/api/render'
+      preLoaderRoute: typeof ApiRenderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/persona': {
+      id: '/api/persona'
+      path: '/api/persona'
+      fullPath: '/api/persona'
+      preLoaderRoute: typeof ApiPersonaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/motion': {
+      id: '/api/motion'
+      path: '/api/motion'
+      fullPath: '/api/motion'
+      preLoaderRoute: typeof ApiMotionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/intelligence': {
+      id: '/api/intelligence'
+      path: '/api/intelligence'
+      fullPath: '/api/intelligence'
+      preLoaderRoute: typeof ApiIntelligenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/hooks': {
+      id: '/api/hooks'
+      path: '/api/hooks'
+      fullPath: '/api/hooks'
+      preLoaderRoute: typeof ApiHooksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/generate-variations': {
+      id: '/api/generate-variations'
+      path: '/api/generate-variations'
+      fullPath: '/api/generate-variations'
+      preLoaderRoute: typeof ApiGenerateVariationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/compiler': {
+      id: '/api/compiler'
+      path: '/api/compiler'
+      fullPath: '/api/compiler'
+      preLoaderRoute: typeof ApiCompilerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
       fullPath: '/api/chat'
       preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/camera': {
+      id: '/api/camera'
+      path: '/api/camera'
+      fullPath: '/api/camera'
+      preLoaderRoute: typeof ApiCameraRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/chat': {
@@ -402,6 +595,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChatLibraryRouteImport
       parentRoute: typeof AuthenticatedChatRoute
     }
+    '/_authenticated/chat/higgsfield': {
+      id: '/_authenticated/chat/higgsfield'
+      path: '/higgsfield'
+      fullPath: '/chat/higgsfield'
+      preLoaderRoute: typeof AuthenticatedChatHiggsfieldRouteImport
+      parentRoute: typeof AuthenticatedChatRoute
+    }
     '/_authenticated/chat/dashboard': {
       id: '/_authenticated/chat/dashboard'
       path: '/dashboard'
@@ -430,6 +630,7 @@ interface AuthenticatedChatRouteChildren {
   AuthenticatedChatThreadIdRoute: typeof AuthenticatedChatThreadIdRoute
   AuthenticatedChatCreditsRoute: typeof AuthenticatedChatCreditsRoute
   AuthenticatedChatDashboardRoute: typeof AuthenticatedChatDashboardRoute
+  AuthenticatedChatHiggsfieldRoute: typeof AuthenticatedChatHiggsfieldRoute
   AuthenticatedChatLibraryRoute: typeof AuthenticatedChatLibraryRoute
   AuthenticatedChatNewRoute: typeof AuthenticatedChatNewRoute
   AuthenticatedChatPresetsRoute: typeof AuthenticatedChatPresetsRoute
@@ -441,6 +642,7 @@ const AuthenticatedChatRouteChildren: AuthenticatedChatRouteChildren = {
   AuthenticatedChatThreadIdRoute: AuthenticatedChatThreadIdRoute,
   AuthenticatedChatCreditsRoute: AuthenticatedChatCreditsRoute,
   AuthenticatedChatDashboardRoute: AuthenticatedChatDashboardRoute,
+  AuthenticatedChatHiggsfieldRoute: AuthenticatedChatHiggsfieldRoute,
   AuthenticatedChatLibraryRoute: AuthenticatedChatLibraryRoute,
   AuthenticatedChatNewRoute: AuthenticatedChatNewRoute,
   AuthenticatedChatPresetsRoute: AuthenticatedChatPresetsRoute,
@@ -472,7 +674,16 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TermsRoute: TermsRoute,
+  ApiCameraRoute: ApiCameraRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiCompilerRoute: ApiCompilerRoute,
+  ApiGenerateVariationsRoute: ApiGenerateVariationsRoute,
+  ApiHooksRoute: ApiHooksRoute,
+  ApiIntelligenceRoute: ApiIntelligenceRoute,
+  ApiMotionRoute: ApiMotionRoute,
+  ApiPersonaRoute: ApiPersonaRoute,
+  ApiRenderRoute: ApiRenderRoute,
+  ApiScriptRoute: ApiScriptRoute,
   ApiTrendsSyncRoute: ApiTrendsSyncRoute,
 }
 export const routeTree = rootRouteImport

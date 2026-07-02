@@ -27,6 +27,7 @@ import {
   Settings,
   Home,
   Coins,
+  Clapperboard,
 } from "lucide-react";
 import { toast } from "sonner";
 import { VidzoLogo } from "@/components/vidzo-logo";
@@ -126,6 +127,7 @@ function ChatLayout() {
       <div className="p-3 space-y-1">
         <NavItem to="/chat/dashboard" icon={LayoutDashboard} label="Dashboard" />
         <NavItem to="/chat/trends" icon={TrendingUp} label="Trends" />
+        <NavItem to="/chat/higgsfield" icon={Clapperboard} label="Higgsfield UGC" />
         <NavItem to="/chat/library" icon={FileText} label="Library" />
         <NavItem to="/chat/presets" icon={Sliders} label="Presets" />
         <NavItem to="/chat/credits" icon={Coins} label="Credits" />
@@ -207,6 +209,7 @@ function ChatLayout() {
   const bottomNav = [
     { to: "/chat/dashboard", icon: Home, label: "Home" },
     { to: "/chat/trends", icon: TrendingUp, label: "Trends" },
+    { to: "/chat/higgsfield", icon: Clapperboard, label: "UGC" },
     { to: "/chat/library", icon: Library, label: "Library" },
     { to: "/chat/new", icon: Plus, label: "Create", isCreate: true },
     { to: "/chat/credits", icon: Coins, label: "Credits" },

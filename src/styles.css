@@ -167,6 +167,10 @@ body {
   font-family: "Playfair Display", "Georgia", serif;
 }
 
+.font-cal {
+  font-family: "Cal Sans", "Inter", "Roboto Flex", system-ui, sans-serif;
+}
+
 /* ─── TREND CARD INSTANT FEEDBACK ───────────────────────────────────────── */
 .trend-card-btn {
   cursor: pointer;
