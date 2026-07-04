@@ -26,7 +26,9 @@ export async function parseBriefFile(file: File): Promise<ParsedBrief> {
   }
 
   if (lower.endsWith(".docx")) {
-    const mammoth = await import("mammoth/mammoth.browser");
+    const mammoth = (await import(
+      /* @vite-ignore */ "mammoth/mammoth.browser"
+    )) as { extractRawText: (opts: { arrayBuffer: ArrayBuffer }) => Promise<{ value?: string }> };
     const arrayBuffer = await file.arrayBuffer();
     const result = await mammoth.extractRawText({ arrayBuffer });
     return { text: trim(result.value ?? ""), fileName: name };
