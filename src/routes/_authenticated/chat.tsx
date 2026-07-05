@@ -26,6 +26,7 @@ import {
   Library,
   Home,
   Coins,
+  Clapperboard,
 } from "lucide-react";
 import { toast } from "sonner";
 import { VidzoLogo } from "@/components/vidzo-logo";

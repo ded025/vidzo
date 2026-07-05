@@ -23,6 +23,7 @@ import { Route as ApiTrendsSyncRouteImport } from './routes/api/trends-sync'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
+import { Route as AuthenticatedChatVseRouteImport } from './routes/_authenticated/chat.vse'
 import { Route as AuthenticatedChatTrendsRouteImport } from './routes/_authenticated/chat.trends'
 import { Route as AuthenticatedChatPresetsRouteImport } from './routes/_authenticated/chat.presets'
 import { Route as AuthenticatedChatNewRouteImport } from './routes/_authenticated/chat.new'
@@ -100,6 +101,11 @@ const AuthenticatedChatIndexRoute = AuthenticatedChatIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedChatRoute,
 } as any)
+const AuthenticatedChatVseRoute = AuthenticatedChatVseRouteImport.update({
+  id: '/vse',
+  path: '/vse',
+  getParentRoute: () => AuthenticatedChatRoute,
+} as any)
 const AuthenticatedChatTrendsRoute = AuthenticatedChatTrendsRouteImport.update({
   id: '/trends',
   path: '/trends',
@@ -163,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/chat/new': typeof AuthenticatedChatNewRoute
   '/chat/presets': typeof AuthenticatedChatPresetsRoute
   '/chat/trends': typeof AuthenticatedChatTrendsRoute
+  '/chat/vse': typeof AuthenticatedChatVseRoute
   '/chat/': typeof AuthenticatedChatIndexRoute
 }
 export interface FileRoutesByTo {
@@ -184,6 +191,7 @@ export interface FileRoutesByTo {
   '/chat/new': typeof AuthenticatedChatNewRoute
   '/chat/presets': typeof AuthenticatedChatPresetsRoute
   '/chat/trends': typeof AuthenticatedChatTrendsRoute
+  '/chat/vse': typeof AuthenticatedChatVseRoute
   '/chat': typeof AuthenticatedChatIndexRoute
 }
 export interface FileRoutesById {
@@ -208,6 +216,7 @@ export interface FileRoutesById {
   '/_authenticated/chat/new': typeof AuthenticatedChatNewRoute
   '/_authenticated/chat/presets': typeof AuthenticatedChatPresetsRoute
   '/_authenticated/chat/trends': typeof AuthenticatedChatTrendsRoute
+  '/_authenticated/chat/vse': typeof AuthenticatedChatVseRoute
   '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
 }
 export interface FileRouteTypes {
@@ -232,6 +241,7 @@ export interface FileRouteTypes {
     | '/chat/new'
     | '/chat/presets'
     | '/chat/trends'
+    | '/chat/vse'
     | '/chat/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -253,6 +263,7 @@ export interface FileRouteTypes {
     | '/chat/new'
     | '/chat/presets'
     | '/chat/trends'
+    | '/chat/vse'
     | '/chat'
   id:
     | '__root__'
@@ -276,6 +287,7 @@ export interface FileRouteTypes {
     | '/_authenticated/chat/new'
     | '/_authenticated/chat/presets'
     | '/_authenticated/chat/trends'
+    | '/_authenticated/chat/vse'
     | '/_authenticated/chat/'
   fileRoutesById: FileRoutesById
 }
@@ -394,6 +406,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChatIndexRouteImport
       parentRoute: typeof AuthenticatedChatRoute
     }
+    '/_authenticated/chat/vse': {
+      id: '/_authenticated/chat/vse'
+      path: '/vse'
+      fullPath: '/chat/vse'
+      preLoaderRoute: typeof AuthenticatedChatVseRouteImport
+      parentRoute: typeof AuthenticatedChatRoute
+    }
     '/_authenticated/chat/trends': {
       id: '/_authenticated/chat/trends'
       path: '/trends'
@@ -454,6 +473,7 @@ interface AuthenticatedChatRouteChildren {
   AuthenticatedChatNewRoute: typeof AuthenticatedChatNewRoute
   AuthenticatedChatPresetsRoute: typeof AuthenticatedChatPresetsRoute
   AuthenticatedChatTrendsRoute: typeof AuthenticatedChatTrendsRoute
+  AuthenticatedChatVseRoute: typeof AuthenticatedChatVseRoute
   AuthenticatedChatIndexRoute: typeof AuthenticatedChatIndexRoute
 }
 
@@ -465,6 +485,7 @@ const AuthenticatedChatRouteChildren: AuthenticatedChatRouteChildren = {
   AuthenticatedChatNewRoute: AuthenticatedChatNewRoute,
   AuthenticatedChatPresetsRoute: AuthenticatedChatPresetsRoute,
   AuthenticatedChatTrendsRoute: AuthenticatedChatTrendsRoute,
+  AuthenticatedChatVseRoute: AuthenticatedChatVseRoute,
   AuthenticatedChatIndexRoute: AuthenticatedChatIndexRoute,
 }
 
