@@ -19,9 +19,29 @@ function jsonError(message: string, status: number, code: string) {
 function extractJsonObject(text: string) {
   const trimmed = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "");
   const start = trimmed.indexOf("{");
-  const end = trimmed.lastIndexOf("}");
-  if (start === -1 || end === -1) throw new Error("AI returned no JSON object.");
-  return JSON.parse(trimmed.slice(start, end + 1));
+  if (start === -1) throw new Error("AI returned no JSON object.");
+  // Walk the string, respecting string literals + escapes, to find the matching
+  // closing brace for the first '{'. This avoids "Unexpected non-whitespace
+  // character after JSON" when the model appends prose or a second object.
+  let depth = 0;
+  let inStr = false;
+  let esc = false;
+  for (let i = start; i < trimmed.length; i++) {
+    const ch = trimmed[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (ch === "\\") esc = true;
+      else if (ch === '"') inStr = false;
+      continue;
+    }
+    if (ch === '"') { inStr = true; continue; }
+    if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) return JSON.parse(trimmed.slice(start, i + 1));
+    }
+  }
+  throw new Error("AI returned an unbalanced JSON object.");
 }
 
 async function authenticate(req: Request) {
