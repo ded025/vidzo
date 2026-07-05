@@ -143,6 +143,28 @@ function Dashboard() {
           <div className="space-y-5">
             <CreatePackPanel />
 
+            {/* Visual Story Engine banner */}
+            <Link
+              to="/chat/vse"
+              className="group block rounded-3xl border border-border p-5 bg-gradient-to-br from-indigo-500/10 via-violet-500/10 to-fuchsia-500/10 hover:from-indigo-500/15 hover:via-violet-500/15 hover:to-fuchsia-500/15 transition-colors"
+            >
+              <div className="flex items-start gap-4">
+                <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 text-white flex items-center justify-center shrink-0">
+                  <Clapperboard className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <div className="font-bold">Visual Story Engine</div>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-violet-500/15 text-violet-600 dark:text-violet-300">New</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    For creators who don't talk to the camera. Cinematic reels, b-roll, faceless edits — Vidzo designs the shot-by-shot blueprint with lens plan and audio.
+                  </p>
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </Link>
+
             {/* Trends */}
             <div id="dash-trends" className="rounded-3xl border border-border bg-card p-6">
               <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
