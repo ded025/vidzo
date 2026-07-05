@@ -18,6 +18,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiVseRouteImport } from './routes/api/vse'
 import { Route as ApiTrendsSyncRouteImport } from './routes/api/trends-sync'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
@@ -72,6 +73,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiVseRoute = ApiVseRouteImport.update({
+  id: '/api/vse',
+  path: '/api/vse',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiTrendsSyncRoute = ApiTrendsSyncRouteImport.update({
@@ -149,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/chat': typeof AuthenticatedChatRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/api/trends-sync': typeof ApiTrendsSyncRoute
+  '/api/vse': typeof ApiVseRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/chat/credits': typeof AuthenticatedChatCreditsRoute
   '/chat/dashboard': typeof AuthenticatedChatDashboardRoute
@@ -169,6 +176,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/trends-sync': typeof ApiTrendsSyncRoute
+  '/api/vse': typeof ApiVseRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/chat/credits': typeof AuthenticatedChatCreditsRoute
   '/chat/dashboard': typeof AuthenticatedChatDashboardRoute
@@ -192,6 +200,7 @@ export interface FileRoutesById {
   '/_authenticated/chat': typeof AuthenticatedChatRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/api/trends-sync': typeof ApiTrendsSyncRoute
+  '/api/vse': typeof ApiVseRoute
   '/_authenticated/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/_authenticated/chat/credits': typeof AuthenticatedChatCreditsRoute
   '/_authenticated/chat/dashboard': typeof AuthenticatedChatDashboardRoute
@@ -215,6 +224,7 @@ export interface FileRouteTypes {
     | '/chat'
     | '/api/chat'
     | '/api/trends-sync'
+    | '/api/vse'
     | '/chat/$threadId'
     | '/chat/credits'
     | '/chat/dashboard'
@@ -235,6 +245,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/api/chat'
     | '/api/trends-sync'
+    | '/api/vse'
     | '/chat/$threadId'
     | '/chat/credits'
     | '/chat/dashboard'
@@ -257,6 +268,7 @@ export interface FileRouteTypes {
     | '/_authenticated/chat'
     | '/api/chat'
     | '/api/trends-sync'
+    | '/api/vse'
     | '/_authenticated/chat/$threadId'
     | '/_authenticated/chat/credits'
     | '/_authenticated/chat/dashboard'
@@ -279,6 +291,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiTrendsSyncRoute: typeof ApiTrendsSyncRoute
+  ApiVseRoute: typeof ApiVseRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -344,6 +357,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/vse': {
+      id: '/api/vse'
+      path: '/api/vse'
+      fullPath: '/api/vse'
+      preLoaderRoute: typeof ApiVseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/trends-sync': {
@@ -474,6 +494,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,
   ApiTrendsSyncRoute: ApiTrendsSyncRoute,
+  ApiVseRoute: ApiVseRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
