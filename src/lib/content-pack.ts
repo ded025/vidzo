@@ -62,7 +62,19 @@ export const GeneratedContentPackSchema = z.object({
       }),
     )
     .max(6),
+  music: z
+    .array(
+      z.object({
+        title: z.string().min(1).max(120),
+        artist: z.string().min(1).max(120),
+        why: z.string().min(3).max(200),
+        platform: z.enum(["Instagram Reels", "TikTok", "YouTube Shorts", "Cross-platform"]),
+      }),
+    )
+    .max(6)
+    .optional(),
 });
+
 
 export type GeneratedContentPack = z.infer<typeof GeneratedContentPackSchema>;
 
