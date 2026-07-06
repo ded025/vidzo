@@ -143,34 +143,67 @@ export function CreatePackPanel({
       return;
     }
 
-    const parts: string[] = [];
+    const visualStorytelling = delivery === "Documentary" || delivery === "Faceless";
+
+    // What the user SEES in chat — clean, no internal directives.
+    const displayLines: string[] = [];
     if (showProductFields) {
-      parts.push("[PRODUCT_AD_BRIEF]");
-      parts.push(`Product / brand: ${product.name.trim()}`);
-      if (product.what.trim()) parts.push(`What it does: ${product.what.trim()}`);
-      if (product.benefits.trim()) parts.push(`Key features / benefits: ${product.benefits.trim()}`);
-      if (product.audience.trim()) parts.push(`Target audience: ${product.audience.trim()}`);
-      if (product.cta.trim()) parts.push(`Desired CTA: ${product.cta.trim()}`);
-      parts.push("");
+      displayLines.push(`Product: ${product.name.trim()}`);
+      if (product.what.trim()) displayLines.push(`What it does: ${product.what.trim()}`);
+      if (product.benefits.trim()) displayLines.push(`Benefits: ${product.benefits.trim()}`);
+      if (product.audience.trim()) displayLines.push(`Audience: ${product.audience.trim()}`);
+      if (product.cta.trim()) displayLines.push(`CTA: ${product.cta.trim()}`);
+    }
+    if (idea) displayLines.push(idea);
+    displayLines.push(
+      `Style — ${platform} · ${length} · ${contentType} · ${delivery} · ${tone} · ${language}${
+        visualStorytelling ? " · Visual Storytelling (no dialogue, music-driven)" : ""
+      }`,
+    );
+    const displayPrompt = displayLines.join("\n");
+
+    // What the engine sees behind the scenes — full directives (stored as context brief).
+    const engineParts: string[] = [];
+    if (visualStorytelling) engineParts.push("[VISUAL_STORYTELLING]");
+    if (showProductFields) {
+      engineParts.push("[PRODUCT_AD_BRIEF]");
+      engineParts.push(`Product / brand: ${product.name.trim()}`);
+      if (product.what.trim()) engineParts.push(`What it does: ${product.what.trim()}`);
+      if (product.benefits.trim())
+        engineParts.push(`Key features / benefits: ${product.benefits.trim()}`);
+      if (product.audience.trim()) engineParts.push(`Target audience: ${product.audience.trim()}`);
+      if (product.cta.trim()) engineParts.push(`Desired CTA: ${product.cta.trim()}`);
+      engineParts.push("");
     }
     if (idea) {
-      parts.push("[BRIEF]");
-      parts.push(idea);
-      parts.push("");
+      engineParts.push("[BRIEF]");
+      engineParts.push(idea);
+      engineParts.push("");
     }
-    parts.push(
+    engineParts.push(
       `Build ONE production-ready ${length} content pack for ${platform}. ` +
         `Content type: ${contentType}. Delivery: ${delivery}. Tone: ${tone}. Language: ${language}. ` +
-        `Vertical 9:16 with scene-by-scene visuals, voiceover, on-screen captions, and a thumbnail. ` +
+        `Vertical 9:16 with scene-by-scene visuals, ${
+          visualStorytelling
+            ? "sound/music direction (NOT dialogue), camera + editing notes, and a thumbnail. Also populate the top-level music[] array with trending Reels/TikTok/Shorts audio suggestions that match the mood."
+            : "voiceover, on-screen captions, and a thumbnail."
+        } ` +
         (showProductFields
           ? `First-person creator POV, authentic handheld iPhone aesthetic, product visible in-hand and in-use across scenes. Only use claims from the brief — do not invent stats, prices, or features.`
-          : `Only use claims from the brief when factual. Never invent stats or names.`),
+          : `Only use claims from the brief when factual. Never invent stats or names.`) +
+        (visualStorytelling
+          ? ` This is Visual Storytelling mode: NO spoken dialogue in any scene. Use 'voiceover' for sound design + music direction only. Cover the hero moment with wide + medium + close + extreme close shots. Use web research to suggest currently trending audio on ${platform} when possible.`
+          : ""),
     );
+    const enginePrompt = engineParts.filter(Boolean).join("\n");
 
-    const prompt = parts.filter(Boolean).join("\n");
     const titleSeed = (product.name || idea || `${contentType} · ${platform}`).slice(0, 60);
-    navigate({ to: "/chat/new", search: { prompt, title: titleSeed } });
+    navigate({
+      to: "/chat/new",
+      search: { prompt: displayPrompt, engine: enginePrompt, title: titleSeed },
+    });
   };
+
 
   return (
     <div
