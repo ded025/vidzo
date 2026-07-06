@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 
 const searchSchema = z.object({
   prompt: z.string().optional(),
+  engine: z.string().optional(),
   title: z.string().optional(),
 });
 
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/_authenticated/chat/new")({
 });
 
 function NewThread() {
-  const { prompt, title } = Route.useSearch();
+  const { prompt, engine, title } = Route.useSearch();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const create = useServerFn(createThread);
@@ -26,18 +27,22 @@ function NewThread() {
   useEffect(() => {
     if (started.current) return;
     started.current = true;
-    const firstMessage = (prompt ?? "").trim();
+    const displayMessage = (prompt ?? "").trim();
+    // The engine prompt (full internal directives) is stored server-side as
+    // the thread's context_brief so it's re-injected into every AI call
+    // without ever appearing in the chat transcript the user sees.
+    const engineBrief = (engine ?? prompt ?? "").trim();
     (async () => {
       try {
         const t = await create({
           data: {
-            title: (title ?? firstMessage).slice(0, 60) || "New chat",
-            contextBrief: firstMessage || undefined,
+            title: (title ?? displayMessage).slice(0, 60) || "New chat",
+            contextBrief: engineBrief || undefined,
           },
         });
         qc.invalidateQueries({ queryKey: ["threads"] });
-        if (firstMessage) {
-          sessionStorage.setItem(`pending:${t!.id}`, firstMessage);
+        if (displayMessage) {
+          sessionStorage.setItem(`pending:${t!.id}`, displayMessage);
         }
         navigate({
           to: "/chat/$threadId",
@@ -48,7 +53,8 @@ function NewThread() {
         navigate({ to: "/chat/dashboard", replace: true });
       }
     })();
-  }, [prompt, title, create, navigate, qc]);
+  }, [prompt, engine, title, create, navigate, qc]);
+
 
   // Optimistic skeleton — feels instant.
   return (
