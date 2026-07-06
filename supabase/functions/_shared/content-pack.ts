@@ -210,5 +210,24 @@ export const CONTENT_PACK_JSON_SCHEMA = {
         },
       },
     },
+    music: {
+      type: "array",
+      maxItems: 6,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["title", "artist", "why", "platform"],
+        properties: {
+          title: stringSchema(1, 120),
+          artist: stringSchema(1, 120),
+          why: stringSchema(3, 200),
+          platform: {
+            type: "string",
+            enum: ["Instagram Reels", "TikTok", "YouTube Shorts", "Cross-platform"],
+          },
+        },
+      },
+    },
   },
 } as const;
+
