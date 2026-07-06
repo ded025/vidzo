@@ -524,7 +524,36 @@ export function ContentPackCard({ data: rawData }: { data: unknown }) {
               ))}
             </div>
           </section>
+          {data.music && data.music.length > 0 && (
+            <section className="rounded-xl border border-border bg-background/50 p-4">
+              <CardHeading
+                icon={Hash}
+                title="Trending audio"
+                detail={`${data.music.length} track ideas`}
+              />
+              <ul className="mt-2 space-y-2">
+                {data.music.map((track, i) => (
+                  <li
+                    key={`${track.title}-${i}`}
+                    className="rounded-lg border border-border bg-background/40 p-3"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-semibold">{track.title}</div>
+                        <div className="truncate text-xs text-muted-foreground">
+                          {track.artist} · {track.platform}
+                        </div>
+                      </div>
+                      <CopyBtn text={`${track.title} — ${track.artist}`} label="Track" />
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">{track.why}</p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
         </TabsContent>
+
 
         <TabsContent value="sources" className="m-0 p-4">
           {data.sources.length > 0 ? (
