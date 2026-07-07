@@ -36,10 +36,10 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Vidzo turns any idea into a production-ready content pack: script, voiceover dialogue, scene-by-scene visuals, thumbnails, captions, hashtags, and source-backed research.",
+          "Vidzo turns any brief into a production-ready content pack — script, voiceover, scene-by-scene visuals, thumbnails, captions, hashtags, and trending audio. Plus the Visual Story Engine: a shot-by-shot cinematic blueprint for creators who don't talk to the camera.",
       },
       { property: "og:title", content: "Vidzo · AI production room for creators" },
-      { property: "og:description", content: "One idea in. Full video pack out." },
+      { property: "og:description", content: "One idea in. Full video pack out. Now with the Visual Story Engine." },
     ],
   }),
   component: Landing,
