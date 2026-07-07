@@ -136,10 +136,12 @@ function VsePage() {
             <Clapperboard className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Visual Story Engine</h1>
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-violet-300/60 dark:border-violet-700/60 bg-violet-500/10 px-2 py-0.5 text-[10px] uppercase tracking-wider font-semibold text-violet-700 dark:text-violet-300">
+              No dialogue · No voiceover · Cinematic only
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mt-1.5">Visual Story Engine</h1>
             <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-              AI cinematographer for creators who don't want to talk to the camera. Cinematic reels, b-roll,
-              faceless channels, product films, gym/bike/travel edits — Vidzo designs the shot-by-shot blueprint.
+              An AI cinematographer for creators who don't talk to the camera. Vidzo returns a shot-by-shot 9:16 blueprint — camera placement, lens, lighting, editing beats, diegetic audio, and hero-moment coverage. It does <span className="font-semibold text-foreground">not</span> write scripts or voiceover.
             </p>
           </div>
         </div>
