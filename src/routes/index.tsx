@@ -127,6 +127,22 @@ function Landing() {
           ease: "power3.out",
           scrollTrigger: { trigger: ".dashboard-preview", start: "top 80%" },
         });
+        gsap.from(".vse-copy > *", {
+          y: 30,
+          opacity: 0,
+          duration: 0.8,
+          ease: "power3.out",
+          stagger: 0.08,
+          scrollTrigger: { trigger: ".vse-copy", start: "top 80%" },
+        });
+        gsap.from(".vse-mock", {
+          y: 60,
+          opacity: 0,
+          scale: 0.95,
+          duration: 1,
+          ease: "power3.out",
+          scrollTrigger: { trigger: ".vse-mock", start: "top 85%" },
+        });
         gsap.to(".giant-vidzo", {
           fontVariationSettings: '"wght" 1000, "wdth" 151',
           ease: "none",
