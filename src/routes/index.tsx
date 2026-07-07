@@ -36,10 +36,10 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Vidzo turns any idea into a production-ready content pack: script, voiceover dialogue, scene-by-scene visuals, thumbnails, captions, hashtags, and source-backed research.",
+          "Vidzo turns any brief into a production-ready content pack — script, voiceover, scene-by-scene visuals, thumbnails, captions, hashtags, and trending audio. Plus the Visual Story Engine: a shot-by-shot cinematic blueprint for creators who don't talk to the camera.",
       },
       { property: "og:title", content: "Vidzo · AI production room for creators" },
-      { property: "og:description", content: "One idea in. Full video pack out." },
+      { property: "og:description", content: "One idea in. Full video pack out. Now with the Visual Story Engine." },
     ],
   }),
   component: Landing,
@@ -126,6 +126,22 @@ function Landing() {
           duration: 1,
           ease: "power3.out",
           scrollTrigger: { trigger: ".dashboard-preview", start: "top 80%" },
+        });
+        gsap.from(".vse-copy > *", {
+          y: 30,
+          opacity: 0,
+          duration: 0.8,
+          ease: "power3.out",
+          stagger: 0.08,
+          scrollTrigger: { trigger: ".vse-copy", start: "top 80%" },
+        });
+        gsap.from(".vse-mock", {
+          y: 60,
+          opacity: 0,
+          scale: 0.95,
+          duration: 1,
+          ease: "power3.out",
+          scrollTrigger: { trigger: ".vse-mock", start: "top 85%" },
         });
         gsap.to(".giant-vidzo", {
           fontVariationSettings: '"wght" 1000, "wdth" 151',
@@ -426,6 +442,183 @@ function Landing() {
           ))}
         </div>
       </section>
+
+      {/* SECTION 2.5: Visual Story Engine spotlight */}
+      <section className="relative overflow-hidden bg-foreground text-background py-20 sm:py-28">
+        <div className="absolute inset-0 opacity-40 pointer-events-none">
+          <div className="absolute -top-24 left-1/3 h-[420px] w-[420px] rounded-full bg-violet-500 blur-[140px]" />
+          <div className="absolute bottom-0 right-1/4 h-[380px] w-[380px] rounded-full bg-fuchsia-500 blur-[140px]" />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-8 grid lg:grid-cols-[1.05fr,1fr] gap-12 items-center">
+          <div className="vse-copy">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider">
+              <span className="h-1.5 w-1.5 rounded-full bg-fuchsia-400 animate-pulse" />
+              New · Visual Story Engine
+            </div>
+            <h2
+              className="mt-5 font-black tracking-tight"
+              style={{ fontSize: "clamp(2.2rem, 5vw, 4rem)", lineHeight: 1.05, letterSpacing: "-0.02em" }}
+            >
+              For creators who let the{" "}
+              <span
+                className="bg-gradient-to-r from-fuchsia-400 via-violet-400 to-indigo-300 bg-clip-text text-transparent"
+                style={{ fontStyle: "italic", fontFamily: '"Playfair Display", Georgia, serif' }}
+              >
+                visuals talk.
+              </span>
+            </h2>
+            <p className="mt-5 text-base sm:text-lg text-background/70 max-w-xl">
+              Cinematic reels, b-roll storytelling, product films, gym & travel edits. Vidzo returns a shot-by-shot
+              9:16 blueprint — camera, lens, lighting, editing beats, diegetic audio, and hero-moment coverage.
+              No script. No voiceover. Just craft.
+            </p>
+            <div className="mt-8 grid sm:grid-cols-2 gap-3 max-w-xl">
+              {[
+                "7-beat story arc: Establish → Ritual → Details → Action → Hero → Aura → Resolution",
+                "Wide, medium, close, extreme-close coverage on every hero moment",
+                "Real DP language — 24mm, 50mm, gimbal, rack focus, whip pan",
+                "Diegetic audio capture list + trending Reels/TikTok music",
+              ].map((line) => (
+                <div key={line} className="flex items-start gap-2 text-sm text-background/85">
+                  <CheckCircle2 className="h-4 w-4 mt-0.5 text-fuchsia-300 shrink-0" />
+                  <span>{line}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-9 flex flex-wrap gap-3">
+              <Button
+                size="lg"
+                onClick={() => openAuth("signup")}
+                className="text-base h-12 px-6 bg-gradient-to-r from-fuchsia-500 to-violet-500 text-white hover:opacity-90"
+              >
+                Try Visual Story Engine
+                <ArrowRight className="ml-1 h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Mocked shot list card */}
+          <div className="vse-mock relative">
+            <div className="absolute -inset-6 bg-gradient-to-br from-fuchsia-500/20 via-violet-500/20 to-indigo-500/20 blur-3xl rounded-[40px]" />
+            <div className="relative rounded-3xl bg-[#0b0d14] border border-white/10 p-5 shadow-2xl">
+              <div className="flex items-center justify-between text-[11px] text-white/50 uppercase tracking-wider">
+                <span>Blueprint · Gym PR</span>
+                <span>9:16 · Cinematic</span>
+              </div>
+              <div className="mt-4 space-y-2.5">
+                {[
+                  { beat: "Establish World", shot: "24mm wide, doorway, blue hour", tag: "WIDE" },
+                  { beat: "Ritual", shot: "50mm macro, chalk on palms, side light", tag: "CLOSE" },
+                  { beat: "Action", shot: "Handheld tracking, bar clean, backlit dust", tag: "MEDIUM" },
+                  { beat: "Hero Moment", shot: "85mm push-in on face, PR lockout", tag: "EXT-CLOSE" },
+                  { beat: "Aura", shot: "Overhead slow tilt, chalk cloud, silence", tag: "OVERHEAD" },
+                  { beat: "Resolution", shot: "24mm exit, sunrise flare, gym door", tag: "WIDE" },
+                ].map((row, i) => (
+                  <div
+                    key={i}
+                    className="rounded-xl bg-white/5 border border-white/10 p-3 flex items-start gap-3"
+                  >
+                    <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-fuchsia-500/20 text-fuchsia-200 shrink-0">
+                      {row.tag}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-white">{row.beat}</div>
+                      <div className="text-[12px] text-white/60 truncate">{row.shot}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Trending audio</div>
+                <div className="text-xs text-white/80">
+                  "Espresso" (sped up) · Sabrina Carpenter · Reels ↑ 240% this week
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 2.6: Everything Vidzo covers */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-8 py-20 sm:py-28">
+        <div className="max-w-3xl">
+          <div className="text-xs uppercase tracking-[0.2em] font-bold text-[var(--vidzo-blue)]">
+            One flow. Every format.
+          </div>
+          <h2 className="mt-3 text-4xl sm:text-6xl font-black tracking-tight">
+            Drop a brief. Get everything.
+          </h2>
+          <p className="mt-5 text-lg text-muted-foreground max-w-2xl">
+            Paste text, upload a .pdf / .docx / .md, or start from a trend. Pick your platform, delivery
+            style, tone, and language — Vidzo tailors the entire pack around it.
+          </p>
+        </div>
+
+        <div className="mt-12 grid lg:grid-cols-4 gap-3 text-sm">
+          {[
+            {
+              title: "Platforms",
+              items: ["Instagram", "YouTube Shorts", "YouTube", "LinkedIn", "TikTok"],
+              grad: "from-pink-500/15 to-rose-500/5",
+            },
+            {
+              title: "Content type",
+              items: ["Educational", "Storytelling", "Opinion", "Value", "Sales", "Entertainment", "News"],
+              grad: "from-violet-500/15 to-indigo-500/5",
+            },
+            {
+              title: "Delivery style",
+              items: ["Talking Head", "Voice Over", "UGC", "Documentary", "Faceless"],
+              grad: "from-blue-500/15 to-cyan-500/5",
+            },
+            {
+              title: "Tone",
+              items: ["Founder", "Educational", "Premium", "Funny", "Dramatic"],
+              grad: "from-amber-400/15 to-orange-500/5",
+            },
+            {
+              title: "Length",
+              items: ["30s", "60s", "90s"],
+              grad: "from-emerald-400/15 to-teal-500/5",
+            },
+            {
+              title: "Language",
+              items: ["Hinglish", "English", "Hindi", "Tamil", "Marathi", "Bengali", "Spanish"],
+              grad: "from-fuchsia-500/15 to-purple-500/5",
+            },
+            {
+              title: "Brief input",
+              items: ["Paste text", ".txt / .md", ".pdf", ".docx", "Drag & drop"],
+              grad: "from-cyan-500/15 to-blue-500/5",
+            },
+            {
+              title: "Auto-included",
+              items: ["Trending audio", "Web-cited sources", "Thumbnails", "Captions", "Hashtags"],
+              grad: "from-rose-500/15 to-pink-500/5",
+            },
+          ].map((col) => (
+            <div
+              key={col.title}
+              className={`rounded-2xl border border-border bg-gradient-to-br ${col.grad} p-5`}
+            >
+              <div className="text-[11px] uppercase tracking-wider font-bold text-muted-foreground">
+                {col.title}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {col.items.map((it) => (
+                  <span
+                    key={it}
+                    className="text-xs px-2 py-1 rounded-md border border-border bg-card font-medium"
+                  >
+                    {it}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
 
       {/* SECTION 3: How */}
       <section id="how" className="bg-secondary/40 border-y border-border py-20 sm:py-28">

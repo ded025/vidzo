@@ -321,6 +321,27 @@ export function CreatePackPanel({
           />
         </div>
 
+        {/* Visual storytelling callout — steer to dedicated engine */}
+        {(delivery === "Documentary" || delivery === "Faceless") && (
+          <div className="mt-4 rounded-2xl border border-violet-300/60 dark:border-violet-800/60 bg-gradient-to-br from-indigo-50 via-violet-50 to-fuchsia-50 dark:from-indigo-950/40 dark:via-violet-950/30 dark:to-fuchsia-950/30 p-4 flex flex-wrap items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="text-xs">
+              <div className="font-semibold text-sm">No voiceover? Try the Visual Story Engine.</div>
+              <div className="text-muted-foreground mt-0.5 max-w-md">
+                Get a pure shot-by-shot cinematic blueprint — camera, lens, lighting, audio capture, hero-moment coverage. No dialogue.
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => navigate({ to: "/chat/vse" })}
+              className="gap-2 border-violet-400 text-violet-700 dark:text-violet-300 hover:bg-violet-500/10"
+            >
+              Open Visual Story Engine →
+            </Button>
+          </div>
+        )}
+
         {/* Conditional product fields */}
         {showProductFields && (
           <div className="mt-4 rounded-2xl border border-orange-200 dark:border-orange-900/40 bg-orange-50/60 dark:bg-orange-950/20 p-4 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
