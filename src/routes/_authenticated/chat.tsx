@@ -23,6 +23,7 @@ import {
   LayoutDashboard,
   Sliders,
   TrendingUp,
+  Library,
   Home,
   Clapperboard,
 } from "lucide-react";
