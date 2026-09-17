@@ -40,14 +40,14 @@ export const Route = createFileRoute("/_authenticated/chat/dashboard")({
 });
 
 const TREND_CARDS = [
-  { t: "Indian startup funding this week", c: "Business / Startup", icon: Rocket, grad: "from-pink-500 to-rose-500" },
-  { t: "Shark Tank India latest viral pitch", c: "Entertainment", icon: Trophy, grad: "from-amber-400 to-orange-500" },
-  { t: "D2C brand going viral 2026", c: "Business / Marketing", icon: ShoppingBag, grad: "from-fuchsia-500 to-purple-500" },
-  { t: "Indian gym & fitness controversies", c: "Fitness", icon: Dumbbell, grad: "from-emerald-500 to-teal-500" },
-  { t: "Recent Bollywood box office surprises", c: "Entertainment", icon: Film, grad: "from-rose-500 to-pink-500" },
-  { t: "Crypto / fintech India this month", c: "Finance / Crypto", icon: Coins, grad: "from-amber-400 to-yellow-500" },
-  { t: "Tech layoffs India recent", c: "Tech / Business", icon: Laptop, grad: "from-blue-500 to-cyan-500" },
-  { t: "21-year-old founders India recent funding", c: "Startup / Business", icon: User, grad: "from-violet-500 to-indigo-500" },
+  { t: "Indian startup funding this week", c: "Business / Startup", icon: Rocket },
+  { t: "Shark Tank India latest viral pitch", c: "Entertainment", icon: Trophy },
+  { t: "D2C brand going viral 2026", c: "Business / Marketing", icon: ShoppingBag },
+  { t: "Indian gym & fitness controversies", c: "Fitness", icon: Dumbbell },
+  { t: "Recent Bollywood box office surprises", c: "Entertainment", icon: Film },
+  { t: "Crypto / fintech India this month", c: "Finance / Crypto", icon: Coins },
+  { t: "Tech layoffs India recent", c: "Tech / Business", icon: Laptop },
+  { t: "21-year-old founders India recent funding", c: "Startup / Business", icon: User },
 ];
 
 function DashboardSkeleton() {

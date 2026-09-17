@@ -23,9 +23,7 @@ import {
   LayoutDashboard,
   Sliders,
   TrendingUp,
-  Library,
   Home,
-  Coins,
   Clapperboard,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -44,15 +42,9 @@ function ChatLayout() {
   const list = useServerFn(listThreads);
   const del = useServerFn(deleteThread);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [balance, setBalance] = useState<number | null>(null);
 
   useEffect(() => {
     setSidebarOpen(false);
-  }, [pathname]);
-
-  // Free mode — credits removed
-  useEffect(() => {
-    setBalance(null);
   }, [pathname]);
 
   const threadsQ = useQuery({
@@ -169,18 +161,6 @@ function ChatLayout() {
           </div>
         )}
       </nav>
-      {/* Credit balance chip */}
-      {balance !== null && (
-        <Link
-          to="/chat/credits"
-          className="mx-3 mb-2 flex items-center gap-2 rounded-lg border border-border bg-secondary/40 px-3 py-2 text-xs hover:bg-secondary transition-colors"
-        >
-          <Coins className="h-3.5 w-3.5 text-[var(--vidzo-magenta)]" />
-          <span className="font-semibold text-foreground">{balance}</span>
-          <span className="text-muted-foreground">credits</span>
-          {balance <= 2 && <span className="ml-auto text-amber-500 font-medium">Low →</span>}
-        </Link>
-      )}
       <div className="border-t border-border p-2 flex items-center gap-2">
         <button
           onClick={signOut}
@@ -248,15 +228,7 @@ function ChatLayout() {
       </div>
 
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 flex items-stretch"
-        style={{
-          height: "calc(64px + env(safe-area-inset-bottom, 0px))",
-          paddingBottom: "env(safe-area-inset-bottom, 0px)",
-          background: "rgba(var(--background-rgb, 15 15 15) / 0.85)",
-          backdropFilter: "blur(24px) saturate(180%)",
-          WebkitBackdropFilter: "blur(24px) saturate(180%)",
-          borderTop: "1px solid hsl(var(--border))",
-        }}
+         className="bottom-nav-safe fixed inset-x-0 bottom-0 z-40 flex h-[calc(64px+env(safe-area-inset-bottom,0px))] items-stretch border-t border-border bg-background/90 backdrop-blur-2xl md:hidden"
       >
         {bottomNav.map(({ to, icon: Icon, label, isCreate }) => {
           const active =
@@ -274,8 +246,8 @@ function ChatLayout() {
                 className="flex-1 flex flex-col items-center justify-center gap-0.5 active:opacity-60 transition-opacity"
                 aria-label={label}
               >
-                <div className="h-10 w-10 rounded-full flex items-center justify-center bg-gradient-to-br from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)]">
-                  <Icon className="h-5 w-5 text-white" />
+                 <div className="h-10 w-10 rounded-full flex items-center justify-center bg-foreground text-background">
+                   <Icon className="h-5 w-5" />
                 </div>
                 <span className="text-[10px] text-muted-foreground">{label}</span>
               </button>
