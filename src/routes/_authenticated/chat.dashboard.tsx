@@ -17,6 +17,9 @@ import {
   Laptop,
   User,
   Clapperboard,
+  ArrowUpRight,
+  CheckCircle2,
+  Clock3,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +41,10 @@ const TREND_CARDS = [
   { t: "Tech layoffs India recent", c: "Tech / Business", icon: Laptop, grad: "from-blue-500 to-cyan-500" },
   { t: "21-year-old founders India recent funding", c: "Startup / Business", icon: User, grad: "from-violet-500 to-indigo-500" },
 ];
+
+function DashboardSkeleton() {
+  return <div className="space-y-3" aria-label="Loading workspace"><div className="h-20 animate-pulse rounded-md bg-secondary" /><div className="h-20 animate-pulse rounded-md bg-secondary" /><div className="h-20 animate-pulse rounded-md bg-secondary" /></div>;
+}
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -107,26 +114,27 @@ function Dashboard() {
 
   return (
     <div className="h-full overflow-y-auto bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 space-y-6">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-6 lg:py-8 space-y-8">
         {/* Top: greeting + stats */}
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-              Welcome back{userName ? `, ${userName}` : ""}! 👋
+            <div className="mb-2 text-[11px] font-semibold uppercase text-muted-foreground">Production overview</div>
+            <h1 className="text-2xl sm:text-3xl font-semibold">
+              Good to see you{userName ? `, ${userName}` : ""}.
             </h1>
             <p className="text-muted-foreground mt-1 text-sm">
               Drop a brief, pick your format — Vidzo builds the whole pack.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-border bg-border sm:grid-cols-4">
             {[
-              { n: stats.data?.scriptsTotal ?? 0, l: "Packs Created", icon: Package, c: "text-pink-500" },
-              { n: stats.data?.scriptsWeek ?? 0, l: "Ready to Ship", icon: Rocket, c: "text-emerald-500" },
-              { n: (stats.data as { sourcesUsed?: number } | undefined)?.sourcesUsed ?? 0, l: "Sources Used", icon: BookOpen, c: "text-blue-500" },
-              { n: Math.max(0, (stats.data?.threadsTotal ?? 0) - (stats.data?.scriptsTotal ?? 0)), l: "Drafts Cooking", icon: FileText, c: "text-amber-500" },
+              { n: stats.data?.scriptsTotal ?? 0, l: "Packs", icon: Package, c: "text-primary" },
+              { n: stats.data?.scriptsWeek ?? 0, l: "This week", icon: CheckCircle2, c: "text-emerald-500" },
+              { n: (stats.data as { sourcesUsed?: number } | undefined)?.sourcesUsed ?? 0, l: "Sources", icon: BookOpen, c: "text-primary" },
+              { n: Math.max(0, (stats.data?.threadsTotal ?? 0) - (stats.data?.scriptsTotal ?? 0)), l: "In progress", icon: Clock3, c: "text-amber-500" },
             ].map((s) => (
-              <div key={s.l} className="flex items-center gap-2 rounded-xl bg-card border border-border px-3 py-2 min-w-[120px]">
-                <div className={`h-8 w-8 rounded-lg bg-secondary flex items-center justify-center ${s.c}`}>
+              <div key={s.l} className="flex min-w-[112px] items-center gap-2 bg-card px-3 py-2.5">
+                <div className={`h-8 w-8 rounded-md bg-secondary flex items-center justify-center ${s.c}`}>
                   <s.icon className="h-4 w-4" />
                 </div>
                 <div>
@@ -138,7 +146,7 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-[1fr,320px] gap-5">
+        <div className="grid xl:grid-cols-[minmax(0,1fr),360px] gap-6">
           {/* Main column */}
           <div className="space-y-5">
             <CreatePackPanel />
@@ -146,10 +154,10 @@ function Dashboard() {
             {/* Visual Story Engine banner */}
             <Link
               to="/chat/vse"
-              className="group block rounded-3xl border border-border p-5 bg-gradient-to-br from-indigo-500/10 via-violet-500/10 to-fuchsia-500/10 hover:from-indigo-500/15 hover:via-violet-500/15 hover:to-fuchsia-500/15 transition-colors"
+              className="group block rounded-lg border border-border p-5 bg-card hover:border-primary/40 transition-colors"
             >
               <div className="flex items-start gap-4">
-                <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 text-white flex items-center justify-center shrink-0">
+                <div className="h-11 w-11 rounded-md bg-foreground text-background flex items-center justify-center shrink-0">
                   <Clapperboard className="h-5 w-5" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -166,11 +174,11 @@ function Dashboard() {
             </Link>
 
             {/* Trends */}
-            <div id="dash-trends" className="rounded-3xl border border-border bg-card p-6">
+            <div id="dash-trends" className="rounded-lg border border-border bg-card p-5 sm:p-6">
               <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <div>
                   <div className="flex items-center gap-2 font-bold text-lg">
-                    <span className="h-9 w-9 rounded-xl bg-gradient-to-br from-[var(--vidzo-magenta)] to-orange-400 text-white flex items-center justify-center">
+                    <span className="h-9 w-9 rounded-md bg-secondary text-foreground flex items-center justify-center">
                       <TrendingUp className="h-4 w-4" />
                     </span>
                     Trends
@@ -183,15 +191,15 @@ function Dashboard() {
                   Open trends feed →
                 </Link>
               </div>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-px overflow-hidden rounded-md border border-border bg-border">
                 {TREND_CARDS.map((tr) => (
                   <button
                     key={tr.t}
                     onClick={() => handleTrend(tr.t)}
-                    className="text-left rounded-xl border border-border bg-card p-3 hover:border-foreground/30 hover:shadow-sm active:scale-[0.98] transition-all"
+                    className="text-left bg-card p-3 hover:bg-secondary/50 active:opacity-70 transition-colors"
                   >
                     <div className="flex items-start justify-between">
-                      <div className={`h-9 w-9 rounded-lg bg-gradient-to-br ${tr.grad} text-white flex items-center justify-center`}>
+                      <div className="h-9 w-9 rounded-md bg-secondary text-foreground flex items-center justify-center">
                         <tr.icon className="h-4 w-4" />
                       </div>
                       <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
@@ -207,11 +215,11 @@ function Dashboard() {
 
           {/* Right column: recent packs + threads */}
           <div className="space-y-5">
-            <div className="rounded-3xl border border-border bg-card p-5">
+            <div className="rounded-lg border border-border bg-card p-5">
               <div className="font-bold flex items-center gap-2 text-sm mb-3">
                 <Package className="h-4 w-4 text-primary" /> Your recent packs
               </div>
-              {hasScripts ? (
+              {scripts.isLoading ? <DashboardSkeleton /> : hasScripts ? (
                 <div className="space-y-3">
                   {qualityReports.slice(0, 4).map((q) => {
                     const c =
@@ -224,7 +232,7 @@ function Dashboard() {
                       <Link
                         key={q.id}
                         to="/chat/library"
-                        className="block rounded-xl border border-border p-3 hover:border-foreground/30 transition-colors"
+                         className="block rounded-md border border-border p-3 hover:border-primary/40 transition-colors"
                       >
                         <div className="flex items-start gap-3">
                           <div
@@ -255,7 +263,7 @@ function Dashboard() {
               )}
             </div>
 
-            <div className="rounded-3xl border border-border bg-card overflow-hidden">
+            <div className="rounded-lg border border-border bg-card overflow-hidden">
               <div className="px-5 py-3 border-b border-border flex items-center justify-between">
                 <div className="font-bold flex items-center gap-2 text-sm">
                   <FileText className="h-4 w-4 text-primary" /> Recent
@@ -263,14 +271,15 @@ function Dashboard() {
                 <Link to="/chat/library" className="text-xs text-primary hover:underline">All</Link>
               </div>
               <div className="divide-y divide-border max-h-[300px] overflow-y-auto">
+                {threads.isLoading && <div className="p-4"><DashboardSkeleton /></div>}
                 {(threads.data ?? []).slice(0, 6).map((t) => (
                   <Link
                     key={t.id}
                     to="/chat/$threadId"
                     params={{ threadId: t.id }}
-                    className="block px-4 py-2.5 hover:bg-secondary/40 text-sm truncate"
+                    className="group flex items-center gap-2 px-4 py-3 hover:bg-secondary/40 text-sm"
                   >
-                    {t.title}
+                    <span className="min-w-0 flex-1 truncate">{t.title}</span><ArrowUpRight className="size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
                   </Link>
                 ))}
                 {threads.data && threads.data.length === 0 && (

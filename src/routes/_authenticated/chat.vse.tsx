@@ -132,14 +132,14 @@ function VsePage() {
     <div className="h-full overflow-y-auto bg-background">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 space-y-6">
         <div className="flex items-start gap-3">
-          <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 text-white flex items-center justify-center shrink-0">
+          <div className="h-11 w-11 rounded-md bg-foreground text-background flex items-center justify-center shrink-0">
             <Clapperboard className="h-5 w-5" />
           </div>
           <div>
             <div className="inline-flex items-center gap-1.5 rounded-full border border-violet-300/60 dark:border-violet-700/60 bg-violet-500/10 px-2 py-0.5 text-[10px] uppercase tracking-wider font-semibold text-violet-700 dark:text-violet-300">
               No dialogue · No voiceover · Cinematic only
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mt-1.5">Visual Story Engine</h1>
+            <h1 className="text-2xl sm:text-3xl font-semibold mt-1.5">Visual Story Engine</h1>
             <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
               An AI cinematographer for creators who don't talk to the camera. Vidzo returns a shot-by-shot 9:16 blueprint — camera placement, lens, lighting, editing beats, diegetic audio, and hero-moment coverage. It does <span className="font-semibold text-foreground">not</span> write scripts or voiceover.
             </p>
@@ -148,7 +148,7 @@ function VsePage() {
 
         <div className="grid lg:grid-cols-[420px,1fr] gap-6">
           {/* Inputs */}
-          <div className="rounded-3xl border border-border bg-card p-5 space-y-4 h-fit">
+          <div className="rounded-lg border border-border bg-card p-5 space-y-4 h-fit">
             <div>
               <Label>What are you filming?</Label>
               <div className="mt-2 space-y-2 max-h-56 overflow-y-auto pr-1">
@@ -208,7 +208,7 @@ function VsePage() {
             <Button
               onClick={generate}
               disabled={loading}
-              className="w-full gap-2 bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 hover:opacity-90 text-white"
+              className="w-full gap-2"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
               {loading ? "Directing your story…" : "Generate Visual Story"}
@@ -261,7 +261,7 @@ function ChipRow({ items, value, onChange }: { items: string[]; value: string; o
 
 function EmptyState() {
   return (
-    <div className="h-full min-h-[400px] rounded-3xl border border-dashed border-border flex flex-col items-center justify-center text-center p-8">
+    <div className="h-full min-h-[400px] rounded-lg border border-dashed border-border flex flex-col items-center justify-center text-center p-8">
       <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-fuchsia-500/20 flex items-center justify-center mb-3">
         <Film className="h-6 w-6 text-violet-500" />
       </div>
@@ -294,7 +294,7 @@ function BlueprintView({ data }: { data: Blueprint }) {
   const totalShots = useMemo(() => data.beats.reduce((n, b) => n + b.shots.length, 0), [data]);
   return (
     <div className="space-y-5">
-      <div className="rounded-3xl border border-border bg-gradient-to-br from-indigo-50 via-violet-50 to-fuchsia-50 dark:from-indigo-950/30 dark:via-violet-950/20 dark:to-fuchsia-950/20 p-5">
+      <div className="rounded-lg border border-border bg-card p-5">
         <div className="text-xs uppercase tracking-wider text-muted-foreground">{data.story_pattern}</div>
         <h2 className="text-xl font-bold mt-1">{data.title}</h2>
         <div className="mt-3 flex flex-wrap gap-2 text-xs">
