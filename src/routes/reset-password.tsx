@@ -10,7 +10,14 @@ import { VidzoLogo } from "@/components/vidzo-logo";
 
 export const Route = createFileRoute("/reset-password")({
   ssr: false,
-  head: () => ({ meta: [{ title: "Reset password · Vidzo" }] }),
+  head: () => ({ meta: [
+    { title: "Reset Password · Vidzo" },
+    { name: "description", content: "Choose a new password for your Vidzo account." },
+    { property: "og:title", content: "Reset Password · Vidzo" },
+    { property: "og:description", content: "Securely reset your Vidzo password." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: ResetPassword,
 });
 

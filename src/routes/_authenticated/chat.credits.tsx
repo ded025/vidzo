@@ -4,7 +4,14 @@ import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/chat/credits")({
   component: CreditsPage,
-  head: () => ({ meta: [{ title: "Credits · Vidzo" }] }),
+  head: () => ({ meta: [
+    { title: "Early Access · Vidzo" },
+    { name: "description", content: "Vidzo production tools are free during early access." },
+    { property: "og:title", content: "Early Access · Vidzo" },
+    { property: "og:description", content: "Create without limits during Vidzo early access." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
 });
 
 function CreditsPage() {
