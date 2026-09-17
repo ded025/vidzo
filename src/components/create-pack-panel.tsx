@@ -207,17 +207,16 @@ export function CreatePackPanel({
 
   return (
     <div
-      className={`rounded-3xl border border-border relative overflow-hidden bg-gradient-to-br from-pink-50 via-violet-50 to-blue-50 dark:from-fuchsia-950/30 dark:via-violet-950/20 dark:to-blue-950/20 ${
+      className={`rounded-lg border border-border relative overflow-hidden bg-card shadow-sm ${
         compact ? "p-4" : "p-5 sm:p-6"
       }`}
     >
-      <div className="absolute -right-6 -top-6 h-40 w-40 rounded-full bg-gradient-to-br from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)] opacity-15 blur-2xl pointer-events-none" />
       <div className="relative">
         <div className="flex items-center gap-2 font-bold text-lg">
-          <span className="h-9 w-9 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 text-white flex items-center justify-center">
+          <span className="h-9 w-9 rounded-md bg-primary text-primary-foreground flex items-center justify-center">
             <Sparkles className="h-4 w-4" />
           </span>
-          Create a New Content Pack
+          Start a production
         </div>
         <p className="text-xs text-muted-foreground mt-1">
           Paste your brief or drop a file (.txt, .md, .pdf, .docx) — pick your format, tone,
@@ -232,7 +231,7 @@ export function CreatePackPanel({
           }}
           onDragLeave={() => setDragging(false)}
           onDrop={onDrop}
-          className={`mt-4 rounded-2xl border-2 border-dashed transition-colors ${
+          className={`mt-4 rounded-md border transition-colors ${
             dragging ? "border-primary bg-primary/5" : "border-border bg-card"
           }`}
         >
@@ -243,7 +242,7 @@ export function CreatePackPanel({
             onChange={(e) => setBrief(e.target.value)}
             placeholder="Drop your brief here, or paste it. e.g. 'A 30-sec Reel for my Pune gym — Hinglish, myth-busting creatine, hook in 2 seconds.'"
             rows={compact ? 3 : 5}
-            className="w-full resize-none rounded-2xl bg-transparent px-4 py-3 text-sm focus:outline-none"
+            className="w-full resize-none rounded-md bg-transparent px-4 py-3 text-sm focus:outline-none"
           />
           <div className="flex flex-wrap items-center justify-between gap-2 px-3 pb-3">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -394,7 +393,7 @@ export function CreatePackPanel({
           <Button
             onClick={goGenerate}
             disabled={parsing}
-            className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:opacity-90 text-white gap-2"
+            className="gap-2"
           >
             <Wand2 className="h-4 w-4" />
             {showProductFields ? "Generate UGC Pack" : "Generate Pack"}

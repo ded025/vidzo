@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, isRedirect, Link, redirect, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
@@ -21,13 +21,13 @@ import { AuthDialog } from "@/components/auth-dialog";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export const Route = createFileRoute("/")({
-  ssr: false,
+  ssr: "data-only",
   beforeLoad: async () => {
     try {
       const { data } = await supabase.auth.getSession();
       if (data.session) throw redirect({ to: "/chat/dashboard" });
     } catch (e: unknown) {
-      if (e && typeof e === "object" && "isRedirect" in e) throw e;
+      if (isRedirect(e)) throw e;
     }
   },
   head: () => ({
@@ -40,6 +40,8 @@ export const Route = createFileRoute("/")({
       },
       { property: "og:title", content: "Vidzo · AI production room for creators" },
       { property: "og:description", content: "One idea in. Full video pack out. Now with the Visual Story Engine." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Landing,
@@ -54,11 +56,11 @@ function Landing() {
   useEffect(() => {
     let active = true;
     supabase.auth.getSession().then(({ data }) => {
-      if (active && data.session) navigate({ to: "/chat/dashboard", replace: true });
+      if (active && data.session) void navigate({ to: "/chat/dashboard", replace: true });
     });
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED")) {
-        navigate({ to: "/chat/dashboard", replace: true });
+        void navigate({ to: "/chat/dashboard", replace: true });
       }
     });
     return () => {

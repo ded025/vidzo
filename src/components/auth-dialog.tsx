@@ -27,9 +27,17 @@ export function AuthDialog({
   const [loading, setLoading] = useState(false);
 
   const goToDashboard = async () => {
-    onOpenChange(false);
-    await new Promise((resolve) => setTimeout(resolve, 30));
-    await navigate({ to: "/chat/dashboard" });
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < 2500) {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        onOpenChange(false);
+        await navigate({ to: "/chat/dashboard", replace: true });
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 80));
+    }
+    throw new Error("Your session could not be restored. Please sign in again.");
   };
 
   const handleEmail = async (event: React.FormEvent) => {

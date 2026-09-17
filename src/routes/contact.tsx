@@ -6,6 +6,10 @@ export const Route = createFileRoute("/contact")({
     meta: [
       { title: "Contact · Vidzo" },
       { name: "description", content: "Get in touch with the Vidzo team." },
+      { property: "og:title", content: "Contact · Vidzo" },
+      { property: "og:description", content: "Get in touch with the Vidzo team." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Contact,

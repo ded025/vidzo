@@ -42,6 +42,14 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/chat/trends")({
   component: TrendsPage,
+  head: () => ({ meta: [
+    { title: "Trend Intelligence · Vidzo" },
+    { name: "description", content: "Discover fresh, source-backed content opportunities and turn them into productions." },
+    { property: "og:title", content: "Trend Intelligence · Vidzo" },
+    { property: "og:description", content: "Source-backed trend intelligence for creators." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
 });
 
 const CATEGORY_META: Record<
@@ -116,12 +124,10 @@ function TrendCard({ trend, onUse }: { trend: GlobalTrend; onUse: (t: GlobalTren
   const meta = CATEGORY_META[trend.category as TrendCategory] ?? CATEGORY_META["All"];
   const Icon = meta.icon;
   return (
-    <div className="group flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 hover:border-primary/40 hover:shadow-md transition-all duration-200">
+    <div className="group flex flex-col gap-3 rounded-lg border border-border bg-card p-4 hover:border-primary/40 transition-colors duration-200">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span
-            className={`h-8 w-8 rounded-lg bg-gradient-to-br ${meta.grad} text-white flex items-center justify-center shrink-0`}
-          >
+          <span className="h-8 w-8 rounded-md bg-secondary text-foreground flex items-center justify-center shrink-0">
             <Icon className="h-4 w-4" />
           </span>
           <div>
@@ -191,7 +197,7 @@ function TrendCard({ trend, onUse }: { trend: GlobalTrend; onUse: (t: GlobalTren
 
       <Button
         size="sm"
-        className="w-full gap-1.5 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:opacity-90 text-white mt-auto"
+         className="w-full gap-1.5 mt-auto"
         onClick={() => onUse(trend)}
       >
         <Sparkles className="h-3.5 w-3.5" />

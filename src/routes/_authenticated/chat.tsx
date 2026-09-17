@@ -9,7 +9,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
-import { listThreads, createThread, deleteThread } from "@/lib/threads.functions";
+import { listThreads, deleteThread } from "@/lib/threads.functions";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -25,7 +25,6 @@ import {
   TrendingUp,
   Library,
   Home,
-  Coins,
   Clapperboard,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -42,31 +41,16 @@ function ChatLayout() {
   const params = useParams({ strict: false }) as { threadId?: string };
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const list = useServerFn(listThreads);
-  const create = useServerFn(createThread);
   const del = useServerFn(deleteThread);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [balance, setBalance] = useState<number | null>(null);
 
   useEffect(() => {
     setSidebarOpen(false);
   }, [pathname]);
 
-  // Free mode — credits removed
-  useEffect(() => {
-    setBalance(null);
-  }, [pathname]);
-
   const threadsQ = useQuery({
     queryKey: ["threads"],
     queryFn: () => list(),
-  });
-
-  const createMut = useMutation({
-    mutationFn: async () => create({ data: { title: "New chat" } }),
-    onSuccess: (t) => {
-      qc.invalidateQueries({ queryKey: ["threads"] });
-      navigate({ to: "/chat/$threadId", params: { threadId: t!.id } });
-    },
   });
 
   const delMut = useMutation({
@@ -128,16 +112,13 @@ function ChatLayout() {
         <NavItem to="/chat/vse" icon={Clapperboard} label="Visual Story" />
         <NavItem to="/chat/trends" icon={TrendingUp} label="Trends" />
         <NavItem to="/chat/library" icon={FileText} label="Library" />
-        <NavItem to="/chat/library" icon={FileText} label="Library" />
         <NavItem to="/chat/presets" icon={Sliders} label="Presets" />
-        <NavItem to="/chat/credits" icon={Coins} label="Credits" />
       </div>
       <div className="px-3 pt-2 pb-1">
         <Button
           className="w-full justify-start gap-2"
           size="sm"
-          onClick={() => createMut.mutate()}
-          disabled={createMut.isPending}
+          onClick={() => navigate({ to: "/chat" })}
         >
           <Plus className="h-4 w-4" />
           New chat
@@ -181,18 +162,6 @@ function ChatLayout() {
           </div>
         )}
       </nav>
-      {/* Credit balance chip */}
-      {balance !== null && (
-        <Link
-          to="/chat/credits"
-          className="mx-3 mb-2 flex items-center gap-2 rounded-lg border border-border bg-secondary/40 px-3 py-2 text-xs hover:bg-secondary transition-colors"
-        >
-          <Coins className="h-3.5 w-3.5 text-[var(--vidzo-magenta)]" />
-          <span className="font-semibold text-foreground">{balance}</span>
-          <span className="text-muted-foreground">credits</span>
-          {balance <= 2 && <span className="ml-auto text-amber-500 font-medium">Low →</span>}
-        </Link>
-      )}
       <div className="border-t border-border p-2 flex items-center gap-2">
         <button
           onClick={signOut}
@@ -211,7 +180,7 @@ function ChatLayout() {
     { to: "/chat/trends", icon: TrendingUp, label: "Trends" },
     { to: "/chat/library", icon: Library, label: "Library" },
     { to: "/chat/new", icon: Plus, label: "Create", isCreate: true },
-    { to: "/chat/credits", icon: Coins, label: "Credits" },
+    { to: "/chat/vse", icon: Clapperboard, label: "Visual" },
   ];
 
   return (
@@ -248,8 +217,7 @@ function ChatLayout() {
               size="sm"
               variant="ghost"
               className="ml-auto"
-              onClick={() => createMut.mutate()}
-              disabled={createMut.isPending}
+              onClick={() => navigate({ to: "/chat" })}
             >
               <Plus className="h-4 w-4" />
             </Button>
@@ -261,15 +229,7 @@ function ChatLayout() {
       </div>
 
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 flex items-stretch"
-        style={{
-          height: "calc(64px + env(safe-area-inset-bottom, 0px))",
-          paddingBottom: "env(safe-area-inset-bottom, 0px)",
-          background: "rgba(var(--background-rgb, 15 15 15) / 0.85)",
-          backdropFilter: "blur(24px) saturate(180%)",
-          WebkitBackdropFilter: "blur(24px) saturate(180%)",
-          borderTop: "1px solid hsl(var(--border))",
-        }}
+         className="bottom-nav-safe fixed inset-x-0 bottom-0 z-40 flex h-[calc(64px+env(safe-area-inset-bottom,0px))] items-stretch border-t border-border bg-background/90 backdrop-blur-2xl md:hidden"
       >
         {bottomNav.map(({ to, icon: Icon, label, isCreate }) => {
           const active =
@@ -283,13 +243,12 @@ function ChatLayout() {
               <button
                 key={label}
                 type="button"
-                onClick={() => createMut.mutate()}
-                disabled={createMut.isPending}
+                 onClick={() => navigate({ to: "/chat" })}
                 className="flex-1 flex flex-col items-center justify-center gap-0.5 active:opacity-60 transition-opacity"
                 aria-label={label}
               >
-                <div className="h-10 w-10 rounded-full flex items-center justify-center bg-gradient-to-br from-[var(--vidzo-magenta)] to-[var(--vidzo-blue)]">
-                  <Icon className="h-5 w-5 text-white" />
+                 <div className="h-10 w-10 rounded-full flex items-center justify-center bg-foreground text-background">
+                   <Icon className="h-5 w-5" />
                 </div>
                 <span className="text-[10px] text-muted-foreground">{label}</span>
               </button>

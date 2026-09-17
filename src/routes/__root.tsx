@@ -98,16 +98,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "Vidzo turns one brief into a full AI-ready content pack: ElevenLabs voiceover, image + video prompts, thumbnails, captions, hashtags — every fact source-verified.",
       },
-      {
-        property: "og:image",
-        content:
-          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/eb0364e1-1574-4604-a0a7-64fee64f811e",
-      },
-      {
-        name: "twitter:image",
-        content:
-          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/eb0364e1-1574-4604-a0a7-64fee64f811e",
-      },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

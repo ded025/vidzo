@@ -6,6 +6,10 @@ export const Route = createFileRoute("/terms")({
     meta: [
       { title: "Terms of Service · Vidzo" },
       { name: "description", content: "The terms governing the use of Vidzo." },
+      { property: "og:title", content: "Terms of Service · Vidzo" },
+      { property: "og:description", content: "The terms governing the use of Vidzo." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Terms,

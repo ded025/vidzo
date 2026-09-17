@@ -10,6 +10,10 @@ export const Route = createFileRoute("/about")({
         content:
           "Vidzo is the AI production room built for creators — turning ideas into ready-to-record content packs.",
       },
+      { property: "og:title", content: "About · Vidzo" },
+      { property: "og:description", content: "Why Vidzo exists and who it helps create." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: About,

@@ -27,6 +27,10 @@ export const Route = createFileRoute("/pricing")({
         name: "description",
         content: "Simple credit-based pricing. 5 free scripts. No subscription.",
       },
+      { property: "og:title", content: "Pricing · Vidzo" },
+      { property: "og:description", content: "Vidzo is free during early access." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
 });

@@ -11,6 +11,14 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/chat/presets")({
   component: PresetsPage,
+  head: () => ({ meta: [
+    { title: "Production Presets · Vidzo" },
+    { name: "description", content: "Save and manage reusable Vidzo production preferences." },
+    { property: "og:title", content: "Production Presets · Vidzo" },
+    { property: "og:description", content: "Reusable production preferences in Vidzo." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
 });
 
 const VOICES = [

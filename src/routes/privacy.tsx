@@ -6,6 +6,10 @@ export const Route = createFileRoute("/privacy")({
     meta: [
       { title: "Privacy Policy · Vidzo" },
       { name: "description", content: "How Vidzo handles your data." },
+      { property: "og:title", content: "Privacy Policy · Vidzo" },
+      { property: "og:description", content: "How Vidzo handles your data." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Privacy,

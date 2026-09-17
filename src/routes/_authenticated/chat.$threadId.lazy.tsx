@@ -22,6 +22,7 @@ import {
 import { ContentPackCard, type ContentPackData } from "@/components/content-pack-card";
 import {
   AlertCircle,
+  ArrowLeft,
   CheckCircle2,
   Coins,
   Loader2,
@@ -175,6 +176,7 @@ function ChatWindow({
     status: "checking",
     message: "Checking chat connection",
   });
+  const draftKey = `vidzo:draft:${threadId}`;
 
   const checkHealth = useCallback(async () => {
     setHealth({ status: "checking", message: "Checking chat connection" });
@@ -290,6 +292,7 @@ function ChatWindow({
       return;
     }
     setCreditError(null);
+    localStorage.removeItem(draftKey);
     sendMessage({ text });
     if (isTweak) setTweakCount((c) => c + 1);
   };
@@ -318,13 +321,20 @@ function ChatWindow({
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col bg-background">
+      <div className="flex h-12 shrink-0 items-center gap-3 border-b border-border px-3 sm:px-5">
+        <Button size="icon" variant="ghost" aria-label="Back" onClick={() => window.history.back()}>
+          <ArrowLeft className="size-4" />
+        </Button>
+        <div className="min-w-0"><div className="text-xs font-semibold">Production room</div><div className="truncate text-[11px] text-muted-foreground">Brief, research and deliverables stay together</div></div>
+        <span className="ml-auto inline-flex items-center gap-1.5 text-[11px] text-muted-foreground"><span className="size-1.5 rounded-full bg-emerald-500" />Autosaved</span>
+      </div>
       {/* Credit status bar */}
       <CreditBar balance={balance} tweakCount={tweakCount} isTweak={isTweak} />
 
       <Conversation className="flex-1">
         <ConversationContent className="mx-auto w-full max-w-5xl px-4 py-6">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card px-3 py-2 text-xs text-muted-foreground">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-2">
               {health.status === "checking" ? (
                 <Loader2 className="size-3.5 animate-spin" />
@@ -499,6 +509,8 @@ function ChatWindow({
                     : "Describe your video idea…"
                 }
                 autoFocus
+                defaultValue={typeof window === "undefined" ? "" : localStorage.getItem(draftKey) ?? ""}
+                onChange={(event) => localStorage.setItem(draftKey, event.currentTarget.value)}
                 disabled={isLoading || chatBlocked}
               />
               <PromptInputFooter className="justify-end">
