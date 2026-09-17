@@ -21,7 +21,7 @@ import { AuthDialog } from "@/components/auth-dialog";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export const Route = createFileRoute("/")({
-  ssr: false,
+  ssr: "data-only",
   beforeLoad: async () => {
     try {
       const { data } = await supabase.auth.getSession();
