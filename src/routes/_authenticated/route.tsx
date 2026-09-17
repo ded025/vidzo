@@ -7,7 +7,7 @@ export const Route = createFileRoute("/_authenticated")({
     // getSession reads from localStorage — instant, no network round-trip.
     // This prevents the auth guard from adding latency on every navigation.
     const { data } = await supabase.auth.getSession();
-    if (!data.session) throw redirect({ to: "/", search: { auth: "expired" } });
+    if (!data.session) throw redirect({ to: "/" });
     return { user: data.session.user };
   },
   component: () => <Outlet />,
