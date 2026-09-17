@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, isRedirect, Link, redirect, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/")({
       const { data } = await supabase.auth.getSession();
       if (data.session) throw redirect({ to: "/chat/dashboard" });
     } catch (e: unknown) {
-      if (e && typeof e === "object" && "isRedirect" in e) throw e;
+      if (isRedirect(e)) throw e;
     }
   },
   head: () => ({
@@ -54,11 +54,11 @@ function Landing() {
   useEffect(() => {
     let active = true;
     supabase.auth.getSession().then(({ data }) => {
-      if (active && data.session) navigate({ to: "/chat/dashboard", replace: true });
+      if (active && data.session) void navigate({ to: "/chat/dashboard", replace: true });
     });
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED")) {
-        navigate({ to: "/chat/dashboard", replace: true });
+        void navigate({ to: "/chat/dashboard", replace: true });
       }
     });
     return () => {

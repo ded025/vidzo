@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { z } from "zod";
 import { createThread } from "@/lib/threads.functions";
-import { Loader2 } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 
 const searchSchema = z.object({
   prompt: z.string().optional(),
@@ -23,6 +23,7 @@ function NewThread() {
   const qc = useQueryClient();
   const create = useServerFn(createThread);
   const started = useRef(false);
+  const [failure, setFailure] = useState<string | null>(null);
 
   useEffect(() => {
     if (started.current) return;
@@ -49,8 +50,9 @@ function NewThread() {
           params: { threadId: t!.id },
           replace: true,
         });
-      } catch {
-        navigate({ to: "/chat/dashboard", replace: true });
+      } catch (error) {
+        started.current = false;
+        setFailure(error instanceof Error ? error.message : "Could not start this production.");
       }
     })();
   }, [prompt, engine, title, create, navigate, qc]);
@@ -66,10 +68,18 @@ function NewThread() {
               {prompt}
             </div>
           )}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Spinning up your content pack…
-          </div>
+          {failure ? (
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm" role="alert">
+              <div className="flex items-center gap-2 font-semibold text-destructive"><AlertCircle className="size-4" />Couldn’t start this production</div>
+              <p className="mt-1 text-muted-foreground">{failure}</p>
+              <button type="button" className="mt-3 text-sm font-semibold text-primary" onClick={() => { setFailure(null); started.current = false; navigate({ to: "/chat", replace: true }); }}>Return to your brief</button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 rounded-md border border-border bg-card p-4 text-sm">
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              <div><div className="font-semibold text-foreground">Production started</div><div className="text-muted-foreground">Saving the brief and preparing research…</div></div>
+            </div>
+          )}
           <div className="space-y-2 max-w-[85%]">
             <div className="h-3 rounded bg-secondary animate-pulse w-3/4" />
             <div className="h-3 rounded bg-secondary animate-pulse w-2/3" />

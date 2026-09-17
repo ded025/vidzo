@@ -42,7 +42,6 @@ function ChatLayout() {
   const params = useParams({ strict: false }) as { threadId?: string };
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const list = useServerFn(listThreads);
-  const create = useServerFn(createThread);
   const del = useServerFn(deleteThread);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [balance, setBalance] = useState<number | null>(null);
@@ -59,14 +58,6 @@ function ChatLayout() {
   const threadsQ = useQuery({
     queryKey: ["threads"],
     queryFn: () => list(),
-  });
-
-  const createMut = useMutation({
-    mutationFn: async () => create({ data: { title: "New chat" } }),
-    onSuccess: (t) => {
-      qc.invalidateQueries({ queryKey: ["threads"] });
-      navigate({ to: "/chat/$threadId", params: { threadId: t!.id } });
-    },
   });
 
   const delMut = useMutation({
@@ -128,16 +119,13 @@ function ChatLayout() {
         <NavItem to="/chat/vse" icon={Clapperboard} label="Visual Story" />
         <NavItem to="/chat/trends" icon={TrendingUp} label="Trends" />
         <NavItem to="/chat/library" icon={FileText} label="Library" />
-        <NavItem to="/chat/library" icon={FileText} label="Library" />
         <NavItem to="/chat/presets" icon={Sliders} label="Presets" />
-        <NavItem to="/chat/credits" icon={Coins} label="Credits" />
       </div>
       <div className="px-3 pt-2 pb-1">
         <Button
           className="w-full justify-start gap-2"
           size="sm"
-          onClick={() => createMut.mutate()}
-          disabled={createMut.isPending}
+          onClick={() => navigate({ to: "/chat" })}
         >
           <Plus className="h-4 w-4" />
           New chat
@@ -211,7 +199,7 @@ function ChatLayout() {
     { to: "/chat/trends", icon: TrendingUp, label: "Trends" },
     { to: "/chat/library", icon: Library, label: "Library" },
     { to: "/chat/new", icon: Plus, label: "Create", isCreate: true },
-    { to: "/chat/credits", icon: Coins, label: "Credits" },
+    { to: "/chat/vse", icon: Clapperboard, label: "Visual" },
   ];
 
   return (
@@ -248,8 +236,7 @@ function ChatLayout() {
               size="sm"
               variant="ghost"
               className="ml-auto"
-              onClick={() => createMut.mutate()}
-              disabled={createMut.isPending}
+              onClick={() => navigate({ to: "/chat" })}
             >
               <Plus className="h-4 w-4" />
             </Button>
@@ -283,8 +270,7 @@ function ChatLayout() {
               <button
                 key={label}
                 type="button"
-                onClick={() => createMut.mutate()}
-                disabled={createMut.isPending}
+                 onClick={() => navigate({ to: "/chat" })}
                 className="flex-1 flex flex-col items-center justify-center gap-0.5 active:opacity-60 transition-opacity"
                 aria-label={label}
               >
