@@ -15,6 +15,14 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/_authenticated/chat/new")({
   validateSearch: searchSchema,
   component: NewThread,
+  head: () => ({ meta: [
+    { title: "Preparing Production · Vidzo" },
+    { name: "description", content: "Vidzo is preparing your production workspace." },
+    { property: "og:title", content: "Preparing Production · Vidzo" },
+    { property: "og:description", content: "Preparing your Vidzo production." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
 });
 
 function NewThread() {

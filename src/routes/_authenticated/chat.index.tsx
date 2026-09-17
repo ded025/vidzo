@@ -3,6 +3,14 @@ import { CreatePackPanel } from "@/components/create-pack-panel";
 
 export const Route = createFileRoute("/_authenticated/chat/")({
   component: ChatIndex,
+  head: () => ({ meta: [
+    { title: "New Production · Vidzo" },
+    { name: "description", content: "Turn a brief into a complete short-form production pack." },
+    { property: "og:title", content: "New Production · Vidzo" },
+    { property: "og:description", content: "Start a new Vidzo production." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
 });
 
 function ChatIndex() {

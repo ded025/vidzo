@@ -17,6 +17,14 @@ import {
 export const Route = createFileRoute("/_authenticated/chat/vse")({
   ssr: false,
   component: VsePage,
+  head: () => ({ meta: [
+    { title: "Visual Story Engine · Vidzo" },
+    { name: "description", content: "Build shot-by-shot visual stories with camera, lens, lighting, editing, and audio direction." },
+    { property: "og:title", content: "Visual Story Engine · Vidzo" },
+    { property: "og:description", content: "AI cinematography direction for creators who do not talk to camera." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
 });
 
 const ACTIVITY_GROUPS: Record<string, string[]> = {

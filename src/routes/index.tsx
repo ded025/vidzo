@@ -40,6 +40,8 @@ export const Route = createFileRoute("/")({
       },
       { property: "og:title", content: "Vidzo · AI production room for creators" },
       { property: "og:description", content: "One idea in. Full video pack out. Now with the Visual Story Engine." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Landing,

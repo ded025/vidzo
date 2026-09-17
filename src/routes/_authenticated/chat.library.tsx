@@ -9,6 +9,14 @@ import { ArrowUpRight, FileText, Loader2, Search } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/chat/library")({
   component: LibraryPage,
+  head: () => ({ meta: [
+    { title: "Production Library · Vidzo" },
+    { name: "description", content: "Review your saved Vidzo content packs and production outputs." },
+    { property: "og:title", content: "Production Library · Vidzo" },
+    { property: "og:description", content: "Your saved Vidzo productions." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
 });
 
 function LibraryPage() {

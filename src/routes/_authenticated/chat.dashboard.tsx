@@ -29,6 +29,14 @@ import { CreatePackPanel } from "@/components/create-pack-panel";
 
 export const Route = createFileRoute("/_authenticated/chat/dashboard")({
   component: Dashboard,
+  head: () => ({ meta: [
+    { title: "Production Dashboard · Vidzo" },
+    { name: "description", content: "Start productions and review your latest Vidzo content packs, sources, and quality signals." },
+    { property: "og:title", content: "Production Dashboard · Vidzo" },
+    { property: "og:description", content: "Your Vidzo production overview." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
 });
 
 const TREND_CARDS = [

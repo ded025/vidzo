@@ -42,6 +42,14 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/chat/trends")({
   component: TrendsPage,
+  head: () => ({ meta: [
+    { title: "Trend Intelligence · Vidzo" },
+    { name: "description", content: "Discover fresh, source-backed content opportunities and turn them into productions." },
+    { property: "og:title", content: "Trend Intelligence · Vidzo" },
+    { property: "og:description", content: "Source-backed trend intelligence for creators." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
 });
 
 const CATEGORY_META: Record<
